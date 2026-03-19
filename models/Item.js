@@ -6,23 +6,26 @@ const Item = sequelize.define('Item', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+    primaryKey: true,
   },
   name: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: false,
   },
-type: {
-  type: DataTypes.STRING,
-  allowNull: false,
-},
-  // game: "Dark Souls", "Bloodborne", etc.
+  type: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   game: {
     type: DataTypes.STRING,
-    allowNull: false
-  }
+    allowNull: false,
+  },
+  iconPath: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 }, {
-  tableName: 'items'
+  tableName: 'items',
 });
 
 module.exports = Item;

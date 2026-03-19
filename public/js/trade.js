@@ -1,263 +1,404 @@
-// ─── Trade Page Logic ────────────────────────────────────────────────────────
+// ─── SoulTrader — Trade Page Logic ───────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
-  // ── Trade Offer Modal ────────────────────────────────────────────────────
+
+  // ── Constants ──────────────────────────────────────────────────────────────
+  const gameKey        = document.getElementById('gameKeyInput')?.value || '';
+  const SEARCH_URL     = '/trade/search-items';
+  const UPGRADEABLE    = ['weapon', 'shield', 'armor'];
+
+  // Max upgrade level per game and item type
+  function maxUpgrade(type) {
+    if (!UPGRADEABLE.includes(type)) return 0;
+    const map = {
+      darksouls:   { weapon: 15, shield: 15, armor: 10 },
+      darksouls2:  { weapon: 10, shield: 10, armor: 10 },
+      darksouls3:  { weapon: 10, shield: 10, armor: 10 },
+      bloodborne:  { weapon: 10, shield: 0,  armor: 0  },
+      eldenring:   { weapon: 25, shield: 25, armor: 0  },
+      demonssouls: { weapon: 10, shield: 10, armor: 10 },
+    };
+    return (map[gameKey] || {})[type] || 0;
+  }
+
+  // ── Trade Creation Modal ───────────────────────────────────────────────────
   const tradeModal = document.getElementById('create-offer-modal');
-  const tradeBtn = document.getElementById('create-offer-btn');
+  const tradeBtn   = document.getElementById('create-offer-btn');
 
   if (tradeModal && tradeBtn) {
     const closeBtn = tradeModal.querySelector('.close-btn');
-    tradeBtn.addEventListener('click', () => (tradeModal.style.display = 'flex'));
-    if (closeBtn) closeBtn.addEventListener('click', () => (tradeModal.style.display = 'none'));
-    window.addEventListener('click', (e) => {
-      if (e.target === tradeModal) tradeModal.style.display = 'none';
-    });
+    tradeBtn.addEventListener('click', () => { tradeModal.style.display = 'flex'; });
+    if (closeBtn) closeBtn.addEventListener('click', () => { tradeModal.style.display = 'none'; });
+    window.addEventListener('click', e => { if (e.target === tradeModal) tradeModal.style.display = 'none'; });
   }
 
-  // ── Item Search & Grid ───────────────────────────────────────────────────
-  const gameKey = document.getElementById('gameKeyInput')?.value || '';
-  const searchEndpoint = '/trade/search-items';
+  // ── Collect items from a grid as a structured array ────────────────────────
+  function collectItems(gridId) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return [];
+    return Array.from(grid.querySelectorAll('.item-box')).map(box => ({
+      name:     box.dataset.name,
+      type:     box.dataset.type,
+      iconPath: box.dataset.iconPath || null,
+      qty:      parseInt(box.querySelector('.item-qty-value')?.textContent || '1', 10),
+      upgrade:  box.dataset.upgradeable === 'true'
+                  ? parseInt(box.querySelector('.item-upgrade-select')?.value || '0', 10)
+                  : null,
+    }));
+  }
 
-  function updateHiddenInput(hiddenInputId) {
-    const gridId = hiddenInputId === 'hiddenOfferedItems' ? 'offeredItemsGrid' : 'requestedItemsGrid';
+  function syncHidden(gridId, hiddenId) {
+    const items  = collectItems(gridId);
+    const hidden = document.getElementById(hiddenId);
+    if (hidden) hidden.value = JSON.stringify(items);
+    updatePreview();
+  }
+
+  // ── Build an item box element ──────────────────────────────────────────────
+  function buildItemBox(item, gridId, hiddenId) {
+    const upgradeable = UPGRADEABLE.includes(item.type) && maxUpgrade(item.type) > 0;
+    const maxUp       = upgradeable ? maxUpgrade(item.type) : 0;
+
+    const box = document.createElement('div');
+    box.className        = 'item-box';
+    box.dataset.name     = item.name;
+    box.dataset.type     = item.type;
+    box.dataset.iconPath = item.iconPath || '';
+    box.dataset.upgradeable = String(upgradeable);
+
+    // Icon
+    const iconWrap = document.createElement('div');
+    iconWrap.className = 'item-box-icon';
+    const img = document.createElement('img');
+    img.src   = item.iconPath || `/images/items/${gameKey}/${slugify(item.name)}.png`;
+    img.alt   = item.name;
+    img.title = item.name;
+    img.onerror = function () {
+      this.style.display = 'none';
+      const fallback = document.createElement('span');
+      fallback.className   = 'item-icon-fallback';
+      fallback.textContent = item.name.charAt(0).toUpperCase();
+      iconWrap.appendChild(fallback);
+    };
+    iconWrap.appendChild(img);
+    box.appendChild(iconWrap);
+
+    // Name
+    const nameEl = document.createElement('div');
+    nameEl.className   = 'item-box-name';
+    nameEl.textContent = item.name;
+    box.appendChild(nameEl);
+
+    // Quantity controls
+    const qtyWrap = document.createElement('div');
+    qtyWrap.className = 'item-box-qty';
+    const qtyMinus = document.createElement('button');
+    qtyMinus.type      = 'button';
+    qtyMinus.className = 'qty-btn';
+    qtyMinus.textContent = '−';
+    const qtyVal = document.createElement('span');
+    qtyVal.className   = 'item-qty-value';
+    qtyVal.textContent = '1';
+    const qtyPlus = document.createElement('button');
+    qtyPlus.type      = 'button';
+    qtyPlus.className = 'qty-btn';
+    qtyPlus.textContent = '+';
+
+    qtyMinus.addEventListener('click', () => {
+      const cur = parseInt(qtyVal.textContent, 10);
+      if (cur > 1) { qtyVal.textContent = cur - 1; syncHidden(gridId, hiddenId); }
+    });
+    qtyPlus.addEventListener('click', () => {
+      const cur = parseInt(qtyVal.textContent, 10);
+      if (cur < 99) { qtyVal.textContent = cur + 1; syncHidden(gridId, hiddenId); }
+    });
+
+    qtyWrap.appendChild(qtyMinus);
+    qtyWrap.appendChild(qtyVal);
+    qtyWrap.appendChild(qtyPlus);
+    box.appendChild(qtyWrap);
+
+    // Upgrade level (only for upgradeable items)
+    if (upgradeable) {
+      const upgradeWrap = document.createElement('div');
+      upgradeWrap.className = 'item-box-upgrade';
+      const sel = document.createElement('select');
+      sel.className = 'item-upgrade-select';
+      for (let i = 0; i <= maxUp; i++) {
+        const opt = document.createElement('option');
+        opt.value       = i;
+        opt.textContent = `+${i}`;
+        sel.appendChild(opt);
+      }
+      sel.addEventListener('change', () => syncHidden(gridId, hiddenId));
+      upgradeWrap.appendChild(sel);
+      box.appendChild(upgradeWrap);
+    }
+
+    // Remove button
+    const removeBtn = document.createElement('button');
+    removeBtn.type      = 'button';
+    removeBtn.className = 'item-box-remove';
+    removeBtn.innerHTML = '&times;';
+    removeBtn.title     = 'Remove';
+    removeBtn.addEventListener('click', () => {
+      box.remove();
+      syncHidden(gridId, hiddenId);
+    });
+    box.appendChild(removeBtn);
+
+    return box;
+  }
+
+  function addItemToGrid(item, gridId, hiddenId) {
     const grid = document.getElementById(gridId);
     if (!grid) return;
-    const items = Array.from(grid.children).map(box => {
-      const img = box.querySelector('img');
-      return img ? img.alt : '';
-    }).filter(Boolean);
-    const hidden = document.getElementById(hiddenInputId);
-    if (hidden) hidden.value = items.join(',');
+    // Prevent duplicates
+    if (Array.from(grid.querySelectorAll('.item-box')).some(b => b.dataset.name === item.name)) return;
+    grid.appendChild(buildItemBox(item, gridId, hiddenId));
+    syncHidden(gridId, hiddenId);
   }
 
-  function addItemToGrid(itemName, grid, hiddenInputId) {
-    const existing = Array.from(grid.children).map(box => {
-      const img = box.querySelector('img');
-      return img ? img.alt : '';
-    });
-    if (existing.includes(itemName)) return;
-
-    const itemBox = document.createElement('div');
-    itemBox.className = 'item-box';
-
-    const img = document.createElement('img');
-    img.src = `/icons/${gameKey.toLowerCase()}/${itemName}.webp`;
-    img.alt = itemName;
-    img.title = itemName;
-    img.onerror = function() {
-      this.style.display = 'none';
-      const text = document.createElement('span');
-      text.textContent = itemName;
-      text.style.cssText = 'font-size:0.7rem;background:var(--bg-tertiary);padding:4px 8px;border-radius:4px;display:inline-block;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
-      itemBox.insertBefore(text, itemBox.firstChild);
-    };
-
-    const removeBtn = document.createElement('button');
-    removeBtn.className = 'remove-item';
-    removeBtn.textContent = '\u00d7';
-    removeBtn.addEventListener('click', () => {
-      grid.removeChild(itemBox);
-      updateHiddenInput(hiddenInputId);
-    });
-
-    itemBox.appendChild(img);
-    itemBox.appendChild(removeBtn);
-    grid.appendChild(itemBox);
-    updateHiddenInput(hiddenInputId);
-  }
-
-  function createSearchHandler(inputId, dropdownId, gridId, hiddenInputId) {
-    const input = document.getElementById(inputId);
+  // ── Item search autocomplete ───────────────────────────────────────────────
+  function setupSearch(inputId, dropdownId, gridId, hiddenId) {
+    const input    = document.getElementById(inputId);
     const dropdown = document.getElementById(dropdownId);
-    const grid = document.getElementById(gridId);
-    if (!input || !dropdown || !grid) return;
+    if (!input || !dropdown) return;
 
-    let debounceTimer;
+    let timer;
     input.addEventListener('input', () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(async () => {
-        const query = input.value.trim();
-        if (!query) { dropdown.style.display = 'none'; return; }
-
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        const q = input.value.trim();
+        if (!q) { dropdown.style.display = 'none'; return; }
         try {
-          const resp = await fetch(`${searchEndpoint}?game=${encodeURIComponent(gameKey)}&query=${encodeURIComponent(query)}`);
-          if (!resp.ok) throw new Error('Network error');
+          const resp  = await fetch(`${SEARCH_URL}?game=${encodeURIComponent(gameKey)}&query=${encodeURIComponent(q)}`);
           const items = await resp.json();
-
           dropdown.innerHTML = '';
-          if (items.length) {
-            items.forEach(item => {
-              const li = document.createElement('li');
-              li.textContent = item.name;
-              li.addEventListener('click', () => {
-                addItemToGrid(item.name, grid, hiddenInputId);
-                input.value = '';
-                dropdown.style.display = 'none';
-              });
-              dropdown.appendChild(li);
+          if (!Array.isArray(items) || items.length === 0) { dropdown.style.display = 'none'; return; }
+          items.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'dropdown-item';
+            // Small icon in dropdown
+            if (item.iconPath) {
+              const dImg = document.createElement('img');
+              dImg.src    = item.iconPath;
+              dImg.alt    = '';
+              dImg.className = 'dropdown-item-icon';
+              dImg.onerror = () => { dImg.style.display = 'none'; };
+              li.appendChild(dImg);
+            }
+            const dName = document.createElement('span');
+            dName.textContent = item.name;
+            const dType = document.createElement('span');
+            dType.className   = 'dropdown-item-type';
+            dType.textContent = item.type;
+            li.appendChild(dName);
+            li.appendChild(dType);
+            li.addEventListener('click', () => {
+              addItemToGrid(item, gridId, hiddenId);
+              input.value        = '';
+              dropdown.style.display = 'none';
             });
-            dropdown.style.display = 'block';
-          } else {
-            dropdown.style.display = 'none';
-          }
+            dropdown.appendChild(li);
+          });
+          dropdown.style.display = 'block';
         } catch (err) {
-          console.error('Item search error:', err);
+          console.error('Search error:', err);
           dropdown.style.display = 'none';
         }
       }, 200);
     });
 
-    window.addEventListener('click', (e) => {
-      if (e.target !== input) dropdown.style.display = 'none';
+    document.addEventListener('click', e => {
+      if (e.target !== input && !dropdown.contains(e.target)) dropdown.style.display = 'none';
     });
   }
 
-  createSearchHandler('offeredItemInput', 'offeredItemDropdown', 'offeredItemsGrid', 'hiddenOfferedItems');
-  createSearchHandler('requestedItemInput', 'requestedItemDropdown', 'requestedItemsGrid', 'hiddenRequestedItems');
+  setupSearch('offeredItemInput',   'offeredItemDropdown',   'offeredItemsGrid',   'hiddenOfferedItems');
+  setupSearch('requestedItemInput', 'requestedItemDropdown', 'requestedItemsGrid', 'hiddenRequestedItems');
 
-  // ── Form Validation ──────────────────────────────────────────────────────
+  // ── Live preview ───────────────────────────────────────────────────────────
+  function renderPreviewSide(items, containerId) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = '';
+    if (!items || items.length === 0) {
+      el.innerHTML = '<span class="preview-empty">None yet</span>';
+      return;
+    }
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'preview-item-row';
+
+      const icon = document.createElement('img');
+      icon.src   = item.iconPath || `/images/items/${gameKey}/${slugify(item.name)}.png`;
+      icon.alt   = '';
+      icon.className = 'preview-item-icon';
+      icon.onerror = () => { icon.style.display = 'none'; };
+
+      const label = document.createElement('span');
+      label.className   = 'preview-item-label';
+      let text = item.name;
+      if (item.qty > 1) text += ` ×${item.qty}`;
+      if (item.upgrade !== null && item.upgrade !== undefined) text += ` [+${item.upgrade}]`;
+      label.textContent = text;
+
+      row.appendChild(icon);
+      row.appendChild(label);
+      el.appendChild(row);
+    });
+  }
+
+  function updatePreview() {
+    renderPreviewSide(collectItems('offeredItemsGrid'),   'preview-offered');
+    renderPreviewSide(collectItems('requestedItemsGrid'), 'preview-requested');
+  }
+
+  // ── Form validation ────────────────────────────────────────────────────────
   const createForm = document.getElementById('create-offer-form');
   if (createForm) {
-    createForm.addEventListener('submit', (e) => {
-      const offered = document.getElementById('hiddenOfferedItems')?.value.trim();
-      const requested = document.getElementById('hiddenRequestedItems')?.value.trim();
-      const platform = document.getElementById('platform')?.value;
-
-      if (!offered) { alert('Please add at least one offered item.'); e.preventDefault(); return; }
-      if (!requested) { alert('Please add at least one requested item.'); e.preventDefault(); return; }
-      if (!platform) { alert('Please select a platform.'); e.preventDefault(); return; }
+    createForm.addEventListener('submit', e => {
+      const offered   = collectItems('offeredItemsGrid');
+      const requested = collectItems('requestedItemsGrid');
+      const platform  = document.getElementById('platform')?.value;
+      if (!offered.length)   { alert('Please add at least one item you are offering.'); e.preventDefault(); return; }
+      if (!requested.length) { alert('Please add at least one item you are requesting.'); e.preventDefault(); return; }
+      if (!platform)         { alert('Please select a platform.'); e.preventDefault(); return; }
+      // Final sync before submit
+      document.getElementById('hiddenOfferedItems').value   = JSON.stringify(offered);
+      document.getElementById('hiddenRequestedItems').value = JSON.stringify(requested);
     });
   }
 
-  // ── Filtering & Sorting ──────────────────────────────────────────────────
-  const tradeCards = Array.from(document.querySelectorAll('.trade-card'));
-  const offersGrid = document.querySelector('.offers-grid');
+  // ── Filter / sort ──────────────────────────────────────────────────────────
+  const tradeCards     = Array.from(document.querySelectorAll('.trade-card'));
+  const offersGrid     = document.querySelector('.offers-grid');
   const platformSelect = document.getElementById('platformSelect');
-  const sortSelect = document.getElementById('sortSelect');
-  const searchInput = document.getElementById('searchInput');
+  const sortSelect     = document.getElementById('sortSelect');
+  const searchInput    = document.getElementById('searchInput');
 
   function applyFilters() {
-    if (!offersGrid || !platformSelect || !sortSelect) return;
+    if (!offersGrid) return;
+    const platform = (platformSelect?.value || 'all').toLowerCase();
+    const sort     = sortSelect?.value || 'desc';
+    const query    = (searchInput?.value || '').toLowerCase().trim();
 
-    const selectedPlatform = platformSelect.value;
-    const sortOrder = sortSelect.value;
-    const searchQuery = (searchInput?.value || '').trim().toLowerCase();
-
-    let filtered = tradeCards.filter(card => {
-      const cardPlatform = (card.dataset.platform || '').toLowerCase();
-      const cardText = card.innerText.toLowerCase();
-
-      if (selectedPlatform !== 'all' && cardPlatform !== selectedPlatform.toLowerCase()) return false;
-      if (searchQuery && !cardText.includes(searchQuery)) return false;
+    let visible = tradeCards.filter(card => {
+      if (platform !== 'all' && (card.dataset.platform || '').toLowerCase() !== platform) return false;
+      if (query && !card.innerText.toLowerCase().includes(query)) return false;
       return true;
     });
 
-    filtered.sort((a, b) => {
-      const aTime = Number(a.dataset.createdAt) || 0;
-      const bTime = Number(b.dataset.createdAt) || 0;
-      return sortOrder === 'asc' ? aTime - bTime : bTime - aTime;
+    visible.sort((a, b) => {
+      const ta = Number(a.dataset.createdAt) || 0;
+      const tb = Number(b.dataset.createdAt) || 0;
+      return sort === 'asc' ? ta - tb : tb - ta;
     });
 
-    tradeCards.forEach(card => (card.style.display = 'none'));
-    filtered.forEach(card => {
-      card.style.display = 'flex';
-      offersGrid.appendChild(card);
-    });
+    tradeCards.forEach(c => (c.style.display = 'none'));
+    visible.forEach(c => { c.style.display = 'flex'; offersGrid.appendChild(c); });
   }
 
-  if (platformSelect) platformSelect.addEventListener('change', applyFilters);
-  if (sortSelect) sortSelect.addEventListener('change', applyFilters);
-  if (searchInput) searchInput.addEventListener('input', applyFilters);
+  platformSelect?.addEventListener('change', applyFilters);
+  sortSelect?.addEventListener('change', applyFilters);
+  searchInput?.addEventListener('input', applyFilters);
   applyFilters();
 
-  // ── Accept Trade Modal ───────────────────────────────────────────────────
-  const acceptModal = document.getElementById('acceptTradeModal');
-  const confirmationModal = document.getElementById('confirmationModal');
-  const tradeIdInput = document.getElementById('tradeId');
-  const acceptForm = document.getElementById('acceptTradeForm');
+  // ── Accept Trade Modal ─────────────────────────────────────────────────────
+  const acceptModal      = document.getElementById('acceptTradeModal');
+  const confirmModal     = document.getElementById('confirmationModal');
+  const tradeIdInput     = document.getElementById('tradeId');
+  const acceptForm       = document.getElementById('acceptTradeForm');
 
-  document.querySelectorAll('.btn-accept').forEach(button => {
-    button.addEventListener('click', () => {
+  document.querySelectorAll('.btn-accept').forEach(btn => {
+    btn.addEventListener('click', () => {
       if (!acceptModal || !tradeIdInput) return;
-      tradeIdInput.value = button.getAttribute('data-trade-id');
+      tradeIdInput.value     = btn.dataset.tradeId;
       acceptModal.style.display = 'flex';
     });
   });
 
-  window.closeAcceptModal = () => { if (acceptModal) acceptModal.style.display = 'none'; };
-  window.closeConfirmationModal = () => { if (confirmationModal) confirmationModal.style.display = 'none'; };
+  window.closeAcceptModal      = () => { if (acceptModal)  acceptModal.style.display  = 'none'; };
+  window.closeConfirmationModal = () => { if (confirmModal) confirmModal.style.display = 'none'; };
 
   if (acceptForm) {
-    acceptForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-
-      const tradeId = tradeIdInput.value;
-      const meetingPoint = document.getElementById('meetingPoint')?.value || '';
-      const discordName = document.getElementById('discordName')?.value || '';
+    acceptForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const tradeId       = tradeIdInput.value;
+      const meetingPoint  = document.getElementById('meetingPoint')?.value  || '';
+      const discordName   = document.getElementById('discordName')?.value   || '';
       const additionalInfo = document.getElementById('additionalInfo')?.value || '';
-      const inGameName = document.getElementById('inGameName')?.value || '';
+      const inGameName    = document.getElementById('inGameName')?.value    || '';
 
-      // Fetch trade details for confirmation
-      const response = await fetch(`/trade/details/${tradeId}`);
-      const trade = await response.json();
+      try {
+        const resp  = await fetch(`/trade/details/${tradeId}`);
+        const trade = await resp.json();
 
-      const tradeDetails = document.getElementById('tradeDetails');
-      if (tradeDetails) {
-        tradeDetails.textContent = `${trade.offerCreator.username} will exchange ${trade.offeredItems} for your ${trade.requestedItems}.`;
-      }
+        // Render confirmation details
+        const detailsEl = document.getElementById('tradeDetails');
+        if (detailsEl) {
+          const fmt = items => (items || []).map(i => {
+            let s = i.name + (i.qty > 1 ? ` ×${i.qty}` : '');
+            if (i.upgrade !== null && i.upgrade !== undefined) s += ` [+${i.upgrade}]`;
+            return s;
+          }).join(', ');
+          detailsEl.innerHTML = `
+            <strong>${trade.offerCreator?.username}</strong> offers: ${fmt(trade.offeredItems)}<br>
+            In return for: ${fmt(trade.requestedItems)}
+          `;
+        }
 
-      if (acceptModal) acceptModal.style.display = 'none';
-      if (confirmationModal) confirmationModal.style.display = 'flex';
+        acceptModal.style.display  = 'none';
+        confirmModal.style.display = 'flex';
 
-      const checkbox = document.getElementById('confirmationCheckbox');
-      const submitBtn = document.getElementById('finalSubmitButton');
-      if (checkbox) checkbox.checked = false;
-      if (submitBtn) submitBtn.disabled = true;
+        const checkbox  = document.getElementById('confirmationCheckbox');
+        const submitBtn = document.getElementById('finalSubmitButton');
+        if (checkbox)  checkbox.checked  = false;
+        if (submitBtn) submitBtn.disabled = true;
 
-      if (checkbox && submitBtn) {
-        const handler = () => { submitBtn.disabled = !checkbox.checked; };
-        checkbox.removeEventListener('change', handler);
-        checkbox.addEventListener('change', handler);
-      }
+        if (checkbox && submitBtn) {
+          const onCheck = () => { submitBtn.disabled = !checkbox.checked; };
+          checkbox.removeEventListener('change', onCheck);
+          checkbox.addEventListener('change', onCheck);
+        }
 
-      if (submitBtn) {
-        const clickHandler = async () => {
-          submitBtn.removeEventListener('click', clickHandler);
-          try {
-            const finalResponse = await fetch(`/trade/accept/${tradeId}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ meetingPoint, discordName, additionalInfo, inGameName }),
-            });
-
-            if (finalResponse.ok) {
-              alert('Trade offer accepted successfully!');
-              window.closeConfirmationModal();
-              window.location.reload();
-            } else {
-              const err = await finalResponse.json().catch(() => ({}));
-              alert(err.error || 'Failed to accept trade offer.');
+        if (submitBtn) {
+          const onSubmit = async () => {
+            submitBtn.removeEventListener('click', onSubmit);
+            submitBtn.disabled   = true;
+            submitBtn.textContent = 'Accepting…';
+            try {
+              const finalResp = await fetch(`/trade/accept/${tradeId}`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ meetingPoint, discordName, additionalInfo, inGameName }),
+              });
+              if (finalResp.ok) {
+                window.closeConfirmationModal();
+                window.location.reload();
+              } else {
+                const err = await finalResp.json().catch(() => ({}));
+                alert(err.error || 'Failed to accept trade.');
+                submitBtn.disabled   = false;
+                submitBtn.textContent = 'Accept Trade';
+              }
+            } catch (err) {
+              console.error('Accept error:', err);
+              submitBtn.disabled   = false;
+              submitBtn.textContent = 'Accept Trade';
             }
-          } catch (error) {
-            console.error('Error accepting trade:', error);
-          }
-        };
-        submitBtn.addEventListener('click', clickHandler);
+          };
+          submitBtn.addEventListener('click', onSubmit);
+        }
+      } catch (err) {
+        console.error('Trade details fetch error:', err);
       }
     });
   }
 });
 
-// ─── Time Ago Helper (used by EJS via inline call) ───────────────────────────
-function timeAgo(dateStr) {
-  const now = new Date();
-  const date = new Date(dateStr);
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-  const diffDays = Math.floor(diffHours / 24);
-  return `${diffDays}d ago`;
+// ── Utility ──────────────────────────────────────────────────────────────────
+function slugify(str) {
+  return str.toLowerCase().replace(/['']/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }

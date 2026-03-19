@@ -1,6 +1,20 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 
+// Helper: parse stored JSON items, fall back to legacy CSV gracefully
+function parseItems(raw) {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    // Legacy CSV format: "ItemA,ItemB" → [{name,qty:1,upgrade:null}]
+    return raw.split(',').filter(Boolean).map(name => ({
+      name: name.trim(), qty: 1, upgrade: null, type: 'misc', iconPath: null,
+    }));
+  }
+}
+
 const Trade = sequelize.define('Trade', {
   id: {
     type: DataTypes.UUID,
@@ -19,10 +33,14 @@ const Trade = sequelize.define('Trade', {
   offeredItems: {
     type: DataTypes.TEXT,
     allowNull: false,
+    get() { return parseItems(this.getDataValue('offeredItems')); },
+    set(val) { this.setDataValue('offeredItems', Array.isArray(val) ? JSON.stringify(val) : val); },
   },
   requestedItems: {
     type: DataTypes.TEXT,
     allowNull: false,
+    get() { return parseItems(this.getDataValue('requestedItems')); },
+    set(val) { this.setDataValue('requestedItems', Array.isArray(val) ? JSON.stringify(val) : val); },
   },
   additionalNotes: {
     type: DataTypes.TEXT,
@@ -40,7 +58,6 @@ const Trade = sequelize.define('Trade', {
     type: DataTypes.UUID,
     allowNull: true,
   },
-  // Dual confirmation
   creatorConfirmed: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
@@ -49,7 +66,6 @@ const Trade = sequelize.define('Trade', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  // Rating tracking
   creatorRated: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
@@ -58,7 +74,6 @@ const Trade = sequelize.define('Trade', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  // Decline/cancel
   declinedById: {
     type: DataTypes.UUID,
     allowNull: true,
