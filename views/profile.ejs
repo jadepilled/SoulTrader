@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= profileUser.username %> | SoulTrader</title>
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <%- include('partials/navbar', { title: profileUser.username + "'s Profile", gameKey: '' }) %>
+
+  <div class="main-content">
+    <%- include('partials/flash-messages') %>
+
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <img
+        src="<%= profileUser.profileImagePath || '/images/default-avatar.svg' %>"
+        alt="<%= profileUser.username %>"
+        class="profile-avatar"
+        onerror="this.src='/images/default-avatar.svg'"
+      />
+      <div class="profile-info">
+        <h1 style="<%= getUsernameStyle(profileUser.role) %>"><%= profileUser.username %></h1>
+        <div class="profile-role"><%= profileUser.role %></div>
+        <div style="color: var(--text-muted); font-size:0.8rem; margin-top:0.25rem;">
+          Member since <%= profileUser.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) %>
+        </div>
+
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <div class="stat-value" style="color: <%= totalKarma >= 0 ? 'var(--success)' : 'var(--danger)' %>;">
+              <%= totalKarma >= 0 ? '+' : '' %><%= totalKarma %>
+            </div>
+            <div class="stat-label">Karma</div>
+          </div>
+          <div class="profile-stat">
+            <div class="stat-value"><%= positivePercent %>%</div>
+            <div class="stat-label">Positive</div>
+          </div>
+          <div class="profile-stat">
+            <div class="stat-value"><%= completedTradeCount %></div>
+            <div class="stat-label">Trades</div>
+          </div>
+        </div>
+
+        <!-- Linked Accounts -->
+        <div class="profile-linked">
+          <% if (profileUser.steamUsername) { %>
+            <div class="linked-badge">
+              <strong>Steam:</strong> <%= profileUser.steamUsername %>
+            </div>
+          <% } %>
+          <% if (profileUser.discordUsername) { %>
+            <div class="linked-badge">
+              <strong>Discord:</strong> <%= profileUser.discordUsername %>
+            </div>
+          <% } %>
+          <% if (!profileUser.steamUsername && !profileUser.discordUsername) { %>
+            <span style="color: var(--text-muted); font-size:0.85rem;">No linked accounts</span>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bio Section -->
+    <div class="profile-bio">
+      <h2 style="font-size:1rem; margin-bottom:0.75rem;">About</h2>
+      <% if (profileUser.bio) { %>
+        <p style="color: var(--text-secondary);"><%= profileUser.bio %></p>
+      <% } else { %>
+        <p style="color: var(--text-muted); font-style:italic;">No bio yet.</p>
+      <% } %>
+    </div>
+
+    <% if (isOwnProfile) { %>
+      <!-- Edit Profile Section -->
+      <div class="profile-bio">
+        <h2 style="font-size:1rem; margin-bottom:0.75rem;">Edit Profile</h2>
+
+        <!-- Bio -->
+        <form action="/profile/update" method="POST" style="margin-bottom:1.5rem;">
+          <label for="bio">Bio (max 500 characters)</label>
+          <textarea id="bio" name="bio" maxlength="500" style="margin-top:0.5rem;"><%= profileUser.bio || '' %></textarea>
+          <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Save Bio</button>
+        </form>
+
+        <!-- Profile Image -->
+        <form action="/profile/upload-image" method="POST" enctype="multipart/form-data" style="margin-bottom:1.5rem;">
+          <label for="profileImage">Profile Image (auto-resized to 500x500)</label>
+          <input type="file" id="profileImage" name="profileImage" accept="image/jpeg,image/png,image/webp,image/gif"
+                 style="margin-top:0.5rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius); padding:0.5rem; width:100%;" />
+          <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Upload Image</button>
+        </form>
+
+        <!-- Link Accounts -->
+        <h3 style="font-size:0.9rem; margin-bottom:0.75rem; color: var(--text-secondary);">Link Accounts</h3>
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+          <% if (!profileUser.steamId) { %>
+            <a href="/auth/steam" class="btn btn-sm">Link Steam</a>
+          <% } else { %>
+            <form action="/auth/unlink/steam" method="POST">
+              <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Unlink Steam?')">Unlink Steam</button>
+            </form>
+          <% } %>
+
+          <% if (!profileUser.discordId) { %>
+            <a href="/auth/discord" class="btn btn-sm">Link Discord</a>
+          <% } else { %>
+            <form action="/auth/unlink/discord" method="POST">
+              <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Unlink Discord?')">Unlink Discord</button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <%- include('partials/auth-modals') %>
+  <%- include('partials/footer') %>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

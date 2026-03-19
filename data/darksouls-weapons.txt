@@ -1,0 +1,138 @@
+Dagger
+Ghost Blade
+Bandit's Knife
+Parrying Dagger
+Priscilla's Dagger
+Dark Silver Tracer
+Straight Sword Hilt
+Broken Straight Sword
+Broadsword
+Shortsword
+Longsword
+Barbed Straight Sword
+Sunlight Straight Sword
+Balder Side Sword
+Astora's Straight Sword
+Silver Knight Straight Sword
+Drake Sword
+Darksword
+Crystal Straight Sword
+Bastard Sword
+Black Knight Sword
+Claymore
+Flamberge
+Crystal Greatsword
+Man-Serpent Greatsword
+Great Lord Greatsword
+Moonlight Greatsword
+Greatsword of Artorias
+Greatsword of Artorias (Cursed)
+Stone Greatsword
+Abyss Greatsword
+Obsidian Greatsword
+Dragon Greatsword
+Greatsword
+Black Knight Greatsword
+Zweihander
+Demon Great Machete
+Scimitar
+Shotel
+Falchion
+Quelaag's Furysword
+Painting Guardian Sword
+Jagged Ghost Blade
+Gold Tracer
+Uchigatana
+Washing Pole
+Iaito
+Chaos Blade
+Server
+Murakumo
+Gravelord Sword
+Rapier
+Estoc
+Mail Breaker
+Ricard's Rapier
+Velka's Rapier
+Hand Axe
+Gargoyle Tail Axe
+Battle Axe
+Butcher Knife
+Crescent Axe
+Golem Axe
+Demon's Greataxe
+Greataxe
+Dragon King Greataxe
+Black Knight Greataxe
+Stone Greataxe
+Club
+Reinforced Club
+Mace
+Morning Star
+Warpick
+Pickaxe
+Blacksmith Hammer
+Blacksmith Giant Hammer
+Hammer of Vamos
+Demon's Great Hammer
+Great Club
+Large Club
+Dragon Tooth
+Smough's Hammer
+Grant
+Caestus
+Claws
+Dragon Bone Fist
+Dark Hand
+Spear
+Winged Spear
+Demon's Spear
+Pike
+Dragonslayer Spear
+Partizan
+Channeler's Trident
+Silver Knight Spear
+Moonlight Butterfly Horn
+Four-pronged Plow
+Halberd
+Gargoyle's Halberd
+Titanite Catch Pole
+Black Knight Halberd
+Great Scythe
+Lifehunt Scythe
+Scythe
+Lucerne
+Giant's Halberd
+Whip
+Notched Whip
+Guardian Tail
+Short Bow
+Longbow
+Composite Bow
+Black Bow of Pharis
+Darkmoon Bow
+Dragonslayer Greatbow
+Gough's Greatbow
+Light Crossbow
+Heavy Crossbow
+Sniper Crossbow
+Avelyn
+Pyromancy Flame
+Sorcerer's Catalyst
+Izalith Catalyst
+Logan's Catalyst
+Beatrice's Catalyst
+Oolacile Ivory Catalyst
+Demon's Catalyst
+Tin Banishment Catalyst
+Tin Crystallization Catalyst
+Tin Darkmoon Catalyst
+Oolacile Catalyst
+Manus Catalyst
+Talisman
+Canvas Talisman
+Thorolund Talisman
+Ivory Talisman
+Sunlight Talisman
+Velka's Talisman
+Darkmoon Talisman

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoulTrader</title>
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="brand"><a href="/">SoulTrader</a></div>
+    <button class="hamburger" id="hamburgerBtn" aria-label="Menu">&#9776;</button>
+    <div class="nav-links" id="navLinks">
+      <% if (typeof gameConfigs !== 'undefined') { %>
+        <% Object.entries(gameConfigs).forEach(([key, cfg]) => { %>
+          <a href="/<%= key %>"><%= cfg.title.replace(/:.+/, '').trim() %></a>
+        <% }); %>
+      <% } %>
+      <div class="nav-user">
+        <% if (userId) { %>
+          <a href="/trade/my-trades" style="font-weight:600;">My Trades</a>
+          <a href="/profile" style="font-weight:600;">Profile</a>
+          <a href="/auth/logout" style="font-weight:600;">Log Out</a>
+        <% } else { %>
+          <a href="#" id="openSignupLink" style="font-weight:600;">Sign Up</a>
+          <a href="#" id="openLoginLink" style="font-weight:600;">Log In</a>
+        <% } %>
+      </div>
+    </div>
+  </nav>
+
+  <div class="main-content" style="padding-top:100px;">
+    <%- include('partials/flash-messages') %>
+
+    <div class="home-grid">
+      <img src="https://i.imgur.com/ZA6Hkr1.png" class="main-image" alt="SoulTrader">
+      <div class="game-grid">
+        <a href="/eldenring"><img src="https://i.imgur.com/7aq4TkU.png" alt="Elden Ring"></a>
+        <a href="/darksouls"><img src="https://i.imgur.com/o0BUvUQ.png" alt="Dark Souls"></a>
+        <a href="/darksouls3"><img src="https://i.imgur.com/sETyDch.png" alt="Dark Souls 3"></a>
+        <a href="/darksouls2"><img src="https://i.imgur.com/TFHkXED.png" alt="Dark Souls 2"></a>
+        <a href="/bloodborne"><img src="https://i.imgur.com/0q8jRGA.png" alt="Bloodborne"></a>
+        <a href="/demonssouls"><img src="https://i.imgur.com/R9wKWFE.png" alt="Demon's Souls"></a>
+      </div>
+    </div>
+  </div>
+
+  <%- include('partials/auth-modals') %>
+  <%- include('partials/footer') %>
+
+  <script src="/js/auth.js"></script>
+</body>
+</html>

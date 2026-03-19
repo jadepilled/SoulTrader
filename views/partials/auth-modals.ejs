@@ -1,0 +1,36 @@
+<!-- Signup Modal -->
+<div id="signupModal" class="modal-overlay">
+  <div class="modal-content">
+    <button class="close-btn" data-close-modal="signupModal">&times;</button>
+    <h2>Sign Up</h2>
+    <form action="/auth/signup" method="POST">
+      <label for="signupEmail">Email</label>
+      <input type="email" id="signupEmail" name="email" required />
+
+      <label for="signupPassword">Password</label>
+      <input type="password" id="signupPassword" name="password" required />
+
+      <label for="signupUsername">Username</label>
+      <input type="text" id="signupUsername" name="username" required />
+
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:1rem;">Create Account</button>
+    </form>
+  </div>
+</div>
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal-overlay">
+  <div class="modal-content">
+    <button class="close-btn" data-close-modal="loginModal">&times;</button>
+    <h2>Log In</h2>
+    <form action="/auth/login" method="POST">
+      <label for="loginEmail">Email</label>
+      <input type="email" id="loginEmail" name="email" required />
+
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" name="password" required />
+
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:1rem;">Log In</button>
+    </form>
+  </div>
+</div>

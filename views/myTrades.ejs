@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Trades | SoulTrader</title>
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <%- include('partials/navbar', { title: 'My Trades', gameKey: '' }) %>
+
+  <div class="main-content">
+    <h1 class="section-title" style="margin-top:0.5rem;">My Trades</h1>
+
+    <%
+      // Game key reverse map for display
+      const gameKeyReverse = {};
+      if (typeof gameKeyMap !== 'undefined') {
+        Object.entries(gameKeyMap).forEach(([k, v]) => { gameKeyReverse[v] = k; });
+      }
+
+      function getStatusBadge(trade) {
+        const s = trade.status;
+        if (s === 'open') return '<span class="status-badge status-open">Open</span>';
+        if (s === 'awaiting_confirmation') {
+          let detail = '';
+          if (trade.creatorConfirmed && !trade.acceptorConfirmed) detail = ' (Creator confirmed)';
+          else if (!trade.creatorConfirmed && trade.acceptorConfirmed) detail = ' (Acceptor confirmed)';
+          else detail = ' (Awaiting both)';
+          return '<span class="status-badge status-awaiting">Awaiting Confirmation' + detail + '</span>';
+        }
+        if (s === 'completed') return '<span class="status-badge status-completed">Completed</span>';
+        if (s === 'declined') return '<span class="status-badge status-declined">Declined</span>';
+        if (s === 'cancelled') return '<span class="status-badge status-cancelled">Cancelled</span>';
+        return '<span class="status-badge">' + s + '</span>';
+      }
+    %>
+
+    <!-- ═══ Created Trades ═══ -->
+    <h2 style="margin:2rem 0 1rem;">Trades I Created</h2>
+    <% if (!createdTrades || createdTrades.length === 0) { %>
+      <div class="no-offers-card">No trades created yet.</div>
+    <% } else { %>
+      <div class="offers-grid">
+        <% createdTrades.forEach(trade => { %>
+          <div class="trade-card">
+            <div class="offer-heading">
+              <% if (trade.game) { %>
+                <span class="game-badge"><%= trade.game %></span>
+              <% } %>
+              <div style="margin-top:0.5rem;"><%- getStatusBadge(trade) %></div>
+            </div>
+
+            <div class="trade-card-inner">
+              <div class="offered-col">
+                <h2>Offered</h2>
+                <ul><% trade.offeredItems.split(',').forEach(i => { %><li><%= i.trim() %></li><% }); %></ul>
+              </div>
+              <div class="requested-col">
+                <h2>Requested</h2>
+                <ul><% trade.requestedItems.split(',').forEach(i => { %><li><%= i.trim() %></li><% }); %></ul>
+              </div>
+            </div>
+
+            <div class="trade-details">
+              <div class="platform">Platform: <%= trade.platform %></div>
+            </div>
+
+            <% if (trade.acceptor) { %>
+              <p style="font-size:0.85rem; margin:0.5rem 0;">
+                Accepted by:
+                <span class="tooltip" tabindex="0" style="<%= getUsernameStyle(trade.acceptor.role) %>">
+                  <a href="/profile/<%= trade.acceptor.username %>" style="color:inherit;"><%= trade.acceptor.username %></a>
+                  <span class="tooltiptext">
+                    Karma: <%= trade.acceptor.positiveKarma - trade.acceptor.negativeKarma %><br>
+                    Role: <%= trade.acceptor.role %>
+                  </span>
+                </span>
+              </p>
+            <% } %>
+
+            <div class="trade-actions">
+              <% if (trade.status === 'awaiting_confirmation' && !trade.creatorConfirmed) { %>
+                <form action="/trade/confirm/<%= trade.id %>" method="POST" style="flex:1;">
+                  <button type="submit" class="btn btn-success btn-full">Confirm Trade</button>
+                </form>
+              <% } %>
+              <% if (trade.status === 'awaiting_confirmation') { %>
+                <form action="/trade/decline/<%= trade.id %>" method="POST" style="flex:1;" onsubmit="return confirm('Decline this trade?');">
+                  <button type="submit" class="btn btn-danger btn-full">Decline</button>
+                </form>
+              <% } %>
+              <% if (trade.status === 'open') { %>
+                <form action="/trade/cancel/<%= trade.id %>" method="POST" style="flex:1;" onsubmit="return confirm('Cancel this trade?');">
+                  <button type="submit" class="btn btn-danger btn-full">Cancel</button>
+                </form>
+              <% } %>
+              <% if (trade.status === 'completed' && !trade.creatorRated) { %>
+                <form action="/trade/rate/<%= trade.id %>" method="POST" style="flex:1; display:flex; gap:0.5rem; align-items:center;">
+                  <select name="rating" required style="flex:1;">
+                    <option value="" disabled selected>Rate</option>
+                    <% for(let i=10; i>=1; i--) { %><option value="<%= i %>"><%= i %>/10</option><% } %>
+                  </select>
+                  <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                </form>
+              <% } %>
+              <% if (trade.status === 'completed' && trade.creatorRated) { %>
+                <span style="color: var(--text-muted); font-size:0.8rem;">Rated</span>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <!-- ═══ Accepted Trades ═══ -->
+    <h2 style="margin:2rem 0 1rem;">Trades I Accepted</h2>
+    <% if (!acceptedTrades || acceptedTrades.length === 0) { %>
+      <div class="no-offers-card">No accepted trades.</div>
+    <% } else { %>
+      <div class="offers-grid">
+        <% acceptedTrades.forEach(trade => { %>
+          <div class="trade-card">
+            <div class="offer-heading">
+              <% if (trade.game) { %>
+                <span class="game-badge"><%= trade.game %></span>
+              <% } %>
+              <div style="margin-top:0.5rem;"><%- getStatusBadge(trade) %></div>
+            </div>
+
+            <div class="trade-card-inner">
+              <div class="offered-col">
+                <h2>Offered</h2>
+                <ul><% trade.offeredItems.split(',').forEach(i => { %><li><%= i.trim() %></li><% }); %></ul>
+              </div>
+              <div class="requested-col">
+                <h2>Requested</h2>
+                <ul><% trade.requestedItems.split(',').forEach(i => { %><li><%= i.trim() %></li><% }); %></ul>
+              </div>
+            </div>
+
+            <div class="trade-details">
+              <div class="platform">Platform: <%= trade.platform %></div>
+            </div>
+
+            <p style="font-size:0.85rem; margin:0.5rem 0;">
+              Created by:
+              <span class="tooltip" tabindex="0" style="<%= getUsernameStyle(trade.offerCreator.role) %>">
+                <a href="/profile/<%= trade.offerCreator.username %>" style="color:inherit;"><%= trade.offerCreator.username %></a>
+                <span class="tooltiptext">
+                  Karma: <%= trade.offerCreator.positiveKarma - trade.offerCreator.negativeKarma %><br>
+                  Role: <%= trade.offerCreator.role %>
+                </span>
+              </span>
+            </p>
+
+            <div class="trade-actions">
+              <% if (trade.status === 'awaiting_confirmation' && !trade.acceptorConfirmed) { %>
+                <form action="/trade/confirm/<%= trade.id %>" method="POST" style="flex:1;">
+                  <button type="submit" class="btn btn-success btn-full">Confirm Trade</button>
+                </form>
+              <% } %>
+              <% if (trade.status === 'completed' && !trade.acceptorRated) { %>
+                <form action="/trade/rate/<%= trade.id %>" method="POST" style="flex:1; display:flex; gap:0.5rem; align-items:center;">
+                  <select name="rating" required style="flex:1;">
+                    <option value="" disabled selected>Rate</option>
+                    <% for(let i=10; i>=1; i--) { %><option value="<%= i %>"><%= i %>/10</option><% } %>
+                  </select>
+                  <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                </form>
+              <% } %>
+              <% if (trade.status === 'completed' && trade.acceptorRated) { %>
+                <span style="color: var(--text-muted); font-size:0.8rem;">Rated</span>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+
+  <%- include('partials/footer') %>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+Brigand Hood
+Priest's Hat
+Pharis's Hat
+Knight Helm
+Tattered Cloth Hood
+Sorcerer Hat
+Thief Mask
+Wanderer Hood
+Standard Helm
+Brigand Armor
+Holy Robe
+Leather Armor
+Knight Armor
+Tattered Cloth Robe
+Sorcerer Cloak
+Black Leather Armor
+Wanderer Coat
+Hard Leather Armor
+Brigand Gauntlets
+Traveling Gloves
+Leather Gloves
+Knight Gauntlets
+Tattered Cloth Manchette
+Sorcerer Gauntlets
+Black Leather Gloves
+Wanderer Manchette
+Hard Leather Gauntlets
+Brigand Trousers
+Holy Trousers
+Leather Boots
+Knight Leggings
+Heavy Boots
+Sorcerer Boots
+Black Leather Boots
+Wanderer Boots
+Hard Leather Boots
+Crown of Dusk
+Big Hat
+Mask of Velka
+Black Sorcerer Hat
+Chain Helm
+Snickering Top Hat
+Mask of the Sealer
+Dingy Hood
+Gold-Hemmed Black Hood
+Crown of the Great Lord
+Hollow Soldier Helm
+Hollow Thief's Hood
+Hollow Warrior Helm
+Porcelain Mask
+Maiden Hood
+Crown of the Dark Sun
+Painting Guardian Hood
+Shadow Mask
+Witch Hat
+Xanthous Crown
+Antiquated Dress
+Sage Robe
+Black Cleric Robe
+Black Sorcerer Cloak
+Chain Armor
+Chester's Long Coat
+Crimson Robe
+Dingy Robe
+Gold-Hemmed Black Cloak
+Robe of the Great Lord
+Hollow Soldier Armor
+Hollow Thief's Armor
+Hollow Warrior Armor
+Lord's Blade Robe
+Maiden Robe
+Moonlight Robe
+Painting Guardian Robe
+Shadow Garb
+Witch Cloak
+Xanthous Overcoat
+Antiquated Gloves
+Traveling Gloves
+Black Manchette
+Black Sorcerer Gauntlets
+Leather Gauntlets
+Chester's Gloves
+Crimson Gloves
+Dingy Gloves
+Gold-Hemmed Black Gloves
+Bracelet of the Great Lord
+Lord's Blade Gloves
+Maiden Gloves
+Moonlight Gloves
+Painting Guardian Gloves
+Shadow Gauntlets
+Witch Gloves
+Xanthous Gloves
+Antiquated Skirt
+Traveling Boots
+Black Tights
+Black Sorcerer Boots
+Chain Leggings
+Chester's Trousers
+Crimson Waistcloth
+Blood-Stained Skirt
+Gold-Hemmed Black Skirt
+Anklet of the Great Lord
+Hollow Soldier Waistcloth
+Hollow Thief's Tights
+Hollow Warrior Waistcloth
+Lord's Blade Waistcloth
+Maiden Skirt
+Moonlight Waistcloth
+Painting Guard Waistcloth
+Shadow Leggings
+Witch Skirt
+Xanthous Waistcloth
+Helm of the Wise
+Balder Helm
+Black Knight Helm
+Brass Helm
+Catarina Helm
+Six-Eyed Helm
+Cleric Helm
+Crystalline Helm
+Dark Mask
+Eastern Helm
+Elite Knight Helm
+Helm of Favor
+Gough's Helm
+Iron Helm
+Ornstein's Helm
+Paladin Helm
+Helm of Artorias
+Silver Knight Helm
+Steel Helm
+Helm of Thorns
+Armor of the Glorious
+Balder Armor
+Black Knight Armor
+Brass Armor
+Catarina Armor
+Robe of the Channelers
+Cleric Armor
+Crystalline Armor
+Dark Armor
+Eastern Armor
+Elite Knight Armor
+Embraced Armor of Favor
+Gough's Armor
+Armor of the Sun
+Ornstein's Armor
+Paladin Armor
+Armor of Artorias
+Silver Knight Armor
+Steel Armor
+Armor of Thorns
+Gauntlets of the Vanquisher
+Balder Gauntlets
+Black Knight Gauntlets
+Brass Gauntlets
+Catarina Gauntlets
+Gauntlets of the Channelers
+Cleric Gauntlets
+Crystalline Gauntlets
+Dark Gauntlets
+Eastern Gauntlets
+Elite Knight Gauntlets
+Gauntlets of Favor
+Gough's Gauntlets
+Iron Bracelet
+Ornstein's Gauntlets
+Paladin Gauntlets
+Gauntlets of Artorias
+Silver Knight Gauntlets
+Steel Gauntlets
+Gauntlets of Thorns
+Boots of the Explorer
+Balder Leggings
+Black Knight Leggings
+Brass Leggings
+Catarina Leggings
+Waistcloth of the Channelers
+Cleric Leggings
+Crystalline Leggings
+Dark Leggings
+Eastern Leggings
+Elite Knight Leggings
+Leggings of Favor
+Gough's Leggings
+Iron Leggings
+Ornstein's Leggings
+Paladin Leggings
+Leggings of Artorias
+Silver Knight Leggings
+Steel Leggings
+Leggings of Thorns
+Black Iron Helm
+Giant Helm
+Golem Helm
+Guardian Helm
+Havel's Helm
+Smough's Helm
+Stone Helm
+Black Iron Armor
+Giant Armor
+Golem Armor
+Guardian Armor
+Havel's Armor
+Smough's Armor
+Stone Armor
+Black Iron Gauntlets
+Giant Gauntlets
+Golem Gauntlets
+Guardian Gauntlets
+Havel's Gauntlets
+Smough's Gauntlets
+Stone Gauntlets
+Black Iron Leggings
+Giant Leggings
+Golem Leggings
+Guardian Leggings
+Havel's Leggings
+Smough's Leggings
+Stone Leggings
+Bloated Head
+Bloated Sorcerer Head
+Fang Boar Helm
+Gargoyle Helm
+Mask of the Child
+Mask of the Father
+Mask of the Mother
+Royal Helm
+Sack
+Sunlight Maggot
+Symbol of Avarice

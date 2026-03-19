@@ -1,0 +1,42 @@
+<% if (typeof query !== 'undefined' && query) { %>
+  <% if (query.signup === 'success') { %>
+    <div class="flash-message">Account created. Please check your email to verify.</div>
+  <% } %>
+  <% if (query.signup === 'verified') { %>
+    <div class="flash-message">Email verified successfully! You can now log in.</div>
+  <% } %>
+  <% if (query.trade === 'rescinded') { %>
+    <div class="flash-message">Trade offer cancelled.</div>
+  <% } %>
+  <% if (query.linked) { %>
+    <div class="flash-message"><%= query.linked.charAt(0).toUpperCase() + query.linked.slice(1) %> account linked successfully.</div>
+  <% } %>
+  <% if (query.unlinked) { %>
+    <div class="flash-message"><%= query.unlinked.charAt(0).toUpperCase() + query.unlinked.slice(1) %> account unlinked.</div>
+  <% } %>
+  <% if (query.error) { %>
+    <div class="flash-message error">
+      <% if (query.error === 'emailInUse') { %>
+        Email is already in use.
+      <% } else if (query.error === 'usernameInUse') { %>
+        Username is already taken.
+      <% } else if (query.error === 'invalidCredentials') { %>
+        Invalid email or password.
+      <% } else if (query.error === 'notVerified') { %>
+        Please verify your email before logging in.
+      <% } else if (query.error === 'banned') { %>
+        Your account has been banned.
+      <% } else if (query.error === 'missing-fields') { %>
+        Email and password are required.
+      <% } else if (query.error === 'server') { %>
+        A server error occurred. Please try again.
+      <% } else if (query.error === 'steam_link_failed') { %>
+        Failed to link Steam account. It may already be linked to another user.
+      <% } else if (query.error === 'discord_link_failed') { %>
+        Failed to link Discord account. It may already be linked to another user.
+      <% } else { %>
+        An error occurred.
+      <% } %>
+    </div>
+  <% } %>
+<% } %>

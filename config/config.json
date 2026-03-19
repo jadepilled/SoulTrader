@@ -1,0 +1,30 @@
+{
+  "soultrader": {
+    "username": "soultrader_user",
+    "password": "5dq3czVPU25xsH1YsBClcMp2w159wDsN",
+    "database": "soultrader",
+    "host": "localhost",
+    "dialect": "postgres"
+  },
+  "development": {
+    "username": "soultrader_user",
+    "password": "5dq3czVPU25xsH1YsBClcMp2w159wDsN",
+    "database": "soultrader",
+    "host": "localhost",
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "soultrader_user",
+    "password": "5dq3czVPU25xsH1YsBClcMp2w159wDsN",
+    "database": "soultrader",
+    "host": "localhost",
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "soultrader_user",
+    "password": "5dq3czVPU25xsH1YsBClcMp2w159wDsN",
+    "database": "soultrader",
+    "host": "localhost",
+    "dialect": "postgres"
+  }
+}

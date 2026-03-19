@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | SoulTrader</title>
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <style>
+    :root {
+      --game-accent: <%= accentColor %>;
+      --game-accent-rgb: <%= accentColorRgb %>;
+      --game-secondary: <%= secondaryColor %>;
+      --game-secondary-rgb: <%= secondaryColorRgb %>;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/navbar') %>
+
+  <div class="main-content">
+    <!-- Game Logo -->
+    <div class="header-logo">
+      <img src="<%= logoUrl %>" alt="<%= title %>" />
+    </div>
+
+    <%- include('partials/flash-messages') %>
+
+    <!-- ═══ Trade Creation Modal ═══ -->
+    <div id="create-offer-modal" class="modal-overlay">
+      <div class="modal-content">
+        <button class="close-btn">&times;</button>
+        <h2>Create Trade Offer</h2>
+        <form id="create-offer-form" action="/trade/create" method="POST">
+          <input type="hidden" name="game" value="<%= gameKey %>" />
+          <input type="hidden" id="gameKeyInput" value="<%= gameKey %>" />
+
+          <label for="offeredItemInput">Offered Items</label>
+          <div style="position:relative;">
+            <input type="text" id="offeredItemInput" placeholder="Search for items..." autocomplete="off" />
+            <ul id="offeredItemDropdown" class="dropdown"></ul>
+          </div>
+          <div id="offeredItemsGrid" class="item-grid"></div>
+          <input type="hidden" id="hiddenOfferedItems" name="offeredItems" value="" />
+
+          <label for="requestedItemInput">Requested Items</label>
+          <div style="position:relative;">
+            <input type="text" id="requestedItemInput" placeholder="Search for items..." autocomplete="off" />
+            <ul id="requestedItemDropdown" class="dropdown"></ul>
+          </div>
+          <div id="requestedItemsGrid" class="item-grid"></div>
+          <input type="hidden" id="hiddenRequestedItems" name="requestedItems" value="" />
+
+          <label for="platform">Platform</label>
+          <select id="platform" name="platform" required>
+            <option value="" disabled selected>Select Platform</option>
+            <option value="PlayStation">PlayStation</option>
+            <option value="Xbox">Xbox</option>
+            <option value="PC">PC</option>
+          </select>
+
+          <label for="additionalNotes">Additional Notes</label>
+          <textarea id="additionalNotes" name="additionalNotes" placeholder="Optional notes..."></textarea>
+
+          <button type="submit" class="btn btn-success btn-full" style="margin-top:1rem;">Submit Offer</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ═══ Accept Trade Modal ═══ -->
+    <div id="acceptTradeModal" class="modal-overlay">
+      <div class="modal-content">
+        <button class="close-btn" onclick="closeAcceptModal()">&times;</button>
+        <h2>Accept Trade Offer</h2>
+        <form id="acceptTradeForm">
+          <input type="hidden" id="tradeId" name="tradeId" />
+
+          <label for="meetingPoint">Preferred Meeting Point</label>
+          <input type="text" id="meetingPoint" name="meetingPoint" placeholder="e.g. Firelink Shrine" />
+
+          <label for="discordName">Discord Name</label>
+          <input type="text" id="discordName" name="discordName" required placeholder="username#0000" />
+
+          <label for="inGameName">In-Game Name</label>
+          <input type="text" id="inGameName" name="inGameName" placeholder="Your character name" />
+
+          <label for="additionalInfo">Additional Information</label>
+          <textarea id="additionalInfo" name="additionalInfo" placeholder="Optional..."></textarea>
+
+          <button type="submit" class="btn btn-success btn-full" style="margin-top:1rem;">Continue</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ═══ Confirmation Modal ═══ -->
+    <div id="confirmationModal" class="modal-overlay">
+      <div class="modal-content">
+        <button class="close-btn" onclick="closeConfirmationModal()">&times;</button>
+        <h2>Confirm Trade</h2>
+        <p id="tradeDetails" style="margin-bottom:1rem; color: var(--text-secondary);"></p>
+        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+          <input type="checkbox" id="confirmationCheckbox" />
+          <span>I confirm that I have these item(s) and am willing to trade.</span>
+        </label>
+        <button id="finalSubmitButton" class="btn btn-success btn-full" style="margin-top:1rem;" disabled>Accept Trade</button>
+      </div>
+    </div>
+
+    <!-- ═══ Filter Bar & Trade Offers ═══ -->
+    <section>
+      <div class="filter-bar">
+        <% if (userId) { %>
+          <button id="create-offer-btn" class="btn btn-primary">Create Trade Offer</button>
+        <% } %>
+
+        <div class="filter-group">
+          <label for="platformSelect">Platform</label>
+          <select id="platformSelect">
+            <option value="all">All</option>
+            <option value="PC">PC</option>
+            <option value="PlayStation">PlayStation</option>
+            <option value="Xbox">Xbox</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="sortSelect">Sort</label>
+          <select id="sortSelect">
+            <option value="desc" selected>Newest First</option>
+            <option value="asc">Oldest First</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="searchInput">Search</label>
+          <input type="text" id="searchInput" placeholder="Item name..." style="min-width:150px;" />
+        </div>
+      </div>
+
+      <% if (!offers || offers.length === 0) { %>
+        <div class="no-offers-card">No trade offers yet. Be the first to create one!</div>
+      <% } else { %>
+        <div class="offers-grid" id="offers-grid">
+          <% offers.forEach(offer => { %>
+            <div class="trade-card"
+                 data-platform="<%= offer.platform %>"
+                 data-created-at="<%= offer.createdAt.getTime() %>">
+
+              <div class="offer-heading">
+                Offer from
+                <span class="tooltip" tabindex="0"
+                      style="<%= getUsernameStyle(offer.offerCreator.role) %>">
+                  <%= offer.offerCreator.username %>
+                  <span class="tooltiptext">
+                    Karma: <%= offer.offerCreator.positiveKarma - offer.offerCreator.negativeKarma %><br>
+                    Role: <%= offer.offerCreator.role %>
+                  </span>
+                </span>
+                <span class="time-ago">
+                  <%
+                    const now = new Date();
+                    const diff = now - offer.createdAt;
+                    const mins = Math.floor(diff / 60000);
+                    let timeStr;
+                    if (mins < 1) timeStr = 'just now';
+                    else if (mins < 60) timeStr = mins + 'm ago';
+                    else if (mins < 1440) timeStr = Math.floor(mins/60) + 'h ago';
+                    else timeStr = Math.floor(mins/1440) + 'd ago';
+                  %>
+                  <%= timeStr %>
+                </span>
+              </div>
+
+              <div class="trade-card-inner">
+                <div class="offered-col">
+                  <h2>Offered</h2>
+                  <ul>
+                    <% offer.offeredItems.split(',').forEach(item => { %>
+                      <li><%= item.trim() %></li>
+                    <% }); %>
+                  </ul>
+                </div>
+                <div class="requested-col">
+                  <h2>Requested</h2>
+                  <ul>
+                    <% offer.requestedItems.split(',').forEach(item => { %>
+                      <li><%= item.trim() %></li>
+                    <% }); %>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="trade-details">
+                <div class="platform">Platform: <%= offer.platform %></div>
+                <% if (offer.additionalNotes) { %>
+                  <div class="notes">Notes: <%= offer.additionalNotes %></div>
+                <% } %>
+              </div>
+
+              <div class="trade-actions">
+                <% if (userId && userId !== offer.offerCreatorId) { %>
+                  <button class="btn btn-success btn-accept" data-trade-id="<%= offer.id %>">Accept</button>
+                <% } %>
+                <% if (userId && (userId === offer.offerCreatorId || role === 'admin')) { %>
+                  <form action="/trade/rescind/<%= offer.id %>" method="POST" style="flex:1;" onsubmit="return confirm('Cancel this trade offer?');">
+                    <button type="submit" class="btn btn-danger btn-full">Cancel</button>
+                  </form>
+                <% } %>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+  </div>
+
+  <%- include('partials/auth-modals') %>
+  <%- include('partials/footer') %>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/trade.js"></script>
+</body>
+</html>
