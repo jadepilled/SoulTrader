@@ -528,11 +528,62 @@ textarea {
   margin-bottom: 1rem;
   border-radius: 0 var(--radius) var(--radius) 0;
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
+.flash-message.flash-success {
+  border-left-color: var(--success);
+}
+
+.flash-message.flash-error {
+  border-left-color: var(--danger);
+  color: var(--danger);
+}
+
+.flash-message.flash-warning {
+  border-left-color: var(--warning);
+  color: var(--warning);
+}
+
+/* Legacy alias */
 .flash-message.error {
   border-left-color: var(--danger);
   color: var(--danger);
+}
+
+.flash-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.85;
+  transition: opacity var(--transition);
+}
+
+.flash-link:hover {
+  opacity: 1;
+  color: inherit;
+}
+
+/* Inline button styled as a link (for resend forms) */
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity var(--transition);
+}
+
+.link-btn:hover {
+  opacity: 1;
 }
 
 /* ─── No Offers Card ─────────────────────────────────────────────────────── */
@@ -688,8 +739,9 @@ textarea {
 
 .profile-stats {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .profile-stat {
@@ -731,6 +783,132 @@ textarea {
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+}
+
+/* ─── Profile Sections (new unified style) ───────────────────────────────── */
+.profile-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.profile-subsection-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* ─── Contact Details ────────────────────────────────────────────────────── */
+.contact-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.contact-platform {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  min-width: 52px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.contact-discord { background: #5865f2; color: #fff; }
+.contact-steam   { background: #1b2838; color: #c7d5e0; border: 1px solid #2a475e; }
+.contact-psn     { background: #003087; color: #fff; }
+.contact-xbox    { background: #107c10; color: #fff; }
+
+.contact-value {
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.contact-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .contact-edit-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.contact-edit-field label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ─── Auth pages (forgot/reset password) ────────────────────────────────── */
+.auth-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 3rem 1rem;
+}
+
+.auth-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  width: 100%;
+  max-width: 440px;
+}
+
+.auth-card-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.auth-card-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.modal-link {
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-size: 0.85rem;
+  transition: color var(--transition);
+}
+
+.modal-link:hover {
+  color: var(--accent);
 }
 
 /* ─── Admin Dashboard ────────────────────────────────────────────────────── */

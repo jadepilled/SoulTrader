@@ -1,41 +1,92 @@
+<%
+  // Persistent unverified banner — shown on every page while logged in but unverified
+  const _flashUser = typeof currentUser !== 'undefined' ? currentUser : null;
+%>
+<% if (_flashUser && !_flashUser.isVerified) { %>
+  <div class="flash-message flash-warning">
+    Your email is not yet verified. Some features are restricted until you verify.
+    Didn't get an email?
+    <form action="/auth/resend-verification" method="POST" style="display:inline;">
+      <button type="submit" class="link-btn">Resend verification link</button>
+    </form>
+  </div>
+<% } %>
+
 <% if (typeof query !== 'undefined' && query) { %>
   <% if (query.signup === 'success') { %>
-    <div class="flash-message">Account created. Please check your email to verify.</div>
+    <div class="flash-message flash-success">Account created. Please check your email to verify your address.</div>
   <% } %>
   <% if (query.signup === 'verified') { %>
-    <div class="flash-message">Email verified successfully! You can now log in.</div>
+    <div class="flash-message flash-success">Email verified successfully! You can now log in.</div>
+  <% } %>
+  <% if (query.signup === 'resent') { %>
+    <div class="flash-message flash-success">Verification email resent. Please check your inbox.</div>
+  <% } %>
+  <% if (query.signup === 'resetSent') { %>
+    <div class="flash-message flash-success">If that email is registered, a password reset link has been sent. Please check your inbox.</div>
+  <% } %>
+  <% if (query.signup === 'passwordReset') { %>
+    <div class="flash-message flash-success">Password reset successfully. You can now log in with your new password.</div>
   <% } %>
   <% if (query.trade === 'rescinded') { %>
-    <div class="flash-message">Trade offer cancelled.</div>
+    <div class="flash-message flash-success">Trade offer cancelled.</div>
   <% } %>
   <% if (query.linked) { %>
-    <div class="flash-message"><%= query.linked.charAt(0).toUpperCase() + query.linked.slice(1) %> account linked successfully.</div>
+    <div class="flash-message flash-success"><%= query.linked.charAt(0).toUpperCase() + query.linked.slice(1) %> account linked successfully.</div>
   <% } %>
   <% if (query.unlinked) { %>
-    <div class="flash-message"><%= query.unlinked.charAt(0).toUpperCase() + query.unlinked.slice(1) %> account unlinked.</div>
+    <div class="flash-message flash-success"><%= query.unlinked.charAt(0).toUpperCase() + query.unlinked.slice(1) %> account unlinked.</div>
+  <% } %>
+  <% if (query.profile === 'updated') { %>
+    <div class="flash-message flash-success">Profile updated successfully.</div>
+  <% } %>
+  <% if (query.warning === 'notVerified') { %>
+    <div class="flash-message flash-warning">
+      Logged in. Please verify your email to unlock trading features.
+      Didn't get an email?
+      <form action="/auth/resend-verification" method="POST" style="display:inline;">
+        <button type="submit" class="link-btn">Resend verification link</button>
+      </form>
+    </div>
   <% } %>
   <% if (query.error) { %>
-    <div class="flash-message error">
+    <div class="flash-message flash-error">
       <% if (query.error === 'emailInUse') { %>
-        Email is already in use.
+        That email address is already in use.
       <% } else if (query.error === 'usernameInUse') { %>
-        Username is already taken.
+        That username is already taken.
       <% } else if (query.error === 'invalidCredentials') { %>
         Invalid email or password.
       <% } else if (query.error === 'notVerified') { %>
         Please verify your email before logging in.
+        Didn't get an email?
+        <a href="/auth/forgot-password" class="flash-link">Request a new verification link</a>
+      <% } else if (query.error === 'alreadyVerified') { %>
+        Your email is already verified.
       <% } else if (query.error === 'banned') { %>
-        Your account has been banned.
+        Your account has been suspended. Please contact support if you believe this is an error.
       <% } else if (query.error === 'missing-fields') { %>
-        Email and password are required.
+        All fields are required.
+      <% } else if (query.error === 'passwordMismatch') { %>
+        Passwords do not match.
+      <% } else if (query.error === 'passwordTooShort') { %>
+        Password must be at least 8 characters.
+      <% } else if (query.error === 'invalidResetToken') { %>
+        That reset link is invalid or has expired. Please request a new one.
+      <% } else if (query.error === 'invalidToken') { %>
+        That verification link is invalid or has already been used.
       <% } else if (query.error === 'server') { %>
         A server error occurred. Please try again.
       <% } else if (query.error === 'steam_link_failed') { %>
         Failed to link Steam account. It may already be linked to another user.
       <% } else if (query.error === 'discord_link_failed') { %>
         Failed to link Discord account. It may already be linked to another user.
+      <% } else if (query.error === 'no_file') { %>
+        Please select an image file to upload.
+      <% } else if (query.error === 'upload_failed') { %>
+        Image upload failed. Please try again.
       <% } else { %>
-        An error occurred.
+        An error occurred. Please try again.
       <% } %>
     </div>
   <% } %>

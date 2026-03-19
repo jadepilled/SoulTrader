@@ -54,6 +54,12 @@ app.use(passport.session());
 // JWT auth middleware (runs on every request, sets req.user)
 app.use(authenticateUser);
 
+// Make current user available to all EJS views
+app.use((req, res, next) => {
+  res.locals.currentUser = req.user || null;
+  next();
+});
+
 // ─── EJS Setup ───────────────────────────────────────────────────────────────
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));

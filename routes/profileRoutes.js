@@ -7,6 +7,7 @@ const fs = require('fs');
 const { User, Trade } = require('../models');
 const { ensureAuthenticated } = require('../middleware/roleMiddleware');
 const { getUsernameStyle, gameConfigs } = require('../controllers/gameController');
+const { profileUpdateLimiter } = require('../middleware/rateLimiter');
 
 // Configure multer for memory storage (we'll process with sharp before saving)
 const upload = multer({
@@ -42,6 +43,7 @@ router.get('/:username', async (req, res) => {
         'id', 'username', 'role', 'positiveKarma', 'negativeKarma',
         'bio', 'profileImagePath', 'steamUsername', 'discordUsername',
         'steamId', 'discordId', 'createdAt',
+        'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox',
       ],
     });
 
@@ -90,14 +92,32 @@ router.get('/:username', async (req, res) => {
 });
 
 // ─── Update bio ──────────────────────────────────────────────────────────────
-router.post('/update', ensureAuthenticated, async (req, res) => {
+router.post('/update', ensureAuthenticated, profileUpdateLimiter, async (req, res) => {
   try {
     const { bio } = req.body;
     req.user.bio = bio ? bio.substring(0, 500) : '';
     await req.user.save();
-    res.redirect(`/profile/${req.user.username}`);
+    res.redirect(`/profile/${req.user.username}?profile=updated`);
   } catch (err) {
     console.error('Error updating profile:', err);
+    res.status(500).send('Server error.');
+  }
+});
+
+// ─── Update contact details ──────────────────────────────────────────────────
+router.post('/update-contact', ensureAuthenticated, profileUpdateLimiter, async (req, res) => {
+  try {
+    const { contactDiscord, contactSteam, contactPSN, contactXbox } = req.body;
+
+    req.user.contactDiscord = contactDiscord ? contactDiscord.substring(0, 100).trim() : null;
+    req.user.contactSteam   = contactSteam   ? contactSteam.substring(0, 200).trim()  : null;
+    req.user.contactPSN     = contactPSN     ? contactPSN.substring(0, 100).trim()    : null;
+    req.user.contactXbox    = contactXbox    ? contactXbox.substring(0, 100).trim()   : null;
+
+    await req.user.save();
+    res.redirect(`/profile/${req.user.username}?profile=updated`);
+  } catch (err) {
+    console.error('Error updating contact details:', err);
     res.status(500).send('Server error.');
   }
 });

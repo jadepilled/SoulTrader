@@ -6,6 +6,7 @@ const { transporter } = require('../utils/emailService');
 const tradeEmail = require('../utils/tradeEmailService');
 const { tradeCreateLimiter, tradeAcceptLimiter } = require('../middleware/rateLimiter');
 const { getUsernameStyle } = require('../controllers/gameController');
+const { ensureVerified } = require('../middleware/roleMiddleware');
 
 // ─── Game key → DB game name mapping ─────────────────────────────────────────
 const gameKeyMap = {
@@ -18,7 +19,7 @@ const gameKeyMap = {
 };
 
 // ─── CREATE TRADE ────────────────────────────────────────────────────────────
-router.post('/create', tradeCreateLimiter, async (req, res) => {
+router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
   try {
     const { offeredItems, requestedItems, platform, additionalNotes, game } = req.body;
 
@@ -97,7 +98,7 @@ router.get('/search-items', async (req, res) => {
 });
 
 // ─── ACCEPT TRADE ────────────────────────────────────────────────────────────
-router.post('/accept/:id', tradeAcceptLimiter, async (req, res) => {
+router.post('/accept/:id', tradeAcceptLimiter, ensureVerified, async (req, res) => {
   try {
     const { meetingPoint, discordName, additionalInfo, inGameName } = req.body;
     const tradeId = req.params.id;
@@ -357,7 +358,7 @@ router.get('/details/:id', async (req, res) => {
 });
 
 // ─── RATE TRADE PARTNER ──────────────────────────────────────────────────────
-router.post('/rate/:id', async (req, res) => {
+router.post('/rate/:id', ensureVerified, async (req, res) => {
   try {
     if (!req.user) return res.status(401).send('Unauthorized');
 

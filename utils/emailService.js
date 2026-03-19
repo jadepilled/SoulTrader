@@ -18,7 +18,7 @@ exports.transporter = transporter;
  * Send a verification email with a link to /auth/verify/:token
  */
 exports.sendVerificationEmail = async (recipientEmail, token) => {
-  const verificationUrl = `http://soultrader.gg/auth/verify/${token}`;
+  const verificationUrl = `https://soultrader.gg/auth/verify/${token}`;
   
   const mailOptions = {
     from: `SoulTrader <${process.env.EMAIL_USER}>`,
@@ -29,6 +29,28 @@ exports.sendVerificationEmail = async (recipientEmail, token) => {
       <p>Please click the link below to verify your account:</p>
       <a href="${verificationUrl}">${verificationUrl}</a>
     `
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+/**
+ * Send a password reset email with a link to /auth/reset-password/:token
+ */
+exports.sendPasswordResetEmail = async (recipientEmail, token) => {
+  const resetUrl = `https://soultrader.gg/auth/reset-password/${token}`;
+
+  const mailOptions = {
+    from: `SoulTrader <${process.env.EMAIL_USER}>`,
+    to: recipientEmail,
+    subject: 'Reset your SoulTrader password',
+    html: `
+      <h2>Password Reset</h2>
+      <p>You requested a password reset for your SoulTrader account.</p>
+      <p>Click the link below to set a new password. This link expires in <strong>1 hour</strong>.</p>
+      <a href="${resetUrl}">${resetUrl}</a>
+      <p style="color:#888; font-size:0.85em;">If you did not request this, you can safely ignore this email. Your password will not change.</p>
+    `,
   };
 
   await transporter.sendMail(mailOptions);

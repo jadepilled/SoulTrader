@@ -31,3 +31,27 @@ exports.signupLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+exports.resendVerificationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3,
+  message: 'Too many resend attempts. Please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+exports.passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3,
+  message: 'Too many password reset attempts. Please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+exports.profileUpdateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20,
+  message: 'Too many profile update attempts. Please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});

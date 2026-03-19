@@ -19,4 +19,14 @@ module.exports = {
     }
     res.status(401).redirect('/');
   },
+
+  ensureVerified: (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).redirect('/');
+    }
+    if (!req.user.isVerified) {
+      return res.status(403).json({ error: 'Please verify your email before performing this action.' });
+    }
+    next();
+  },
 };

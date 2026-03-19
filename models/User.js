@@ -91,6 +91,32 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  // Password reset
+  passwordResetToken: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  passwordResetExpires: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+  // User-configurable contact details
+  contactDiscord: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  contactSteam: {
+    type: DataTypes.STRING(200),
+    allowNull: true,
+  },
+  contactPSN: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  contactXbox: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
 }, {
   tableName: 'users',
 });

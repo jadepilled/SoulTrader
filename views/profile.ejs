@@ -30,6 +30,7 @@
           Member since <%= profileUser.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) %>
         </div>
 
+        <!-- Stats Grid -->
         <div class="profile-stats">
           <div class="profile-stat">
             <div class="stat-value" style="color: <%= totalKarma >= 0 ? 'var(--success)' : 'var(--danger)' %>;">
@@ -38,16 +39,30 @@
             <div class="stat-label">Karma</div>
           </div>
           <div class="profile-stat">
-            <div class="stat-value"><%= positivePercent %>%</div>
+            <div class="stat-value" style="color: var(--success);"><%= profileUser.positiveKarma %></div>
             <div class="stat-label">Positive</div>
+          </div>
+          <div class="profile-stat">
+            <div class="stat-value" style="color: var(--danger);"><%= profileUser.negativeKarma %></div>
+            <div class="stat-label">Negative</div>
+          </div>
+          <div class="profile-stat">
+            <div class="stat-value"><%= positivePercent %>%</div>
+            <div class="stat-label">Rating</div>
           </div>
           <div class="profile-stat">
             <div class="stat-value"><%= completedTradeCount %></div>
             <div class="stat-label">Trades</div>
           </div>
+          <div class="profile-stat">
+            <div class="stat-value" style="color: var(--text-muted); font-size:0.85em;">
+              <%= profileUser.positiveKarma + profileUser.negativeKarma %>
+            </div>
+            <div class="stat-label">Feedback</div>
+          </div>
         </div>
 
-        <!-- Linked Accounts -->
+        <!-- Linked Verification Accounts -->
         <div class="profile-linked">
           <% if (profileUser.steamUsername) { %>
             <div class="linked-badge">
@@ -60,59 +75,189 @@
             </div>
           <% } %>
           <% if (!profileUser.steamUsername && !profileUser.discordUsername) { %>
-            <span style="color: var(--text-muted); font-size:0.85rem;">No linked accounts</span>
+            <span style="color: var(--text-muted); font-size:0.85rem;">No verified accounts linked</span>
           <% } %>
         </div>
       </div>
     </div>
 
     <!-- Bio Section -->
-    <div class="profile-bio">
-      <h2 style="font-size:1rem; margin-bottom:0.75rem;">About</h2>
+    <div class="profile-section">
+      <h2 class="profile-section-title">About</h2>
       <% if (profileUser.bio) { %>
-        <p style="color: var(--text-secondary);"><%= profileUser.bio %></p>
+        <p style="color: var(--text-secondary); line-height:1.6;"><%= profileUser.bio %></p>
       <% } else { %>
         <p style="color: var(--text-muted); font-style:italic;">No bio yet.</p>
       <% } %>
     </div>
 
+    <!-- Contact Details (display for all) -->
+    <%
+      const hasContact = profileUser.contactDiscord || profileUser.contactSteam ||
+                         profileUser.contactPSN || profileUser.contactXbox;
+    %>
+    <% if (hasContact || isOwnProfile) { %>
+      <div class="profile-section">
+        <h2 class="profile-section-title">Contact & Platforms</h2>
+        <% if (hasContact) { %>
+          <div class="contact-grid">
+            <% if (profileUser.contactDiscord) { %>
+              <div class="contact-item">
+                <span class="contact-platform contact-discord">Discord</span>
+                <span class="contact-value"><%= profileUser.contactDiscord %></span>
+              </div>
+            <% } %>
+            <% if (profileUser.contactSteam) { %>
+              <div class="contact-item">
+                <span class="contact-platform contact-steam">Steam</span>
+                <span class="contact-value"><%= profileUser.contactSteam %></span>
+              </div>
+            <% } %>
+            <% if (profileUser.contactPSN) { %>
+              <div class="contact-item">
+                <span class="contact-platform contact-psn">PSN</span>
+                <span class="contact-value"><%= profileUser.contactPSN %></span>
+              </div>
+            <% } %>
+            <% if (profileUser.contactXbox) { %>
+              <div class="contact-item">
+                <span class="contact-platform contact-xbox">Xbox</span>
+                <span class="contact-value"><%= profileUser.contactXbox %></span>
+              </div>
+            <% } %>
+          </div>
+        <% } else if (isOwnProfile) { %>
+          <p style="color: var(--text-muted); font-style:italic;">No contact details set. Add them below so trade partners can reach you.</p>
+        <% } %>
+      </div>
+    <% } %>
+
     <% if (isOwnProfile) { %>
-      <!-- Edit Profile Section -->
-      <div class="profile-bio">
-        <h2 style="font-size:1rem; margin-bottom:0.75rem;">Edit Profile</h2>
+      <!-- Edit Profile -->
+      <div class="profile-section">
+        <h2 class="profile-section-title">Edit Profile</h2>
 
         <!-- Bio -->
-        <form action="/profile/update" method="POST" style="margin-bottom:1.5rem;">
-          <label for="bio">Bio (max 500 characters)</label>
+        <form action="/profile/update" method="POST" style="margin-bottom:2rem;">
+          <label for="bio">Bio <span style="color:var(--text-muted); font-size:0.8rem;">(max 500 characters)</span></label>
           <textarea id="bio" name="bio" maxlength="500" style="margin-top:0.5rem;"><%= profileUser.bio || '' %></textarea>
           <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Save Bio</button>
         </form>
 
         <!-- Profile Image -->
-        <form action="/profile/upload-image" method="POST" enctype="multipart/form-data" style="margin-bottom:1.5rem;">
-          <label for="profileImage">Profile Image (auto-resized to 500x500)</label>
-          <input type="file" id="profileImage" name="profileImage" accept="image/jpeg,image/png,image/webp,image/gif"
-                 style="margin-top:0.5rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius); padding:0.5rem; width:100%;" />
+        <form action="/profile/upload-image" method="POST" enctype="multipart/form-data" style="margin-bottom:2rem;">
+          <label for="profileImage">
+            Profile Image
+            <span style="color:var(--text-muted); font-size:0.8rem;">(auto-resized to 500×500px · JPEG, PNG, WebP, GIF)</span>
+          </label>
+          <input
+            type="file"
+            id="profileImage"
+            name="profileImage"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            style="margin-top:0.5rem; background:var(--bg-input); border:1px solid var(--border-color); border-radius:var(--radius); padding:0.5rem; width:100%;"
+          />
           <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Upload Image</button>
         </form>
 
-        <!-- Link Accounts -->
-        <h3 style="font-size:0.9rem; margin-bottom:0.75rem; color: var(--text-secondary);">Link Accounts</h3>
+        <!-- Contact Details -->
+        <form action="/profile/update-contact" method="POST" style="margin-bottom:2rem;">
+          <h3 class="profile-subsection-title">Contact Details</h3>
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
+            These are shown publicly on your profile so trade partners know how to reach you.
+          </p>
+
+          <div class="contact-edit-grid">
+            <div class="contact-edit-field">
+              <label for="contactDiscord">
+                <span class="contact-platform contact-discord" style="font-size:0.75rem;">Discord</span>
+              </label>
+              <input
+                type="text"
+                id="contactDiscord"
+                name="contactDiscord"
+                maxlength="100"
+                placeholder="e.g. username or username#0000"
+                value="<%= profileUser.contactDiscord || '' %>"
+                style="margin-top:0.35rem;"
+              />
+            </div>
+
+            <div class="contact-edit-field">
+              <label for="contactSteam">
+                <span class="contact-platform contact-steam" style="font-size:0.75rem;">Steam</span>
+              </label>
+              <input
+                type="text"
+                id="contactSteam"
+                name="contactSteam"
+                maxlength="200"
+                placeholder="e.g. Steam username or profile URL"
+                value="<%= profileUser.contactSteam || '' %>"
+                style="margin-top:0.35rem;"
+              />
+            </div>
+
+            <div class="contact-edit-field">
+              <label for="contactPSN">
+                <span class="contact-platform contact-psn" style="font-size:0.75rem;">PSN</span>
+              </label>
+              <input
+                type="text"
+                id="contactPSN"
+                name="contactPSN"
+                maxlength="100"
+                placeholder="e.g. YourPSNID"
+                value="<%= profileUser.contactPSN || '' %>"
+                style="margin-top:0.35rem;"
+              />
+            </div>
+
+            <div class="contact-edit-field">
+              <label for="contactXbox">
+                <span class="contact-platform contact-xbox" style="font-size:0.75rem;">Xbox</span>
+              </label>
+              <input
+                type="text"
+                id="contactXbox"
+                name="contactXbox"
+                maxlength="100"
+                placeholder="e.g. YourGamertag"
+                value="<%= profileUser.contactXbox || '' %>"
+                style="margin-top:0.35rem;"
+              />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm" style="margin-top:1rem;">Save Contact Details</button>
+        </form>
+
+        <!-- Verification Accounts -->
+        <h3 class="profile-subsection-title">Verified Accounts</h3>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
+          Link your Steam or Discord to verify your identity. Each account can only be linked to one SoulTrader profile.
+        </p>
         <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
           <% if (!profileUser.steamId) { %>
             <a href="/auth/steam" class="btn btn-sm">Link Steam</a>
           <% } else { %>
-            <form action="/auth/unlink/steam" method="POST">
-              <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Unlink Steam?')">Unlink Steam</button>
-            </form>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <span class="linked-badge">Steam: <%= profileUser.steamUsername %></span>
+              <form action="/auth/unlink/steam" method="POST" style="display:inline;">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Unlink Steam account?')">Unlink</button>
+              </form>
+            </div>
           <% } %>
 
           <% if (!profileUser.discordId) { %>
             <a href="/auth/discord" class="btn btn-sm">Link Discord</a>
           <% } else { %>
-            <form action="/auth/unlink/discord" method="POST">
-              <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Unlink Discord?')">Unlink Discord</button>
-            </form>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <span class="linked-badge">Discord: <%= profileUser.discordUsername %></span>
+              <form action="/auth/unlink/discord" method="POST" style="display:inline;">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Unlink Discord account?')">Unlink</button>
+              </form>
+            </div>
           <% } %>
         </div>
       </div>
