@@ -92,10 +92,14 @@ app.get('/demonssouls', gameController.demonssouls);
 
 // ─── Start Server ────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, (err) => {
-  if (err) {
-    console.error('Server failed to start:', err);
-  } else {
-    console.log(`SoulTrader running on port ${PORT}`);
-  }
-});
+
+sequelize.sync({ alter: true })
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`SoulTrader running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to sync database:', err);
+    process.exit(1);
+  });
