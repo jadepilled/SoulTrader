@@ -33,7 +33,9 @@ exports.signup = async (req, res) => {
       verificationToken,
     });
 
-    await sendVerificationEmail(email, verificationToken);
+    // Non-blocking — account is created regardless of email delivery
+    sendVerificationEmail(email, verificationToken)
+      .catch(err => console.error('Failed to send signup verification email:', err));
 
     return res.redirect('/?signup=success');
   } catch (err) {
@@ -71,11 +73,16 @@ exports.resendVerification = async (req, res) => {
       return res.redirect(`/profile/${req.user.username}?error=alreadyVerified`);
     }
 
+    // Generate and persist new token before attempting to send
     const verificationToken = crypto.randomBytes(32).toString('hex');
     req.user.verificationToken = verificationToken;
     await req.user.save();
 
-    await sendVerificationEmail(req.user.email, verificationToken);
+    // Fire email without awaiting — token is already saved so the link will
+    // work whenever the email arrives. Failures are logged but never cause
+    // a 504 by hanging the HTTP response.
+    sendVerificationEmail(req.user.email, verificationToken)
+      .catch(err => console.error('Failed to send verification email:', err));
 
     return res.redirect('/?signup=resent');
   } catch (err) {

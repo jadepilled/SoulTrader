@@ -1,8 +1,12 @@
 <%
-  // Persistent unverified banner — shown on every page while logged in but unverified
-  const _flashUser = typeof currentUser !== 'undefined' ? currentUser : null;
+  // Persistent unverified banner — shown on every page while logged in but unverified.
+  // Suppressed when the post-login warning=notVerified banner is already showing,
+  // to prevent both appearing simultaneously on the same page.
+  const _flashUser  = typeof currentUser !== 'undefined' ? currentUser : null;
+  const _flashQuery = typeof query !== 'undefined' ? query : {};
+  const _showLoginWarning = _flashQuery.warning === 'notVerified';
 %>
-<% if (_flashUser && !_flashUser.isVerified) { %>
+<% if (_flashUser && !_flashUser.isVerified && !_showLoginWarning) { %>
   <div class="flash-message flash-warning">
     Your email is not yet verified. Some features are restricted until you verify.
     Didn't get an email?

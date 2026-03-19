@@ -2,13 +2,16 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    host: 'mail.spacemail.com',
+  host: 'mail.spacemail.com',
   port: 465,
-  secure: true,  
-auth: {
+  secure: true,
+  auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
+    pass: process.env.EMAIL_PASS,
+  },
+  connectionTimeout: 10000, // 10s to establish TCP connection
+  greetingTimeout:   10000, // 10s to receive SMTP greeting
+  socketTimeout:     15000, // 15s max socket inactivity
 });
 
 // Export transporter
