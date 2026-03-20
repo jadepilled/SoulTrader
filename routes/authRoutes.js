@@ -57,7 +57,12 @@ router.post('/login', loginLimiter, async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({ where: { email } });
+    // Support login with email or username
+    const { Op } = require('sequelize');
+    const isEmail = email.includes('@');
+    const user = isEmail
+      ? await User.findOne({ where: { email } })
+      : await User.findOne({ where: { username: { [Op.iLike]: email } } });
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.redirect('/?error=invalidCredentials');
     }

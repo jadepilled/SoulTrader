@@ -102,7 +102,7 @@ const renderGamePage = async (req, res, gameKey) => {
     const userId = req.user ? req.user.id : null;
     const username = req.user ? req.user.username : null;
     const role = req.user ? req.user.role : 'user';
-    const karma = req.user ? (req.user.positiveKarma - req.user.negativeKarma) : 0;
+    const karma = req.user ? (req.user.positiveKarma - 2 * req.user.negativeKarma) : 0;
     const usernameStyle = getUsernameStyle(role);
 
     // Pending trade count for navbar

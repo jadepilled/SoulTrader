@@ -12,6 +12,16 @@ exports.signup = async (req, res) => {
       return res.redirect('/?error=missing-fields');
     }
 
+    // Username: alphanumeric only, max 14 chars
+    if (!/^[a-zA-Z0-9]{1,14}$/.test(username)) {
+      return res.redirect('/?error=invalidUsername');
+    }
+
+    // Password: min 8 chars, at least one letter and one number
+    if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+      return res.redirect('/?error=weakPassword');
+    }
+
     const existingEmail = await User.findOne({ where: { email } });
     if (existingEmail) {
       return res.redirect('/?error=emailInUse');

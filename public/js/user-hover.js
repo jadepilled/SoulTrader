@@ -60,7 +60,7 @@
   }
 
   function renderCard(data) {
-    const karma    = (data.positiveKarma || 0) - (data.negativeKarma || 0);
+    const karma    = (data.positiveKarma || 0) - 2 * (data.negativeKarma || 0);
     const total    = (data.positiveKarma || 0) + (data.negativeKarma || 0);
     const pct      = total > 0 ? Math.round((data.positiveKarma / total) * 100) : 0;
     const karmaSign = karma >= 0 ? '+' : '';

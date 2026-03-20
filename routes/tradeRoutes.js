@@ -155,6 +155,10 @@ router.post('/accept/:id', tradeAcceptLimiter, ensureVerified, async (req, res) 
 
     trade.status    = 'awaiting_confirmation';
     trade.acceptorId = req.user.id;
+    trade.acceptorInGameName     = inGameName     ? String(inGameName).substring(0, 100).trim()     : null;
+    trade.acceptorDiscordName    = discordName    ? String(discordName).substring(0, 100).trim()    : null;
+    trade.acceptorMeetingPoint   = meetingPoint   ? String(meetingPoint).substring(0, 200).trim()   : null;
+    trade.acceptorAdditionalInfo = additionalInfo ? String(additionalInfo).substring(0, 500).trim() : null;
     await trade.save();
 
     tradeEmail.sendTradeAcceptedEmail(
@@ -190,8 +194,22 @@ router.post('/confirm/:id', async (req, res) => {
     const isAcceptor = trade.acceptorId === req.user.id;
     if (!isCreator && !isAcceptor) return res.status(403).send('You are not part of this trade.');
 
-    if (isCreator)  trade.creatorConfirmed  = true;
-    else            trade.acceptorConfirmed = true;
+    // Store confirmer's details if provided
+    const { inGameName, discordName, meetingPoint, additionalInfo } = req.body;
+    if (isCreator) {
+      trade.creatorConfirmed    = true;
+      trade.creatorInGameName   = inGameName     ? String(inGameName).substring(0, 100).trim()     : null;
+      trade.creatorDiscordName  = discordName    ? String(discordName).substring(0, 100).trim()    : null;
+      trade.creatorMeetingPoint = meetingPoint   ? String(meetingPoint).substring(0, 200).trim()   : null;
+      trade.creatorAdditionalInfo = additionalInfo ? String(additionalInfo).substring(0, 500).trim() : null;
+    } else {
+      trade.acceptorConfirmed = true;
+      // Acceptor may update their info on confirm
+      if (inGameName)     trade.acceptorInGameName     = String(inGameName).substring(0, 100).trim();
+      if (discordName)    trade.acceptorDiscordName    = String(discordName).substring(0, 100).trim();
+      if (meetingPoint)   trade.acceptorMeetingPoint   = String(meetingPoint).substring(0, 200).trim();
+      if (additionalInfo) trade.acceptorAdditionalInfo = String(additionalInfo).substring(0, 500).trim();
+    }
 
     if (trade.creatorConfirmed && trade.acceptorConfirmed) {
       trade.status = 'completed';
@@ -305,14 +323,28 @@ router.post('/rate/:id', ensureVerified, async (req, res) => {
     if (isCreator  && trade.creatorRated)  return res.status(400).send('Already rated.');
     if (isAcceptor && trade.acceptorRated) return res.status(400).send('Already rated.');
 
+    // Sanitise feedback text (optional, max 500 chars, strip links)
+    let feedback = req.body.feedback ? String(req.body.feedback).substring(0, 500).trim() : null;
+    if (feedback) {
+      feedback = feedback.replace(/https?:\/\/[^\s]+/gi, '')
+                         .replace(/www\.[^\s]+/gi, '')
+                         .replace(/[a-z0-9.-]+\.[a-z]{2,}(\/[^\s]*)?/gi, '');
+      if (!feedback.trim()) feedback = null;
+    }
+
     const karmaDelta = [0, -5, -3, -2, -1, 0, 1, 2, 3, 4, 5][r] ?? 0;
     const target = isCreator ? trade.acceptor : trade.offerCreator;
     if (karmaDelta > 0) target.positiveKarma += karmaDelta;
     else if (karmaDelta < 0) target.negativeKarma += Math.abs(karmaDelta);
     await target.save();
 
-    if (isCreator)  trade.creatorRated  = true;
-    else            trade.acceptorRated = true;
+    if (isCreator) {
+      trade.creatorRated = true;
+      trade.tradeFeedbackCreator = feedback;
+    } else {
+      trade.acceptorRated = true;
+      trade.tradeFeedbackAcceptor = feedback;
+    }
     await trade.save();
 
     return res.redirect('/trade/my-trades');
@@ -329,8 +361,8 @@ router.get('/my-trades', async (req, res) => {
 
     const userId = req.user.id;
     const include = [
-      { model: User, as: 'offerCreator', attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma'] },
-      { model: User, as: 'acceptor',     attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma'] },
+      { model: User, as: 'offerCreator', attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox'] },
+      { model: User, as: 'acceptor',     attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox'] },
     ];
 
     const [createdTrades, acceptedTrades] = await Promise.all([
@@ -348,7 +380,7 @@ router.get('/my-trades', async (req, res) => {
       username: req.user.username,
       userId,
       role:    req.user.role,
-      karma:   req.user.positiveKarma - req.user.negativeKarma,
+      karma:   req.user.positiveKarma - 2 * req.user.negativeKarma,
       usernameStyle: getUsernameStyle(req.user.role),
       query:   req.query,
       getUsernameStyle,

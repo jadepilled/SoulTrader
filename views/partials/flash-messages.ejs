@@ -59,7 +59,7 @@
       <% } else if (query.error === 'usernameInUse') { %>
         That username is already taken.
       <% } else if (query.error === 'invalidCredentials') { %>
-        Invalid email or password.
+        Invalid email/username or password.
       <% } else if (query.error === 'notVerified') { %>
         Please verify your email before logging in. Didn't get an email?
         <form action="/auth/resend-verification" method="POST" style="display:inline;">
@@ -69,6 +69,10 @@
         Your email is already verified.
       <% } else if (query.error === 'banned') { %>
         Your account has been suspended. Please contact support if you believe this is an error.
+      <% } else if (query.error === 'invalidUsername') { %>
+        Username must be 1-14 characters, letters and numbers only.
+      <% } else if (query.error === 'weakPassword') { %>
+        Password must be at least 8 characters and include both a letter and a number.
       <% } else if (query.error === 'missing-fields') { %>
         All fields are required.
       <% } else if (query.error === 'passwordMismatch') { %>

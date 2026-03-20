@@ -117,7 +117,7 @@ router.get('/:username', async (req, res) => {
       limit: 5,
     });
 
-    const totalKarma = user.positiveKarma - user.negativeKarma;
+    const totalKarma = user.positiveKarma - 2 * user.negativeKarma;
     const totalRatings = user.positiveKarma + user.negativeKarma;
     const positivePercent = totalRatings > 0
       ? Math.round((user.positiveKarma / totalRatings) * 100)
@@ -128,8 +128,51 @@ router.get('/:username', async (req, res) => {
     // Compute badges
     const badges = computeBadges(user, completedTradeCount);
 
+    // Fetch trade feedback (comments left via rating system about this user)
+    const tradeFeedback = await Trade.findAll({
+      where: {
+        status: 'completed',
+        [Op.or]: [
+          // Feedback left BY creator ABOUT this user (who was acceptor)
+          { acceptorId: user.id, tradeFeedbackCreator: { [Op.ne]: null } },
+          // Feedback left BY acceptor ABOUT this user (who was creator)
+          { offerCreatorId: user.id, tradeFeedbackAcceptor: { [Op.ne]: null } },
+        ],
+      },
+      include: [
+        { model: User, as: 'offerCreator', attributes: ['username', 'role'] },
+        { model: User, as: 'acceptor', attributes: ['username', 'role'] },
+      ],
+      order: [['updatedAt', 'DESC']],
+      limit: 20,
+    });
+
+    // Transform trade feedback into a displayable format
+    const feedbackItems = [];
+    tradeFeedback.forEach(t => {
+      if (t.acceptorId === user.id && t.tradeFeedbackCreator) {
+        feedbackItems.push({
+          authorUsername: t.offerCreator ? t.offerCreator.username : 'Unknown',
+          authorRole: t.offerCreator ? t.offerCreator.role : 'user',
+          content: t.tradeFeedbackCreator,
+          date: t.updatedAt,
+          game: t.game,
+          type: 'trade_feedback',
+        });
+      }
+      if (t.offerCreatorId === user.id && t.tradeFeedbackAcceptor) {
+        feedbackItems.push({
+          authorUsername: t.acceptor ? t.acceptor.username : 'Unknown',
+          authorRole: t.acceptor ? t.acceptor.role : 'user',
+          content: t.tradeFeedbackAcceptor,
+          date: t.updatedAt,
+          game: t.game,
+          type: 'trade_feedback',
+        });
+      }
+    });
+
     // Paginated comments
-    const commentPage = Math.max(1, parseInt(req.query.commentPage, 10) || 1);
     const commentsPerPage = 10;
     const totalComments = await Comment.count({ where: { profileUserId: user.id } });
     const totalCommentPages = Math.ceil(totalComments / commentsPerPage) || 1;
@@ -165,10 +208,11 @@ router.get('/:username', async (req, res) => {
       commentPage,
       totalCommentPages,
       totalComments,
+      feedbackItems,
       userId: req.user ? req.user.id : null,
       username: req.user ? req.user.username : null,
       role: req.user ? req.user.role : 'user',
-      karma: req.user ? (req.user.positiveKarma - req.user.negativeKarma) : 0,
+      karma: req.user ? (req.user.positiveKarma - 2 * req.user.negativeKarma) : 0,
       usernameStyle: getUsernameStyle(req.user ? req.user.role : 'user'),
       getUsernameStyle,
       gameConfigs,

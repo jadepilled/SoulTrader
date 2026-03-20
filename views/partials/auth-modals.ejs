@@ -3,15 +3,17 @@
   <div class="modal-content">
     <button class="close-btn" data-close-modal="signupModal">&times;</button>
     <h2>Sign Up</h2>
-    <form action="/auth/signup" method="POST">
+    <form action="/auth/signup" method="POST" id="signupForm">
       <label for="signupEmail">Email</label>
       <input type="email" id="signupEmail" name="email" required />
 
-      <label for="signupPassword">Password</label>
-      <input type="password" id="signupPassword" name="password" required />
-
       <label for="signupUsername">Username</label>
-      <input type="text" id="signupUsername" name="username" required />
+      <input type="text" id="signupUsername" name="username" required maxlength="14" pattern="[a-zA-Z0-9]{1,14}" title="1-14 alphanumeric characters only" />
+      <span style="font-size:0.75rem; color:var(--text-muted);">Max 14 characters, letters and numbers only</span>
+
+      <label for="signupPassword">Password</label>
+      <input type="password" id="signupPassword" name="password" required minlength="8" />
+      <span style="font-size:0.75rem; color:var(--text-muted);">Min 8 characters, must include a letter and a number</span>
 
       <button type="submit" class="btn btn-primary btn-full" style="margin-top:1rem;">Create Account</button>
     </form>
@@ -24,8 +26,8 @@
     <button class="close-btn" data-close-modal="loginModal">&times;</button>
     <h2>Log In</h2>
     <form action="/auth/login" method="POST">
-      <label for="loginEmail">Email</label>
-      <input type="email" id="loginEmail" name="email" required />
+      <label for="loginEmail">Email or Username</label>
+      <input type="text" id="loginEmail" name="email" required placeholder="email@example.com or username" />
 
       <label for="loginPassword">Password</label>
       <input type="password" id="loginPassword" name="password" required />

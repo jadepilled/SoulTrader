@@ -109,7 +109,7 @@ app.get('/', async (req, res) => {
     userId: req.user ? req.user.id : null,
     username: req.user ? req.user.username : null,
     role: req.user ? req.user.role : 'user',
-    karma: req.user ? (req.user.positiveKarma - req.user.negativeKarma) : 0,
+    karma: req.user ? (req.user.positiveKarma - 2 * req.user.negativeKarma) : 0,
     usernameStyle: getUsernameStyle(req.user ? req.user.role : 'user'),
     query: req.query,
     gameConfigs,
@@ -182,7 +182,7 @@ app.get('/users', async (req, res) => {
   if (sort === 'trades')      order = [[sequelize.literal('"completedTradeCount"'), 'DESC']];
   else if (sort === 'newest') order = [['createdAt', 'DESC']];
   else if (sort === 'oldest') order = [['createdAt', 'ASC']];
-  else                        order = [[sequelize.literal('("positiveKarma" - "negativeKarma")'), 'DESC']];
+  else                        order = [[sequelize.literal('("positiveKarma" - 2 * "negativeKarma")'), 'DESC']];
 
   const totalUsers = await User.count({ where });
   const totalPages = Math.ceil(totalUsers / perPage) || 1;
@@ -202,7 +202,7 @@ app.get('/users', async (req, res) => {
   // Compute badges for each user
   const enriched = users.map(u => {
     const plain = u.get({ plain: true });
-    plain.karma = (plain.positiveKarma || 0) - (plain.negativeKarma || 0);
+    plain.karma = (plain.positiveKarma || 0) - 2 * (plain.negativeKarma || 0);
     plain.completedTradeCount = parseInt(plain.completedTradeCount, 10) || 0;
     plain.badges = computeBadges(plain, plain.completedTradeCount);
     return plain;

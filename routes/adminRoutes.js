@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
       userId: req.user.id,
       username: req.user.username,
       role: req.user.role,
-      karma: req.user.positiveKarma - req.user.negativeKarma,
+      karma: req.user.positiveKarma - 2 * req.user.negativeKarma,
       usernameStyle: getUsernameStyle(req.user.role),
       getUsernameStyle,
       gameConfigs,

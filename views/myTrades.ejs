@@ -8,6 +8,159 @@
   <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/responsive.css">
+  <style>
+    .trade-info-section {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+    }
+    .trade-info-section h3 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .trade-info-row {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+      padding: 0.2rem 0;
+    }
+    .trade-info-label {
+      color: var(--text-muted);
+      min-width: 100px;
+      flex-shrink: 0;
+    }
+    .trade-info-value {
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+    .trade-contact-section {
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(var(--accent-rgb, 138,138,138), 0.06);
+      border: 1px solid rgba(var(--accent-rgb, 138,138,138), 0.12);
+      border-radius: var(--radius);
+    }
+    .trade-contact-section h4 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+    /* Confirm modal */
+    .confirm-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 5000;
+      align-items: center;
+      justify-content: center;
+    }
+    .confirm-modal-overlay.active {
+      display: flex;
+    }
+    .confirm-modal-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      max-width: 480px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .confirm-modal-box h3 {
+      margin-bottom: 0.75rem;
+      font-size: 1.1rem;
+    }
+    .confirm-modal-box label {
+      display: block;
+      font-size: 0.85rem;
+      margin-top: 0.6rem;
+      margin-bottom: 0.25rem;
+      color: var(--text-secondary);
+    }
+    .confirm-modal-box input,
+    .confirm-modal-box textarea {
+      width: 100%;
+      padding: 0.45rem 0.6rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 0.85rem;
+    }
+    .confirm-modal-box textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    .confirm-warning {
+      margin-top: 1rem;
+      padding: 0.6rem;
+      background: rgba(234, 179, 8, 0.08);
+      border: 1px solid rgba(234, 179, 8, 0.2);
+      border-radius: var(--radius);
+      font-size: 0.82rem;
+      color: var(--warning);
+      line-height: 1.5;
+    }
+    .confirm-modal-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .confirm-modal-actions .btn { flex: 1; }
+    /* Rating form */
+    .rating-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .rating-form .rating-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .rating-form textarea {
+      width: 100%;
+      padding: 0.4rem 0.6rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 0.82rem;
+      resize: vertical;
+      min-height: 50px;
+    }
+    /* Feedback display */
+    .trade-feedback-block {
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(34, 197, 94, 0.05);
+      border-left: 3px solid var(--success);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: 0.82rem;
+    }
+    .trade-feedback-block.negative {
+      background: rgba(239, 68, 68, 0.05);
+      border-left-color: var(--danger);
+    }
+    .trade-feedback-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
+    }
+  </style>
 </head>
 <body>
   <%- include('partials/navbar', { title: 'My Trades', gameKey: '', pendingTradeCount: typeof pendingTradeCount !== 'undefined' ? pendingTradeCount : 0 }) %>
@@ -55,6 +208,37 @@
         if (mins < 60)   return mins + 'm ago';
         if (mins < 1440) return Math.floor(mins / 60) + 'h ago';
         return Math.floor(mins / 1440) + 'd ago';
+      }
+
+      // Helper to render trade party details
+      function renderTradeDetails(trade, partyType) {
+        // partyType: 'creator' or 'acceptor'
+        const prefix = partyType;
+        const ign = trade[prefix + 'InGameName'];
+        const discord = trade[prefix + 'DiscordName'];
+        const meeting = trade[prefix + 'MeetingPoint'];
+        const info = trade[prefix + 'AdditionalInfo'];
+        if (!ign && !discord && !meeting && !info) return '';
+
+        let html = '<div class="trade-info-section"><h3>' + (partyType === 'creator' ? "Creator's" : "Acceptor's") + ' Details</h3>';
+        if (ign)     html += '<div class="trade-info-row"><span class="trade-info-label">In-Game Name</span><span class="trade-info-value">' + ign + '</span></div>';
+        if (discord) html += '<div class="trade-info-row"><span class="trade-info-label">Discord</span><span class="trade-info-value">' + discord + '</span></div>';
+        if (meeting) html += '<div class="trade-info-row"><span class="trade-info-label">Meeting Point</span><span class="trade-info-value">' + meeting + '</span></div>';
+        if (info)    html += '<div class="trade-info-row"><span class="trade-info-label">Additional Info</span><span class="trade-info-value">' + info + '</span></div>';
+        html += '</div>';
+        return html;
+      }
+
+      // Helper to render connected contact info for a user
+      function renderContactInfo(user, label) {
+        if (!user) return '';
+        const c = [];
+        if (user.contactDiscord) c.push('<div class="trade-info-row"><span class="trade-info-label">Discord</span><span class="trade-info-value">' + user.contactDiscord + '</span></div>');
+        if (user.contactSteam)   c.push('<div class="trade-info-row"><span class="trade-info-label">Steam</span><span class="trade-info-value">' + user.contactSteam + '</span></div>');
+        if (user.contactPSN)     c.push('<div class="trade-info-row"><span class="trade-info-label">PSN</span><span class="trade-info-value">' + user.contactPSN + '</span></div>');
+        if (user.contactXbox)    c.push('<div class="trade-info-row"><span class="trade-info-label">Xbox</span><span class="trade-info-value">' + user.contactXbox + '</span></div>');
+        if (c.length === 0) return '';
+        return '<div class="trade-contact-section"><h4>' + label + ' Contact Info</h4>' + c.join('') + '</div>';
       }
     %>
 
@@ -122,6 +306,7 @@
               </div>
             </div>
 
+            <!-- Acceptor info -->
             <div class="trade-details">
               <% if (trade.acceptor) { %>
                 <p style="font-size:0.85rem; margin:0.5rem 0;">
@@ -133,13 +318,32 @@
                   </span>
                 </p>
               <% } %>
+
+              <% if (trade.status === 'awaiting_confirmation' || trade.status === 'completed') { %>
+                <%- renderTradeDetails(trade, 'acceptor') %>
+                <%- renderTradeDetails(trade, 'creator') %>
+                <% if (trade.acceptor) { %>
+                  <%- renderContactInfo(trade.acceptor, trade.acceptor.username + "'s") %>
+                <% } %>
+              <% } %>
+
+              <% if (trade.tradeFeedbackAcceptor) { %>
+                <div class="trade-feedback-block">
+                  <div class="trade-feedback-label">Feedback from <%= trade.acceptor ? trade.acceptor.username : 'acceptor' %></div>
+                  <%= trade.tradeFeedbackAcceptor %>
+                </div>
+              <% } %>
+              <% if (trade.tradeFeedbackCreator) { %>
+                <div class="trade-feedback-block">
+                  <div class="trade-feedback-label">Your feedback</div>
+                  <%= trade.tradeFeedbackCreator %>
+                </div>
+              <% } %>
             </div>
 
             <div class="trade-actions">
               <% if (trade.status === 'awaiting_confirmation' && !trade.creatorConfirmed) { %>
-                <form action="/trade/confirm/<%= trade.id %>" method="POST" style="flex:1;">
-                  <button type="submit" class="btn btn-success btn-full">Confirm Trade</button>
-                </form>
+                <button type="button" class="btn btn-success btn-full" onclick="openConfirmModal('<%= trade.id %>', 'creator')">Confirm Trade</button>
               <% } %>
               <% if (trade.status === 'awaiting_confirmation') { %>
                 <form action="/trade/decline/<%= trade.id %>" method="POST" style="flex:1;" onsubmit="return confirm('Decline this trade?');">
@@ -152,12 +356,15 @@
                 </form>
               <% } %>
               <% if (trade.status === 'completed' && !trade.creatorRated) { %>
-                <form action="/trade/rate/<%= trade.id %>" method="POST" style="flex:1; display:flex; gap:0.5rem; align-items:center;">
-                  <select name="rating" required style="flex:1;">
-                    <option value="" disabled selected>Rate</option>
-                    <% for (let i = 10; i >= 1; i--) { %><option value="<%= i %>"><%= i %>/10</option><% } %>
-                  </select>
-                  <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                <form action="/trade/rate/<%= trade.id %>" method="POST" class="rating-form">
+                  <div class="rating-row">
+                    <select name="rating" required style="flex:1;">
+                      <option value="" disabled selected>Rate</option>
+                      <% for (let i = 10; i >= 1; i--) { %><option value="<%= i %>"><%= i %>/10</option><% } %>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                  </div>
+                  <textarea name="feedback" placeholder="Trade feedback (optional, visible on their profile)" maxlength="500"></textarea>
                 </form>
               <% } %>
               <% if (trade.status === 'completed' && trade.creatorRated) { %>
@@ -233,6 +440,7 @@
               </div>
             </div>
 
+            <!-- Creator info -->
             <div class="trade-details">
               <p style="font-size:0.85rem; margin:0.5rem 0;">
                 Created by:
@@ -242,13 +450,32 @@
                   <a href="/profile/<%= trade.offerCreator.username %>" style="color:inherit;"><%= trade.offerCreator.username %></a>
                 </span>
               </p>
+
+              <% if (trade.status === 'awaiting_confirmation' || trade.status === 'completed') { %>
+                <%- renderTradeDetails(trade, 'creator') %>
+                <%- renderTradeDetails(trade, 'acceptor') %>
+                <% if (trade.offerCreator) { %>
+                  <%- renderContactInfo(trade.offerCreator, trade.offerCreator.username + "'s") %>
+                <% } %>
+              <% } %>
+
+              <% if (trade.tradeFeedbackCreator) { %>
+                <div class="trade-feedback-block">
+                  <div class="trade-feedback-label">Feedback from <%= trade.offerCreator ? trade.offerCreator.username : 'creator' %></div>
+                  <%= trade.tradeFeedbackCreator %>
+                </div>
+              <% } %>
+              <% if (trade.tradeFeedbackAcceptor) { %>
+                <div class="trade-feedback-block">
+                  <div class="trade-feedback-label">Your feedback</div>
+                  <%= trade.tradeFeedbackAcceptor %>
+                </div>
+              <% } %>
             </div>
 
             <div class="trade-actions">
               <% if (trade.status === 'awaiting_confirmation' && !trade.acceptorConfirmed) { %>
-                <form action="/trade/confirm/<%= trade.id %>" method="POST" style="flex:1;">
-                  <button type="submit" class="btn btn-success btn-full">Confirm Trade</button>
-                </form>
+                <button type="button" class="btn btn-success btn-full" onclick="openConfirmModal('<%= trade.id %>', 'acceptor')">Confirm Trade</button>
               <% } %>
               <% if (trade.status === 'awaiting_confirmation') { %>
                 <form action="/trade/decline/<%= trade.id %>" method="POST" style="flex:1;" onsubmit="return confirm('Decline this trade?');">
@@ -256,12 +483,15 @@
                 </form>
               <% } %>
               <% if (trade.status === 'completed' && !trade.acceptorRated) { %>
-                <form action="/trade/rate/<%= trade.id %>" method="POST" style="flex:1; display:flex; gap:0.5rem; align-items:center;">
-                  <select name="rating" required style="flex:1;">
-                    <option value="" disabled selected>Rate</option>
-                    <% for (let i = 10; i >= 1; i--) { %><option value="<%= i %>"><%= i %>/10</option><% } %>
-                  </select>
-                  <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                <form action="/trade/rate/<%= trade.id %>" method="POST" class="rating-form">
+                  <div class="rating-row">
+                    <select name="rating" required style="flex:1;">
+                      <option value="" disabled selected>Rate</option>
+                      <% for (let i = 10; i >= 1; i--) { %><option value="<%= i %>"><%= i %>/10</option><% } %>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                  </div>
+                  <textarea name="feedback" placeholder="Trade feedback (optional, visible on their profile)" maxlength="500"></textarea>
                 </form>
               <% } %>
               <% if (trade.status === 'completed' && trade.acceptorRated) { %>
@@ -274,9 +504,57 @@
     <% } %>
   </div>
 
+  <!-- ═══ Confirm Trade Modal ═══ -->
+  <div class="confirm-modal-overlay" id="confirmTradeModal">
+    <div class="confirm-modal-box">
+      <h3>Confirm Trade</h3>
+      <form id="confirmTradeForm" method="POST">
+        <label for="confirmInGameName">In-Game Character Name</label>
+        <input type="text" id="confirmInGameName" name="inGameName" placeholder="Your character name" />
+
+        <label for="confirmDiscordName">Discord Name</label>
+        <input type="text" id="confirmDiscordName" name="discordName" placeholder="username or username#0000" />
+
+        <label for="confirmMeetingPoint">Preferred Meeting Point</label>
+        <input type="text" id="confirmMeetingPoint" name="meetingPoint" placeholder="e.g. Firelink Shrine" />
+
+        <label for="confirmAdditionalInfo">Additional Information</label>
+        <textarea id="confirmAdditionalInfo" name="additionalInfo" placeholder="Timezone, availability, etc."></textarea>
+
+        <div class="confirm-warning">
+          <strong>This action is final.</strong> Once both parties confirm, the trade is marked as completed and cannot be undone. Please ensure you have completed the in-game trade before confirming.
+        </div>
+
+        <div class="confirm-modal-actions">
+          <button type="button" class="btn btn-danger" onclick="closeConfirmModal()">Cancel</button>
+          <button type="submit" class="btn btn-success">Confirm Trade</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <%- include('partials/auth-modals') %>
   <%- include('partials/footer') %>
   <script src="/js/auth.js"></script>
   <script src="/js/user-hover.js"></script>
+  <script>
+    function openConfirmModal(tradeId, role) {
+      const modal = document.getElementById('confirmTradeModal');
+      const form = document.getElementById('confirmTradeForm');
+      form.action = '/trade/confirm/' + tradeId;
+      modal.classList.add('active');
+    }
+    function closeConfirmModal() {
+      document.getElementById('confirmTradeModal').classList.remove('active');
+    }
+    // Close on overlay click
+    document.getElementById('confirmTradeModal').addEventListener('click', function(e) {
+      if (e.target === this) closeConfirmModal();
+    });
+    // Close on Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeConfirmModal();
+    });
+  </script>
 </body>
 </html>

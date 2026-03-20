@@ -86,6 +86,19 @@ const Trade = sequelize.define('Trade', {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
+  // ── Acceptor details (filled when accepting) ──
+  acceptorInGameName:     { type: DataTypes.STRING, allowNull: true },
+  acceptorDiscordName:    { type: DataTypes.STRING, allowNull: true },
+  acceptorMeetingPoint:   { type: DataTypes.STRING, allowNull: true },
+  acceptorAdditionalInfo: { type: DataTypes.TEXT,   allowNull: true },
+  // ── Creator details (filled when confirming) ──
+  creatorInGameName:      { type: DataTypes.STRING, allowNull: true },
+  creatorDiscordName:     { type: DataTypes.STRING, allowNull: true },
+  creatorMeetingPoint:    { type: DataTypes.STRING, allowNull: true },
+  creatorAdditionalInfo:  { type: DataTypes.TEXT,   allowNull: true },
+  // ── Trade feedback (filled when rating) ──
+  tradeFeedbackCreator:   { type: DataTypes.TEXT,   allowNull: true },
+  tradeFeedbackAcceptor:  { type: DataTypes.TEXT,   allowNull: true },
 }, {
   tableName: 'trades',
   timestamps: true,

@@ -46,7 +46,7 @@ const User = sequelize.define('User', {
   karma: {
     type: DataTypes.VIRTUAL,
     get() {
-      return this.getDataValue('positiveKarma') - this.getDataValue('negativeKarma');
+      return this.getDataValue('positiveKarma') - (2 * this.getDataValue('negativeKarma'));
     },
   },
   // Profile

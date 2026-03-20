@@ -38,6 +38,11 @@
     order: 2;
   }
 
+  .nav-dropdown-menu {
+    right: 50%;
+    transform: translateX(50%);
+  }
+
   /* Keep nav-links always visible — no hamburger */
   .nav-links.open {
     display: flex;

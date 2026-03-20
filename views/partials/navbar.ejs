@@ -14,20 +14,32 @@
 
   <div class="nav-user">
     <% if (typeof userId !== 'undefined' && userId) { %>
-      <a href="/trade/my-trades" class="nav-trades-link">
-        My Trades
-        <% if (typeof pendingTradeCount !== 'undefined' && pendingTradeCount > 0) { %>
-          <span class="nav-trade-badge"><%= pendingTradeCount %></span>
-        <% } %>
-      </a>
-      <a href="/profile">Profile</a>
-      <a href="/users">Community</a>
-      <a href="/code-of-conduct">Conduct</a>
-      <a href="/feedback">Feedback</a>
-      <% if (typeof role !== 'undefined' && role === 'admin') { %>
-        <a href="/admin" style="color: #fa9cff;">Admin</a>
-      <% } %>
-      <a href="/auth/logout">Log Out</a>
+      <div class="nav-user-dropdown">
+        <button class="nav-user-toggle" id="navUserToggle">
+          <span class="nav-user-name"><%= typeof username !== 'undefined' ? username : 'Account' %></span>
+          <% if (typeof pendingTradeCount !== 'undefined' && pendingTradeCount > 0) { %>
+            <span class="nav-trade-badge"><%= pendingTradeCount %></span>
+          <% } %>
+          <span class="nav-user-caret">&#9662;</span>
+        </button>
+        <div class="nav-dropdown-menu" id="navDropdownMenu">
+          <a href="/trade/my-trades" class="nav-dropdown-item">
+            My Trades
+            <% if (typeof pendingTradeCount !== 'undefined' && pendingTradeCount > 0) { %>
+              <span class="nav-trade-badge"><%= pendingTradeCount %></span>
+            <% } %>
+          </a>
+          <a href="/profile" class="nav-dropdown-item">Profile</a>
+          <a href="/users" class="nav-dropdown-item">Community</a>
+          <a href="/code-of-conduct" class="nav-dropdown-item">Conduct</a>
+          <a href="/feedback" class="nav-dropdown-item">Feedback</a>
+          <% if (typeof role !== 'undefined' && role === 'admin') { %>
+            <a href="/admin" class="nav-dropdown-item" style="color: #fa9cff;">Admin</a>
+          <% } %>
+          <div class="nav-dropdown-divider"></div>
+          <a href="/auth/logout" class="nav-dropdown-item nav-dropdown-logout">Log Out</a>
+        </div>
+      </div>
     <% } else { %>
       <a href="/users">Community</a>
       <a href="/code-of-conduct">Conduct</a>
@@ -42,3 +54,27 @@
   <span>SoulTrader is currently in alpha. Features may change and bugs may occur. <a href="/feedback">Report issues</a></span>
   <button class="alpha-banner-close" onclick="document.getElementById('alphaBanner').style.display='none'">&times;</button>
 </div>
+
+<script>
+(function() {
+  const toggle = document.getElementById('navUserToggle');
+  const menu = document.getElementById('navDropdownMenu');
+  if (!toggle || !menu) return;
+
+  toggle.addEventListener('click', function(e) {
+    e.stopPropagation();
+    menu.classList.toggle('nav-dropdown-open');
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!menu.contains(e.target) && !toggle.contains(e.target)) {
+      menu.classList.remove('nav-dropdown-open');
+    }
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') menu.classList.remove('nav-dropdown-open');
+  });
+})();
+</script>

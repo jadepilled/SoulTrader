@@ -344,6 +344,37 @@
     </div>
   </div>
 
+    <!-- Trade Feedback -->
+    <% if (typeof feedbackItems !== 'undefined' && feedbackItems.length > 0) { %>
+      <div class="profile-section">
+        <h2 class="profile-section-title">Trade Feedback (<%= feedbackItems.length %>)</h2>
+        <div class="comment-list">
+          <% feedbackItems.forEach(fb => { %>
+            <div class="comment-card" style="border-left: 3px solid var(--success); background: rgba(34, 197, 94, 0.03);">
+              <div class="comment-header">
+                <div class="comment-author">
+                  <div class="comment-avatar-fallback" style="background: rgba(34, 197, 94, 0.15); color: var(--success); font-size: 0.6rem;">TF</div>
+                  <a href="/profile/<%= fb.authorUsername %>"
+                     class="comment-author-name"
+                     style="<%= getUsernameStyle(fb.authorRole) %>">
+                    <%= fb.authorUsername %>
+                  </a>
+                  <span style="font-size:0.7rem; color:var(--text-muted); margin-left:0.25rem;">via trade</span>
+                  <% if (fb.game) { %>
+                    <span style="font-size:0.68rem; color:var(--text-muted); opacity:0.7; margin-left:0.25rem;">(<%= fb.game %>)</span>
+                  <% } %>
+                </div>
+                <div class="comment-meta">
+                  <span class="comment-date"><%= fb.date.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) %></span>
+                </div>
+              </div>
+              <div class="comment-body"><%= fb.content %></div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
     <!-- Profile Comments -->
     <div class="profile-section">
       <h2 class="profile-section-title">Comments (<%= typeof totalComments !== 'undefined' ? totalComments : 0 %>)</h2>

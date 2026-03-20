@@ -43,7 +43,7 @@ function computeBadges(user, completedTradeCount = 0) {
   }
 
   const badges = [];
-  const karma = (user.positiveKarma || 0) - (user.negativeKarma || 0);
+  const karma = (user.positiveKarma || 0) - 2 * (user.negativeKarma || 0);
 
   // ── Role badges ──
   if (user.role === 'admin')     badges.push({ name: 'Admin',     color: '#fa9cff', textColor: '#111', category: 'role' });
