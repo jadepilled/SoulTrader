@@ -56,6 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('click', e => { if (e.target === tradeModal) tradeModal.style.display = 'none'; });
   }
 
+  // Types that get a free-text quantity input instead of +/- buttons
+  const FREE_QTY_TYPES = ['currency', 'soul'];
+
   // ── Collect items from a grid as a structured array ────────────────────────
   function collectItems(gridId) {
     const grid = document.getElementById(gridId);
@@ -64,7 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
       name:     box.dataset.name,
       type:     box.dataset.type,
       iconPath: box.dataset.iconPath || null,
-      qty:      parseInt(box.querySelector('.item-qty-value')?.textContent || '1', 10),
+      // Support both free-text input (.item-qty-input) and +/- span (.item-qty-value)
+      qty:      parseInt(
+                  box.querySelector('.item-qty-input')?.value ||
+                  box.querySelector('.item-qty-value')?.textContent ||
+                  '1', 10),
       upgrade:  box.dataset.upgradeable === 'true'
                   ? parseInt(box.querySelector('.item-upgrade-select')?.value || '0', 10)
                   : null,
@@ -113,33 +120,52 @@ document.addEventListener('DOMContentLoaded', () => {
     nameEl.textContent = item.name;
     box.appendChild(nameEl);
 
-    // Quantity controls
+    // Quantity controls — currency/soul types get a free-text input, others get +/− buttons
     const qtyWrap = document.createElement('div');
     qtyWrap.className = 'item-box-qty';
-    const qtyMinus = document.createElement('button');
-    qtyMinus.type      = 'button';
-    qtyMinus.className = 'qty-btn';
-    qtyMinus.textContent = '−';
-    const qtyVal = document.createElement('span');
-    qtyVal.className   = 'item-qty-value';
-    qtyVal.textContent = '1';
-    const qtyPlus = document.createElement('button');
-    qtyPlus.type      = 'button';
-    qtyPlus.className = 'qty-btn';
-    qtyPlus.textContent = '+';
 
-    qtyMinus.addEventListener('click', () => {
-      const cur = parseInt(qtyVal.textContent, 10);
-      if (cur > 1) { qtyVal.textContent = cur - 1; syncHidden(gridId, hiddenId); }
-    });
-    qtyPlus.addEventListener('click', () => {
-      const cur = parseInt(qtyVal.textContent, 10);
-      if (cur < 99) { qtyVal.textContent = cur + 1; syncHidden(gridId, hiddenId); }
-    });
+    if (FREE_QTY_TYPES.includes(item.type)) {
+      // Free-text numeric input for currencies and soul items
+      const qtyInput = document.createElement('input');
+      qtyInput.type        = 'number';
+      qtyInput.className   = 'item-qty-input';
+      qtyInput.min         = 1;
+      qtyInput.value       = 1;
+      qtyInput.placeholder = 'Qty';
+      qtyInput.addEventListener('input', () => {
+        const v = parseInt(qtyInput.value, 10);
+        if (isNaN(v) || v < 1) qtyInput.value = 1;
+        syncHidden(gridId, hiddenId);
+      });
+      qtyWrap.appendChild(qtyInput);
+    } else {
+      // Standard +/− stepper for regular items
+      const qtyMinus = document.createElement('button');
+      qtyMinus.type        = 'button';
+      qtyMinus.className   = 'qty-btn';
+      qtyMinus.textContent = '−';
+      const qtyVal = document.createElement('span');
+      qtyVal.className   = 'item-qty-value';
+      qtyVal.textContent = '1';
+      const qtyPlus = document.createElement('button');
+      qtyPlus.type        = 'button';
+      qtyPlus.className   = 'qty-btn';
+      qtyPlus.textContent = '+';
 
-    qtyWrap.appendChild(qtyMinus);
-    qtyWrap.appendChild(qtyVal);
-    qtyWrap.appendChild(qtyPlus);
+      qtyMinus.addEventListener('click', () => {
+        const cur = parseInt(qtyVal.textContent, 10);
+        if (cur > 1) { qtyVal.textContent = cur - 1; syncHidden(gridId, hiddenId); }
+      });
+      qtyPlus.addEventListener('click', () => {
+        const cur = parseInt(qtyVal.textContent, 10);
+        if (cur < 99) { qtyVal.textContent = cur + 1; syncHidden(gridId, hiddenId); }
+      });
+
+      qtyWrap.appendChild(qtyMinus);
+      qtyWrap.appendChild(qtyVal);
+      qtyWrap.appendChild(qtyPlus);
+    }
+
     box.appendChild(qtyWrap);
 
     // Upgrade level (only for upgradeable items)
@@ -264,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const label = document.createElement('span');
       label.className   = 'preview-item-label';
       let text = item.name;
-      if (item.qty > 1) text += ` ×${item.qty}`;
+      if (item.qty > 1) text += ` ×${item.qty.toLocaleString()}`;
       if (item.upgrade !== null && item.upgrade !== undefined) text += ` [+${item.upgrade}]`;
       label.textContent = text;
 

@@ -33,8 +33,8 @@ const TYPE_MAP = {
 
 // ── Boss Souls & Consumable Souls with icons (DS1) ──────────────────────────
 const DS1_SOUL_ITEMS = [
-  // Boss Souls
-  { name: 'Core of an Iron Golem',       type: 'soul', iconFile: 'Core of an Iron Golem.webp' },
+  // Boss Souls (no fixed soul value — used to transpose weapons)
+  { name: 'Core of an Iron Golem',        type: 'soul', iconFile: 'Core of an Iron Golem.webp' },
   { name: 'Soul of Gwyn, Lord of Cinder', type: 'soul', iconFile: 'Soul of Gwyn, Lord of Cinder.webp' },
   { name: 'Soul of Gwyndolin',            type: 'soul', iconFile: 'Soul of Gwyndolin.webp' },
   { name: 'Soul of Ornstein',             type: 'soul', iconFile: 'Soul of Ornstein.webp' },
@@ -43,17 +43,17 @@ const DS1_SOUL_ITEMS = [
   { name: 'Soul of Sif',                  type: 'soul', iconFile: 'Soul of Sif.webp' },
   { name: 'Soul of Smough',               type: 'soul', iconFile: 'Soul of Smough.webp' },
   { name: 'Soul of the Moonlight Butterfly', type: 'soul', iconFile: 'Soul of the Moonlight Butterfly.webp' },
-  // Consumable Soul Items
-  { name: 'Soul of a Lost Undead',         type: 'soul', iconFile: 'Soul of a Lost Undead (200).webp' },
-  { name: 'Large Soul of a Lost Undead',   type: 'soul', iconFile: 'Large Soul of a Lost Undead (400).webp' },
-  { name: 'Soul of a Nameless Soldier',    type: 'soul', iconFile: 'Soul of a Nameless Soldier (800).webp' },
-  { name: 'Large Soul of a Nameless Soldier', type: 'soul', iconFile: 'Large Soul of a Nameless Soldier (1,000).webp' },
-  { name: 'Soul of a Proud Knight',        type: 'soul', iconFile: 'Soul of a Proud Knight (2,000).webp' },
-  { name: 'Large Soul of a Proud Knight',  type: 'soul', iconFile: 'Large Soul of a Proud Knight (3,000).webp' },
-  { name: 'Soul of a Brave Warrior',       type: 'soul', iconFile: 'Soul of a Brave Warrior (8,000).webp' },
-  { name: 'Large Soul of a Brave Warrior', type: 'soul', iconFile: 'Large Soul of a Brave Warrior (5,000).webp' },
-  { name: 'Soul of a Hero',                type: 'soul', iconFile: 'Soul of a Hero (10,000).webp' },
-  { name: 'Soul of a Great Hero',          type: 'soul', iconFile: 'Soul of a Great Hero (20,000).webp' },
+  // Consumable Soul Items — name includes soul value for clarity
+  { name: 'Soul of a Lost Undead (200)',           type: 'soul', iconFile: 'Soul of a Lost Undead (200).webp' },
+  { name: 'Large Soul of a Lost Undead (400)',     type: 'soul', iconFile: 'Large Soul of a Lost Undead (400).webp' },
+  { name: 'Soul of a Nameless Soldier (800)',      type: 'soul', iconFile: 'Soul of a Nameless Soldier (800).webp' },
+  { name: 'Large Soul of a Nameless Soldier (1,000)', type: 'soul', iconFile: 'Large Soul of a Nameless Soldier (1,000).webp' },
+  { name: 'Soul of a Proud Knight (2,000)',        type: 'soul', iconFile: 'Soul of a Proud Knight (2,000).webp' },
+  { name: 'Large Soul of a Proud Knight (3,000)',  type: 'soul', iconFile: 'Large Soul of a Proud Knight (3,000).webp' },
+  { name: 'Soul of a Brave Warrior (8,000)',       type: 'soul', iconFile: 'Soul of a Brave Warrior (8,000).webp' },
+  { name: 'Large Soul of a Brave Warrior (5,000)', type: 'soul', iconFile: 'Large Soul of a Brave Warrior (5,000).webp' },
+  { name: 'Soul of a Hero (10,000)',               type: 'soul', iconFile: 'Soul of a Hero (10,000).webp' },
+  { name: 'Soul of a Great Hero (20,000)',         type: 'soul', iconFile: 'Soul of a Great Hero (20,000).webp' },
 ];
 
 // ── Manually-defined items (consumables, rings, misc, currencies — no icon data) ────
