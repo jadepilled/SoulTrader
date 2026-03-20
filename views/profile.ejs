@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/css/responsive.css">
 </head>
 <body>
-  <%- include('partials/navbar', { title: profileUser.username + "'s Profile", gameKey: '', pendingTradeCount: 0 }) %>
+  <%- include('partials/navbar', { title: profileUser.username + "'s Profile", gameKey: '', pendingTradeCount: typeof pendingTradeCount !== 'undefined' ? pendingTradeCount : 0 }) %>
 
   <div class="main-content">
     <%- include('partials/flash-messages') %>
@@ -77,7 +77,18 @@
           </div>
         </div>
 
-        <!-- Badges: Linked Accounts + Contact Platforms -->
+        <!-- Role Badges -->
+        <% if (typeof badges !== 'undefined' && badges.length > 0) { %>
+          <div class="profile-badges">
+            <% badges.forEach(badge => { %>
+              <span class="contact-item">
+                <span class="contact-platform" style="background:<%= badge.color %>; color:<%= badge.textColor %>"><%= badge.name %></span>
+              </span>
+            <% }); %>
+          </div>
+        <% } %>
+
+        <!-- Contact Details & Linked Accounts -->
         <%
           const hasLinked = profileUser.steamUsername || profileUser.discordUsername;
           const hasContact = profileUser.contactDiscord || profileUser.contactSteam ||
@@ -333,12 +344,131 @@
     </div>
   </div>
 
+    <!-- Profile Comments -->
+    <div class="profile-section">
+      <h2 class="profile-section-title">Comments (<%= typeof totalComments !== 'undefined' ? totalComments : 0 %>)</h2>
+
+      <% if (typeof query !== 'undefined' && query.error) { %>
+        <p style="color:var(--danger); font-size:0.85rem; margin-bottom:1rem;"><%= query.error %></p>
+      <% } %>
+
+      <!-- Comment form (logged-in users only) -->
+      <% if (typeof userId !== 'undefined' && userId) { %>
+        <form action="/comments/<%= profileUser.id %>" method="POST" class="comment-form">
+          <textarea name="content" maxlength="500" rows="3" placeholder="Leave a comment..." required></textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+            <span style="font-size:0.72rem; color:var(--text-muted);">Max 500 characters. No links or hate speech.</span>
+            <button type="submit" class="btn btn-primary btn-sm">Post</button>
+          </div>
+        </form>
+      <% } else { %>
+        <p style="color:var(--text-muted); font-size:0.85rem; font-style:italic;">Log in to leave a comment.</p>
+      <% } %>
+
+      <!-- Comment list -->
+      <div class="comment-list">
+        <% if (typeof comments !== 'undefined' && comments.length > 0) { %>
+          <% comments.forEach(comment => { %>
+            <div class="comment-card" id="comment-<%= comment.id %>">
+              <div class="comment-header">
+                <div class="comment-author">
+                  <% if (comment.author && comment.author.profileImagePath) { %>
+                    <img src="<%= comment.author.profileImagePath %>" class="comment-avatar" alt="" onerror="this.style.display='none'">
+                  <% } else { %>
+                    <div class="comment-avatar-fallback"><%= comment.author ? comment.author.username.charAt(0).toUpperCase() : '?' %></div>
+                  <% } %>
+                  <a href="/profile/<%= comment.author ? comment.author.username : '' %>"
+                     class="comment-author-name"
+                     style="<%= comment.author ? getUsernameStyle(comment.author.role) : '' %>">
+                    <%= comment.author ? comment.author.username : 'Unknown' %>
+                  </a>
+                </div>
+                <div class="comment-meta">
+                  <span class="comment-date"><%= comment.createdAt.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) %></span>
+                  <% if (comment.editedAt) { %>
+                    <span class="comment-edited">(edited)</span>
+                  <% } %>
+                </div>
+              </div>
+              <div class="comment-body" id="comment-body-<%= comment.id %>"><%= comment.content %></div>
+              <div class="comment-actions">
+                <% const canEdit   = typeof userId !== 'undefined' && userId && comment.author && comment.authorId === userId; %>
+                <% const canDelete = typeof userId !== 'undefined' && userId && (comment.authorId === userId || profileUser.id === userId || role === 'admin'); %>
+                <% if (canEdit) { %>
+                  <button class="comment-action-btn" onclick="editComment('<%= comment.id %>')">Edit</button>
+                <% } %>
+                <% if (canDelete) { %>
+                  <button class="comment-action-btn comment-delete-btn" onclick="deleteComment('<%= comment.id %>')">Delete</button>
+                <% } %>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <p style="color:var(--text-muted); font-style:italic; margin-top:1rem;">No comments yet.</p>
+        <% } %>
+      </div>
+
+      <!-- Comment pagination -->
+      <% if (typeof totalCommentPages !== 'undefined' && totalCommentPages > 1) { %>
+        <div class="pagination" style="margin-top:1rem;">
+          <% for (let i = 1; i <= totalCommentPages; i++) { %>
+            <a href="/profile/<%= profileUser.username %>?commentPage=<%= i %>"
+               class="pagination-btn <%= (typeof commentPage !== 'undefined' ? commentPage : 1) === i ? 'active' : '' %>"><%= i %></a>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
   <%- include('partials/auth-modals') %>
   <%- include('partials/footer') %>
   <script src="/js/auth.js"></script>
+  <script src="/js/user-hover.js"></script>
   <script>
     function toggleProfileEdit() {
       document.getElementById('profileEditPanel').classList.toggle('open');
+    }
+
+    async function editComment(commentId) {
+      const bodyEl = document.getElementById('comment-body-' + commentId);
+      const current = bodyEl.textContent.trim();
+      const newText = prompt('Edit your comment:', current);
+      if (newText === null || newText.trim() === current) return;
+
+      try {
+        const resp = await fetch('/comments/' + commentId, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: newText }),
+        });
+        const data = await resp.json();
+        if (data.success) {
+          bodyEl.textContent = data.content;
+          // Add (edited) indicator
+          const meta = bodyEl.closest('.comment-card').querySelector('.comment-meta');
+          if (!meta.querySelector('.comment-edited')) {
+            const ed = document.createElement('span');
+            ed.className = 'comment-edited';
+            ed.textContent = '(edited)';
+            meta.appendChild(ed);
+          }
+        } else {
+          alert(data.error || 'Failed to edit comment.');
+        }
+      } catch { alert('Network error.'); }
+    }
+
+    async function deleteComment(commentId) {
+      if (!confirm('Delete this comment?')) return;
+      try {
+        const resp = await fetch('/comments/' + commentId, { method: 'DELETE' });
+        const data = await resp.json();
+        if (data.success) {
+          document.getElementById('comment-' + commentId).remove();
+        } else {
+          alert(data.error || 'Failed to delete comment.');
+        }
+      } catch { alert('Network error.'); }
     }
   </script>
 </body>

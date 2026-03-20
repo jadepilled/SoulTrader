@@ -117,6 +117,11 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(100),
     allowNull: true,
   },
+  // Sponsor status (set manually by admins)
+  isSponsor: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 }, {
   tableName: 'users',
 });

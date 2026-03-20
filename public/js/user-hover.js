@@ -70,12 +70,17 @@
       ? `<img src="${data.profileImagePath}" class="uhc-avatar" alt="" onerror="this.style.display='none'">`
       : `<div class="uhc-avatar-fallback">${(data.username || '?').charAt(0).toUpperCase()}</div>`;
 
+    // Build badge chips
+    const badgesHtml = (data.badges || []).map(b =>
+      `<span class="user-card-badge" style="background:${b.color};color:${b.textColor}">${b.name}</span>`
+    ).join('');
+
     card.innerHTML = `
       <div class="uhc-header">
         ${avatar}
         <div class="uhc-header-info">
           <a href="/profile/${data.username}" class="uhc-username" style="color:${roleColor}">${data.username}</a>
-          <span class="uhc-role" style="color:${roleColor}">${data.role}</span>
+          ${badgesHtml ? `<div class="uhc-badges">${badgesHtml}</div>` : `<span class="uhc-role" style="color:${roleColor}">${data.role}</span>`}
         </div>
       </div>
       <div class="uhc-divider"></div>

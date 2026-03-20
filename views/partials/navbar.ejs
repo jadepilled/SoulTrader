@@ -21,12 +21,16 @@
         <% } %>
       </a>
       <a href="/profile">Profile</a>
+      <a href="/users">Community</a>
+      <a href="/code-of-conduct">Conduct</a>
       <a href="/feedback">Feedback</a>
       <% if (typeof role !== 'undefined' && role === 'admin') { %>
         <a href="/admin" style="color: #fa9cff;">Admin</a>
       <% } %>
       <a href="/auth/logout">Log Out</a>
     <% } else { %>
+      <a href="/users">Community</a>
+      <a href="/code-of-conduct">Conduct</a>
       <a href="#" id="openSignupLink">Sign Up</a>
       <a href="#" id="openLoginLink">Log In</a>
     <% } %>

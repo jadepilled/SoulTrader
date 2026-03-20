@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community | SoulTrader</title>
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <%- include('partials/navbar', { title: 'Community', gameKey: '', pendingTradeCount: typeof pendingTradeCount !== 'undefined' ? pendingTradeCount : 0 }) %>
+
+  <div class="main-content">
+    <h1 class="section-title" style="margin-top:0.5rem;">Community</h1>
+
+    <!-- Filters -->
+    <div class="users-filters">
+      <div class="filter-group" style="flex:1; min-width:180px;">
+        <label>Search</label>
+        <input type="text" id="userSearch" placeholder="Search by username..." value="<%= typeof search !== 'undefined' ? search : '' %>">
+      </div>
+      <div class="filter-group">
+        <label>Sort by</label>
+        <select id="userSort">
+          <option value="karma"  <%= sort === 'karma'  ? 'selected' : '' %>>Karma</option>
+          <option value="trades" <%= sort === 'trades' ? 'selected' : '' %>>Trades</option>
+          <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Newest</option>
+          <option value="oldest" <%= sort === 'oldest' ? 'selected' : '' %>>Oldest</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Filter</label>
+        <select id="userFilter">
+          <option value=""          <%= filter === ''          ? 'selected' : '' %>>All Users</option>
+          <option value="admin"     <%= filter === 'admin'     ? 'selected' : '' %>>Admins</option>
+          <option value="moderator" <%= filter === 'moderator' ? 'selected' : '' %>>Moderators</option>
+          <option value="sponsor"   <%= filter === 'sponsor'   ? 'selected' : '' %>>Sponsors</option>
+        </select>
+      </div>
+      <span class="users-count"><%= totalUsers %> user<%= totalUsers !== 1 ? 's' : '' %></span>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="users-grid">
+      <% users.forEach((user, idx) => { %>
+        <a href="/profile/<%= user.username %>" class="user-card">
+          <div class="user-card-rank"><%= ((page - 1) * 30) + idx + 1 %></div>
+
+          <div class="user-card-avatar">
+            <% if (user.profileImagePath) { %>
+              <img src="<%= user.profileImagePath %>" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div class="user-card-avatar-fallback" style="display:none;"><%= user.username.charAt(0).toUpperCase() %></div>
+            <% } else { %>
+              <div class="user-card-avatar-fallback"><%= user.username.charAt(0).toUpperCase() %></div>
+            <% } %>
+          </div>
+
+          <div class="user-card-info">
+            <div class="user-card-name" style="<%= getUsernameStyle(user.role) %>"><%= user.username %></div>
+            <div class="user-card-badges">
+              <% (user.badges || []).forEach(badge => { %>
+                <span class="user-card-badge" style="background:<%= badge.color %>; color:<%= badge.textColor %>"><%= badge.name %></span>
+              <% }); %>
+            </div>
+          </div>
+
+          <div class="user-card-stats">
+            <div class="user-card-stat">
+              <span class="user-card-stat-value" style="color:<%= user.karma >= 0 ? 'var(--success)' : 'var(--danger)' %>"><%= user.karma >= 0 ? '+' : '' %><%= user.karma %></span>
+              <span class="user-card-stat-label">Karma</span>
+            </div>
+            <div class="user-card-stat">
+              <span class="user-card-stat-value"><%= user.completedTradeCount %></span>
+              <span class="user-card-stat-label">Trades</span>
+            </div>
+            <div class="user-card-stat">
+              <span class="user-card-stat-value" style="font-size:0.75em; color:var(--text-muted);"><%= user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '' %></span>
+              <span class="user-card-stat-label">Joined</span>
+            </div>
+          </div>
+        </a>
+      <% }); %>
+
+      <% if (!users || users.length === 0) { %>
+        <div class="no-offers-card">No users found.</div>
+      <% } %>
+    </div>
+
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+      <div class="pagination">
+        <% for (let i = 1; i <= Math.min(totalPages, 20); i++) { %>
+          <a href="/users?page=<%= i %>&search=<%= encodeURIComponent(search) %>&sort=<%= sort %>&filter=<%= filter %>"
+             class="pagination-btn <%= page === i ? 'active' : '' %>"><%= i %></a>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+
+  <%- include('partials/auth-modals') %>
+  <%- include('partials/footer') %>
+  <script src="/js/auth.js"></script>
+  <script>
+    const searchInput  = document.getElementById('userSearch');
+    const sortSelect   = document.getElementById('userSort');
+    const filterSelect = document.getElementById('userFilter');
+
+    function go() {
+      const p = new URLSearchParams();
+      if (searchInput.value)             p.set('search', searchInput.value);
+      if (sortSelect.value !== 'karma')  p.set('sort', sortSelect.value);
+      if (filterSelect.value)            p.set('filter', filterSelect.value);
+      window.location.href = '/users?' + p.toString();
+    }
+
+    let _t;
+    searchInput.addEventListener('input', () => { clearTimeout(_t); _t = setTimeout(go, 500); });
+    sortSelect.addEventListener('change', go);
+    filterSelect.addEventListener('change', go);
+  </script>
+</body>
+</html>

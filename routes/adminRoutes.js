@@ -152,6 +152,11 @@ router.get('/trades', async (req, res) => {
         { model: User, as: 'offerCreator', attributes: ['id', 'username'] },
         { model: User, as: 'acceptor', attributes: ['id', 'username'] },
       ],
+      attributes: [
+        'id', 'game', 'platform', 'status', 'offeredItems', 'requestedItems',
+        'creatorConfirmed', 'acceptorConfirmed', 'creatorRated', 'acceptorRated',
+        'characterLevel', 'additionalNotes', 'createdAt', 'updatedAt',
+      ],
       order: [['createdAt', 'DESC']],
       limit: 50,
     });

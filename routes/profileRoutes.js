@@ -4,10 +4,11 @@ const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
-const { User, Trade } = require('../models');
+const { User, Trade, Comment } = require('../models');
 const { ensureAuthenticated } = require('../middleware/roleMiddleware');
 const { getUsernameStyle, gameConfigs } = require('../controllers/gameController');
 const { profileUpdateLimiter } = require('../middleware/rateLimiter');
+const { computeBadges } = require('../utils/badges');
 
 // Configure multer for memory storage (we'll process with sharp before saving)
 const upload = multer({
@@ -34,7 +35,7 @@ router.get('/preview/:username', async (req, res) => {
   try {
     const user = await User.findOne({
       where: { username: req.params.username },
-      attributes: ['username', 'role', 'positiveKarma', 'negativeKarma', 'profileImagePath', 'createdAt'],
+      attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'profileImagePath', 'createdAt', 'isVerified', 'isBanned', 'isSponsor'],
     });
     if (!user) return res.status(404).json({ error: 'Not found' });
 
@@ -46,6 +47,8 @@ router.get('/preview/:username', async (req, res) => {
       },
     });
 
+    const badges = computeBadges(user, completedTradeCount);
+
     res.json({
       username:            user.username,
       role:                user.role,
@@ -54,6 +57,7 @@ router.get('/preview/:username', async (req, res) => {
       profileImagePath:    user.profileImagePath,
       completedTradeCount,
       createdAt:           user.createdAt,
+      badges,
     });
   } catch (err) {
     console.error('Preview error:', err);
@@ -74,7 +78,7 @@ router.get('/:username', async (req, res) => {
       attributes: [
         'id', 'username', 'role', 'positiveKarma', 'negativeKarma',
         'bio', 'profileImagePath', 'steamUsername', 'discordUsername',
-        'steamId', 'discordId', 'createdAt',
+        'steamId', 'discordId', 'createdAt', 'isVerified', 'isBanned', 'isSponsor',
         'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox',
       ],
     });
@@ -121,6 +125,34 @@ router.get('/:username', async (req, res) => {
 
     const isOwnProfile = req.user && req.user.id === user.id;
 
+    // Compute badges
+    const badges = computeBadges(user, completedTradeCount);
+
+    // Paginated comments
+    const commentPage = Math.max(1, parseInt(req.query.commentPage, 10) || 1);
+    const commentsPerPage = 10;
+    const totalComments = await Comment.count({ where: { profileUserId: user.id } });
+    const totalCommentPages = Math.ceil(totalComments / commentsPerPage) || 1;
+
+    const comments = await Comment.findAll({
+      where: { profileUserId: user.id },
+      include: [{ model: User, as: 'author', attributes: ['id', 'username', 'role', 'profileImagePath'] }],
+      order: [['createdAt', 'DESC']],
+      limit: commentsPerPage,
+      offset: (commentPage - 1) * commentsPerPage,
+    });
+
+    // Pending trade count for navbar
+    let pendingTradeCount = 0;
+    if (req.user) {
+      pendingTradeCount = await Trade.count({
+        where: {
+          status: 'awaiting_confirmation',
+          [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }],
+        },
+      });
+    }
+
     res.render('profile', {
       profileUser: user,
       completedTradeCount,
@@ -128,6 +160,11 @@ router.get('/:username', async (req, res) => {
       positivePercent,
       recentTrades,
       isOwnProfile,
+      badges,
+      comments,
+      commentPage,
+      totalCommentPages,
+      totalComments,
       userId: req.user ? req.user.id : null,
       username: req.user ? req.user.username : null,
       role: req.user ? req.user.role : 'user',
@@ -135,6 +172,7 @@ router.get('/:username', async (req, res) => {
       usernameStyle: getUsernameStyle(req.user ? req.user.role : 'user'),
       getUsernameStyle,
       gameConfigs,
+      pendingTradeCount,
       query: req.query,
     });
   } catch (err) {

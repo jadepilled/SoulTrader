@@ -18,6 +18,7 @@ const tradeRoutes = require('./routes/tradeRoutes');
 const oauthRoutes = require('./routes/oauthRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const commentRoutes = require('./routes/commentRoutes');
 
 const app = express();
 
@@ -86,6 +87,7 @@ app.use('/auth', oauthRoutes);
 app.use('/trade', tradeRoutes);
 app.use('/profile', profileRoutes);
 app.use('/admin', adminRoutes);
+app.use('/comments', commentRoutes);
 
 // Homepage
 app.get('/', async (req, res) => {
@@ -145,6 +147,95 @@ app.get('/items', async (req, res) => {
     pendingTradeCount,
     items,
     totalItems: items.length,
+  });
+});
+
+// Users / Community page
+app.get('/users', async (req, res) => {
+  const { gameConfigs, getUsernameStyle } = require('./controllers/gameController');
+  const { User, Trade } = require('./models');
+  const { computeBadges } = require('./utils/badges');
+  const { Op } = require('sequelize');
+
+  let pendingTradeCount = 0;
+  if (req.user) {
+    pendingTradeCount = await Trade.count({
+      where: { status: 'awaiting_confirmation', [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }] },
+    });
+  }
+
+  const search = req.query.search || '';
+  const sort   = req.query.sort   || 'karma';
+  const filter = req.query.filter || '';
+  const page   = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const perPage = 30;
+
+  // Build where clause
+  const where = {};
+  if (search) where.username = { [Op.iLike]: `%${search}%` };
+  if (filter === 'admin')     where.role = 'admin';
+  if (filter === 'moderator') where.role = 'moderator';
+  if (filter === 'sponsor')   where.isSponsor = true;
+
+  // Sort order
+  let order;
+  if (sort === 'trades')      order = [[sequelize.literal('"completedTradeCount"'), 'DESC']];
+  else if (sort === 'newest') order = [['createdAt', 'DESC']];
+  else if (sort === 'oldest') order = [['createdAt', 'ASC']];
+  else                        order = [[sequelize.literal('("positiveKarma" - "negativeKarma")'), 'DESC']];
+
+  const totalUsers = await User.count({ where });
+  const totalPages = Math.ceil(totalUsers / perPage) || 1;
+
+  const users = await User.findAll({
+    where,
+    attributes: {
+      include: [
+        [sequelize.literal(`(SELECT COUNT(*) FROM "Trades" WHERE status = 'completed' AND ("offerCreatorId" = "User"."id" OR "acceptorId" = "User"."id"))`), 'completedTradeCount'],
+      ],
+    },
+    order,
+    limit: perPage,
+    offset: (page - 1) * perPage,
+  });
+
+  // Compute badges for each user
+  const enriched = users.map(u => {
+    const plain = u.get({ plain: true });
+    plain.karma = (plain.positiveKarma || 0) - (plain.negativeKarma || 0);
+    plain.completedTradeCount = parseInt(plain.completedTradeCount, 10) || 0;
+    plain.badges = computeBadges(plain, plain.completedTradeCount);
+    return plain;
+  });
+
+  res.render('users', {
+    userId:   req.user ? req.user.id : null,
+    username: req.user ? req.user.username : null,
+    role:     req.user ? req.user.role : 'user',
+    gameConfigs, getUsernameStyle, pendingTradeCount,
+    users: enriched, totalUsers, totalPages, page,
+    search, sort, filter,
+  });
+});
+
+// Code of Conduct
+app.get('/code-of-conduct', async (req, res) => {
+  const { gameConfigs } = require('./controllers/gameController');
+  const { Trade } = require('./models');
+  const { Op } = require('sequelize');
+
+  let pendingTradeCount = 0;
+  if (req.user) {
+    pendingTradeCount = await Trade.count({
+      where: { status: 'awaiting_confirmation', [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }] },
+    });
+  }
+
+  res.render('codeOfConduct', {
+    userId:   req.user ? req.user.id : null,
+    username: req.user ? req.user.username : null,
+    role:     req.user ? req.user.role : 'user',
+    gameConfigs, pendingTradeCount,
   });
 });
 
