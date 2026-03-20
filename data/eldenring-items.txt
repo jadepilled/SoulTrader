@@ -1,0 +1,141 @@
+Neutralizing Boluses
+Preserving Boluses
+Stanching Boluses
+Thawfrost Boluses
+Stimulating Boluses
+Clarifying Boluses
+Rejuvenating Boluses
+Spellproof Dried Liver
+Fireproof Dried Liver
+Lightningproof Dried Liver
+Holyproof Dried Liver
+Immunizing Cured Meat
+Invigorating Cured Meat
+Clarifying Cured Meat
+Dappled Cured Meat
+Immunizing White Cured Meat
+Invigorating White Cured Meat
+Clarifying White Cured Meat
+Dappled White Cured Meat
+Pickled Turtle Neck
+Exalted Flesh
+Silver-Pickled Fowl Foot
+Gold-Pickled Fowl Foot
+Boiled Prawn
+Boiled Crab
+Raw Meat Dumpling
+Fire Pot
+Oil Pot
+Redmane Fire Pot
+Giantsflame Fire Pot
+Magic Pot
+Academy Magic Pot
+Lightning Pot
+Ancient Dragonbolt Pot
+Holy Water Pot
+Sacred Order Pot
+Poison Pot
+Fetid Pot
+Rot Pot
+Swarm Pot
+Freezing Pot
+Sleep Pot
+Volcano Pot
+Rancor Pot
+Cursed-Blood Pot
+Alluring Pot
+Beastlure Pot
+Albinauric Pot
+Roped Fire Pot
+Roped Oil Pot
+Roped Magic Pot
+Roped Lightning Pot
+Roped Holy Water Pot
+Roped Poison Pot
+Roped Fetid Pot
+Roped Fly Pot
+Bone Dart
+Poisonbone Dart
+Crystal Dart
+Throwing Dagger
+Kukri
+Fan Daggers
+Ruin Fragment
+Poisoned Stone
+Poisoned Stone Clump
+Explosive Stone
+Explosive Stone Clump
+Glintstone Scrap
+Large Glintstone Scrap
+Cuckoo Glintstone
+Gravity Stone Fan
+Gravity Stone Chunk
+Scriptstone
+Warming Stone
+Frenzyflame Stone
+Bewitching Branch
+Wraith Calling Bell
+Ancestral Infant's Head
+Omen Bairn
+Regal Omen Bairn
+Mimic's Veil
+Baldachin's Blessing
+Radiant Baldachin's Blessing
+Margit's Shackle
+Mohg's Shackle
+Blasphemous Claw
+Fire Grease
+Magic Grease
+Lightning Grease
+Holy Grease
+Poison Grease
+Rot Grease
+Blood Grease
+Freezing Grease
+Soporific Grease
+Dragonwound Grease
+Shield Grease
+Drawstring Fire Grease
+Drawstring Magic Grease
+Drawstring Lightning Grease
+Drawstring Holy Grease
+Drawstring Poison Grease
+Drawstring Rot Grease
+Drawstring Blood Grease
+Drawstring Soporific Grease
+Rowa Raisin
+Sweet Raisin
+Frozen Raisin
+Rainbow Stone
+Glowstone
+Soft Cotton
+Soap
+Grace Mimic
+Glass Shard
+Lantern
+Telescope
+Prattling Pate "Hello"
+Prattling Pate "Thank you"
+Prattling Pate "Apologies"
+Prattling Pate "Wonderful"
+Prattling Pate "Please help"
+Prattling Pate "My Beloved"
+Prattling Pate "Let's Get to It"
+Prattling Pate "You're Beautiful"
+Remembrance of the Regal Ancestor
+Remembrance of the Naturalborn
+Remembrance of the Lichdragon
+Remembrance of the Fire Giant
+Remembrance of the Grafted
+Remembrance of the Full Moon Queen
+Remembrance of the Blasphemous
+Remembrance of the Starscourge
+Remembrance of the Omen King
+Remembrance of the Blood Lord
+Remembrance of the Rot Goddess
+Remembrance of the Black Blade
+Remembrance of Hoarah Loux
+Remembrance of the Dragonlord
+Elden Remembrance
+Furlcalling Finger Remedy
+Festering Bloody Finger
