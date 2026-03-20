@@ -215,14 +215,12 @@
         // partyType: 'creator' or 'acceptor'
         const prefix = partyType;
         const ign = trade[prefix + 'InGameName'];
-        const discord = trade[prefix + 'DiscordName'];
         const meeting = trade[prefix + 'MeetingPoint'];
         const info = trade[prefix + 'AdditionalInfo'];
-        if (!ign && !discord && !meeting && !info) return '';
+        if (!ign && !meeting && !info) return '';
 
         let html = '<div class="trade-info-section"><h3>' + (partyType === 'creator' ? "Creator's" : "Acceptor's") + ' Details</h3>';
         if (ign)     html += '<div class="trade-info-row"><span class="trade-info-label">In-Game Name</span><span class="trade-info-value">' + ign + '</span></div>';
-        if (discord) html += '<div class="trade-info-row"><span class="trade-info-label">Discord</span><span class="trade-info-value">' + discord + '</span></div>';
         if (meeting) html += '<div class="trade-info-row"><span class="trade-info-label">Meeting Point</span><span class="trade-info-value">' + meeting + '</span></div>';
         if (info)    html += '<div class="trade-info-row"><span class="trade-info-label">Additional Info</span><span class="trade-info-value">' + info + '</span></div>';
         html += '</div>';
@@ -512,9 +510,6 @@
         <label for="confirmInGameName">In-Game Character Name</label>
         <input type="text" id="confirmInGameName" name="inGameName" placeholder="Your character name" />
 
-        <label for="confirmDiscordName">Discord Name</label>
-        <input type="text" id="confirmDiscordName" name="discordName" placeholder="username or username#0000" />
-
         <label for="confirmMeetingPoint">Preferred Meeting Point</label>
         <input type="text" id="confirmMeetingPoint" name="meetingPoint" placeholder="e.g. Firelink Shrine" />
 
@@ -523,6 +518,7 @@
 
         <div class="confirm-warning">
           <strong>This action is final.</strong> Once both parties confirm, the trade is marked as completed and cannot be undone. Please ensure you have completed the in-game trade before confirming.
+          <br><br>You must have a Discord name set in your <a href="/profile" style="color:var(--warning); text-decoration:underline;">profile</a> before confirming.
         </div>
 
         <div class="confirm-modal-actions">

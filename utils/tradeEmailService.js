@@ -27,7 +27,6 @@ exports.sendTradeAcceptedEmail = async (creatorEmail, creatorUsername, acceptorU
             <tr><td style="padding:0.4rem 0;color:#999;width:160px;">Offering</td><td>${formatItems(trade.offeredItems)}</td></tr>
             <tr><td style="padding:0.4rem 0;color:#999;">Requesting</td><td>${formatItems(trade.requestedItems)}</td></tr>
             <tr><td style="padding:0.4rem 0;color:#999;">Meeting point</td><td>${contactInfo.meetingPoint || 'Not specified'}</td></tr>
-            <tr><td style="padding:0.4rem 0;color:#999;">Discord</td><td>${contactInfo.discordName || 'Not provided'}</td></tr>
             <tr><td style="padding:0.4rem 0;color:#999;">In-game name</td><td>${contactInfo.inGameName || 'Not specified'}</td></tr>
             <tr><td style="padding:0.4rem 0;color:#999;">Additional info</td><td>${contactInfo.additionalInfo || 'None'}</td></tr>
           </table>

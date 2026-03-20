@@ -379,7 +379,6 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const tradeId       = tradeIdInput.value;
       const meetingPoint  = document.getElementById('meetingPoint')?.value  || '';
-      const discordName   = document.getElementById('discordName')?.value   || '';
       const additionalInfo = document.getElementById('additionalInfo')?.value || '';
       const inGameName    = document.getElementById('inGameName')?.value    || '';
 
@@ -425,7 +424,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const finalResp = await fetch(`/trade/accept/${tradeId}`, {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ meetingPoint, discordName, additionalInfo, inGameName }),
+                body:    JSON.stringify({ meetingPoint, additionalInfo, inGameName }),
               });
               if (finalResp.ok) {
                 window.closeConfirmationModal();

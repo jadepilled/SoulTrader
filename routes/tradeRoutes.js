@@ -151,12 +151,17 @@ router.post('/accept/:id', tradeAcceptLimiter, ensureVerified, async (req, res) 
     if (trade.status !== 'open')         return res.status(400).json({ error: 'This trade is no longer available.' });
     if (trade.offerCreatorId === req.user.id) return res.status(400).json({ error: 'You cannot accept your own trade.' });
 
-    const { meetingPoint, discordName, additionalInfo, inGameName } = req.body;
+    const { meetingPoint, additionalInfo, inGameName } = req.body;
+
+    // Require Discord set in profile
+    const acceptorUser = await User.findByPk(req.user.id, { attributes: ['contactDiscord'] });
+    if (!acceptorUser || !acceptorUser.contactDiscord) {
+      return res.status(400).json({ error: 'Please set your Discord name in your profile before accepting a trade.' });
+    }
 
     trade.status    = 'awaiting_confirmation';
     trade.acceptorId = req.user.id;
     trade.acceptorInGameName     = inGameName     ? String(inGameName).substring(0, 100).trim()     : null;
-    trade.acceptorDiscordName    = discordName    ? String(discordName).substring(0, 100).trim()    : null;
     trade.acceptorMeetingPoint   = meetingPoint   ? String(meetingPoint).substring(0, 200).trim()   : null;
     trade.acceptorAdditionalInfo = additionalInfo ? String(additionalInfo).substring(0, 500).trim() : null;
     await trade.save();
@@ -164,7 +169,7 @@ router.post('/accept/:id', tradeAcceptLimiter, ensureVerified, async (req, res) 
     tradeEmail.sendTradeAcceptedEmail(
       trade.offerCreator.email, trade.offerCreator.username,
       req.user.username, trade,
-      { meetingPoint, discordName, inGameName, additionalInfo }
+      { meetingPoint, inGameName, additionalInfo }
     ).catch(err => console.error('Trade accepted email failed:', err));
 
     return res.status(200).json({ success: true });
@@ -194,19 +199,23 @@ router.post('/confirm/:id', async (req, res) => {
     const isAcceptor = trade.acceptorId === req.user.id;
     if (!isCreator && !isAcceptor) return res.status(403).send('You are not part of this trade.');
 
+    // Require Discord set in profile before confirming
+    const confirmUser = await User.findByPk(req.user.id, { attributes: ['contactDiscord'] });
+    if (!confirmUser || !confirmUser.contactDiscord) {
+      return res.status(400).send('Please set your Discord name in your profile before confirming a trade.');
+    }
+
     // Store confirmer's details if provided
-    const { inGameName, discordName, meetingPoint, additionalInfo } = req.body;
+    const { inGameName, meetingPoint, additionalInfo } = req.body;
     if (isCreator) {
       trade.creatorConfirmed    = true;
       trade.creatorInGameName   = inGameName     ? String(inGameName).substring(0, 100).trim()     : null;
-      trade.creatorDiscordName  = discordName    ? String(discordName).substring(0, 100).trim()    : null;
       trade.creatorMeetingPoint = meetingPoint   ? String(meetingPoint).substring(0, 200).trim()   : null;
       trade.creatorAdditionalInfo = additionalInfo ? String(additionalInfo).substring(0, 500).trim() : null;
     } else {
       trade.acceptorConfirmed = true;
       // Acceptor may update their info on confirm
       if (inGameName)     trade.acceptorInGameName     = String(inGameName).substring(0, 100).trim();
-      if (discordName)    trade.acceptorDiscordName    = String(discordName).substring(0, 100).trim();
       if (meetingPoint)   trade.acceptorMeetingPoint   = String(meetingPoint).substring(0, 200).trim();
       if (additionalInfo) trade.acceptorAdditionalInfo = String(additionalInfo).substring(0, 500).trim();
     }

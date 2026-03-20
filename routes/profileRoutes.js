@@ -173,6 +173,7 @@ router.get('/:username', async (req, res) => {
     });
 
     // Paginated comments
+    const commentPage = Math.max(1, parseInt(req.query.commentPage, 10) || 1);
     const commentsPerPage = 10;
     const totalComments = await Comment.count({ where: { profileUserId: user.id } });
     const totalCommentPages = Math.ceil(totalComments / commentsPerPage) || 1;
