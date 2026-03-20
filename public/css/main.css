@@ -196,13 +196,57 @@ button, input, select, textarea {
 }
 
 
+/* ─── Alpha Disclaimer Banner ──────────────────────────────────────────── */
+.alpha-banner {
+  position: fixed;
+  top: 3.2rem;
+  left: 0;
+  right: 0;
+  z-index: 1999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.3rem 1rem;
+  background: rgba(180, 40, 40, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.4);
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+}
+
+.alpha-banner a {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.alpha-banner-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  line-height: 1;
+  transition: color var(--transition);
+  flex-shrink: 0;
+}
+
+.alpha-banner-close:hover {
+  color: #fff;
+}
+
+
 /* ═══════════════════════════════════════════════════════════════════════════
    MAIN CONTENT
    ═══════════════════════════════════════════════════════════════════════════ */
 .main-content {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 4rem 1.5rem 3rem;
+  padding: 5.2rem 1.5rem 3rem;
   flex: 1;
   width: 100%;
 }
@@ -386,9 +430,25 @@ textarea {
   border-radius: var(--radius-lg);
   box-shadow: 0 1rem 2.2rem rgba(0, 0, 0, 0.26);
   padding: 1rem;
+  padding-top: 0;
   transition: all var(--transition);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+/* ─── Trade Card Game Banner ───────────────────────────────────────────── */
+.trade-card-banner {
+  background: rgba(var(--accent-rgb), 0.2);
+  border-bottom: 1px solid rgba(var(--accent-rgb), 0.3);
+  padding: 0.35rem 0.75rem;
+  margin: 0 -1rem 0.75rem -1rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-align: center;
 }
 
 .trade-card:hover {
@@ -401,6 +461,7 @@ textarea {
   text-align: center;
   margin-bottom: 0.75rem;
   font-size: 0.95rem;
+  padding-top: 0.25rem;
 }
 
 .offer-heading .time-ago {
@@ -1263,6 +1324,146 @@ textarea {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-top: 0.25rem;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ITEM DATABASE PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.itemdb-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.itemdb-count {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-left: auto;
+  white-space: nowrap;
+  align-self: flex-end;
+  padding-bottom: 0.6rem;
+}
+
+.itemdb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+
+.itemdb-card {
+  background: rgba(18, 18, 18, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all var(--transition);
+  cursor: default;
+}
+
+.itemdb-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.itemdb-card-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.itemdb-card-icon img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.itemdb-icon-fallback {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.itemdb-card-name {
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--text-primary);
+  line-height: 1.3;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemdb-card-meta {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.itemdb-type-badge {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+}
+
+.itemdb-game-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(138, 138, 138, 0.3);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FEEDBACK PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.feedback-container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.feedback-user-info {
+  background: rgba(18, 18, 18, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.feedback-form-wrap {
+  background: rgba(18, 18, 18, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: 0 1rem 2.2rem rgba(0, 0, 0, 0.26);
 }
 
 

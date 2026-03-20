@@ -262,13 +262,24 @@
             ? trade.updatedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
             : '';
         %>
+          <%
+            const profileGameColorMap = {
+              'Dark Souls':    { color: '#7b86a2', rgb: '123, 134, 162' },
+              'Dark Souls 2':  { color: '#8b7eaa', rgb: '139, 126, 170' },
+              'Dark Souls 3':  { color: '#6e7fa0', rgb: '110, 127, 160' },
+              'Bloodborne':    { color: '#8b3a3a', rgb: '139, 58, 58' },
+              'Elden Ring':    { color: '#c8a84e', rgb: '200, 168, 78' },
+              "Demon's Souls": { color: '#8a8a8a', rgb: '138, 138, 138' },
+            };
+            const pgc = profileGameColorMap[trade.game] || { color: '#8a8a8a', rgb: '138, 138, 138' };
+          %>
           <div class="trade-card">
+            <% if (trade.game) { %>
+              <div class="trade-card-banner" style="background: rgba(<%= pgc.rgb %>, 0.2); color: <%= pgc.color %>; border-bottom: 1px solid rgba(<%= pgc.rgb %>, 0.3);"><%= trade.game %></div>
+            <% } %>
             <div class="offer-heading">
               Trade with
               <span style="<%= getUsernameStyle(partnerRole) %>"><%= partnerName %></span>
-              <% if (trade.game) { %>
-                <span class="game-badge"><%= trade.game %></span>
-              <% } %>
               <% if (completedDate) { %>
                 <span class="time-ago"><%= completedDate %></span>
               <% } %>

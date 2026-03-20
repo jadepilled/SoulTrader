@@ -8,19 +8,41 @@ document.addEventListener('DOMContentLoaded', () => {
   const UPGRADEABLE    = ['weapon', 'shield', 'armor', 'head', 'chest', 'hands', 'legs'];
 
   // Max upgrade level per game and item type
+  // DS1: Standard weapons/shields +15, unique +5, armor +10
+  // DS2: All weapons/shields/armor +10, unique +5
+  // DS3: Weapons/shields +10, armor NOT upgradeable
+  // BB:  Weapons +10, no shields/armor upgrades
+  // ER:  Regular weapons/shields +25, somber +10, armor NOT upgradeable
+  // DeS: Weapons/shields +10, armor +10
   function maxUpgrade(type) {
     if (!UPGRADEABLE.includes(type)) return 0;
-    // Armor slot types (head/chest/hands/legs) use same limits as 'armor'
     const normalizedType = ['head', 'chest', 'hands', 'legs'].includes(type) ? 'armor' : type;
     const map = {
       darksouls:   { weapon: 15, shield: 15, armor: 10 },
       darksouls2:  { weapon: 10, shield: 10, armor: 10 },
-      darksouls3:  { weapon: 10, shield: 10, armor: 10 },
+      darksouls3:  { weapon: 10, shield: 10, armor: 0  },
       bloodborne:  { weapon: 10, shield: 0,  armor: 0  },
       eldenring:   { weapon: 25, shield: 25, armor: 0  },
       demonssouls: { weapon: 10, shield: 10, armor: 10 },
     };
     return (map[gameKey] || {})[normalizedType] || 0;
+  }
+
+  // Level caps per game
+  const LEVEL_CAPS = {
+    darksouls: 713,
+    darksouls2: 838,
+    darksouls3: 802,
+    bloodborne: 544,
+    eldenring: 713,
+    demonssouls: 712,
+  };
+
+  // Apply level cap to character level input
+  const charLevelInput = document.getElementById('characterLevel');
+  if (charLevelInput && LEVEL_CAPS[gameKey]) {
+    charLevelInput.max = LEVEL_CAPS[gameKey];
+    charLevelInput.placeholder = `1–${LEVEL_CAPS[gameKey]}`;
   }
 
   // ── Trade Creation Modal ───────────────────────────────────────────────────

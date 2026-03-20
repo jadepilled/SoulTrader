@@ -100,6 +100,69 @@ app.get('/', async (req, res) => {
   });
 });
 
+// Item Database
+app.get('/items', async (req, res) => {
+  const { gameConfigs, getUsernameStyle } = require('./controllers/gameController');
+  const { Item, Trade } = require('./models');
+  const { Op } = require('sequelize');
+
+  let pendingTradeCount = 0;
+  if (req.user) {
+    pendingTradeCount = await Trade.count({
+      where: {
+        status: 'awaiting_confirmation',
+        [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }],
+      },
+    });
+  }
+
+  const items = await Item.findAll({
+    attributes: ['name', 'type', 'game', 'iconPath'],
+    order: [['game', 'ASC'], ['type', 'ASC'], ['name', 'ASC']],
+    raw: true,
+  });
+
+  res.render('itemdb', {
+    userId: req.user ? req.user.id : null,
+    username: req.user ? req.user.username : null,
+    role: req.user ? req.user.role : 'user',
+    gameConfigs,
+    pendingTradeCount,
+    items,
+    totalItems: items.length,
+  });
+});
+
+// Feedback page (login required)
+app.get('/feedback', (req, res) => {
+  const { gameConfigs } = require('./controllers/gameController');
+  const { Trade } = require('./models');
+  const { Op } = require('sequelize');
+
+  if (!req.user) {
+    return res.redirect('/');
+  }
+
+  (async () => {
+    let pendingTradeCount = 0;
+    pendingTradeCount = await Trade.count({
+      where: {
+        status: 'awaiting_confirmation',
+        [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }],
+      },
+    });
+
+    res.render('feedback', {
+      userId: req.user.id,
+      username: req.user.username,
+      email: req.user.email,
+      role: req.user.role,
+      gameConfigs,
+      pendingTradeCount,
+    });
+  })();
+});
+
 // Game pages
 app.get('/darksouls', gameController.darksouls);
 app.get('/darksouls2', gameController.darksouls2);

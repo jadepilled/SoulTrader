@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Item Database | SoulTrader</title>
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <%- include('partials/navbar', { title: 'Item DB', gameKey: '', activeNav: 'items', pendingTradeCount: typeof pendingTradeCount !== 'undefined' ? pendingTradeCount : 0 }) %>
+
+  <div class="main-content">
+    <h1 class="section-title" style="margin-top:0.5rem;">Item Database</h1>
+    <p style="text-align:center; color:var(--text-muted); margin-bottom:1.5rem; font-size:0.88rem;">
+      Browse all <%= totalItems %> tradeable items across all SoulsBorne games.
+    </p>
+
+    <!-- Filters -->
+    <div class="itemdb-filters">
+      <div class="filter-group">
+        <label for="gameFilter">Game</label>
+        <select id="gameFilter">
+          <option value="all">All Games</option>
+          <option value="Dark Souls">Dark Souls</option>
+          <option value="Dark Souls 2">Dark Souls 2</option>
+          <option value="Dark Souls 3">Dark Souls 3</option>
+          <option value="Bloodborne">Bloodborne</option>
+          <option value="Elden Ring">Elden Ring</option>
+          <option value="Demon's Souls">Demon's Souls</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="typeFilter">Type</label>
+        <select id="typeFilter">
+          <option value="all">All Types</option>
+        </select>
+      </div>
+      <div class="filter-group" style="flex:1; min-width:180px;">
+        <label for="itemSearch">Search</label>
+        <input type="text" id="itemSearch" placeholder="Search items..." />
+      </div>
+      <div class="itemdb-count">
+        <span id="visibleCount"><%= totalItems %></span> items
+      </div>
+    </div>
+
+    <!-- Item Grid (rendered client-side for performance) -->
+    <div id="itemGrid" class="itemdb-grid"></div>
+    <div id="noResults" class="no-offers-card" style="display:none;">No items match your filters.</div>
+  </div>
+
+  <%- include('partials/auth-modals') %>
+  <%- include('partials/footer') %>
+  <script src="/js/auth.js"></script>
+
+  <script>
+    // All items passed from server as JSON
+    const ALL_ITEMS = <%- JSON.stringify(items) %>;
+
+    // Game color mapping
+    const GAME_COLORS = {
+      'Dark Souls':    { color: '#7b86a2', rgb: '123, 134, 162' },
+      'Dark Souls 2':  { color: '#8b7eaa', rgb: '139, 126, 170' },
+      'Dark Souls 3':  { color: '#6e7fa0', rgb: '110, 127, 160' },
+      'Bloodborne':    { color: '#8b3a3a', rgb: '139, 58, 58' },
+      'Elden Ring':    { color: '#c8a84e', rgb: '200, 168, 78' },
+      "Demon's Souls": { color: '#8a8a8a', rgb: '138, 138, 138' },
+    };
+
+    // Extract all unique types
+    const ALL_TYPES = [...new Set(ALL_ITEMS.map(i => i.type))].sort();
+
+    const gameFilter  = document.getElementById('gameFilter');
+    const typeFilter  = document.getElementById('typeFilter');
+    const searchInput = document.getElementById('itemSearch');
+    const grid        = document.getElementById('itemGrid');
+    const noResults   = document.getElementById('noResults');
+    const countEl     = document.getElementById('visibleCount');
+
+    // Populate type filter
+    function populateTypes(game) {
+      const items = game === 'all' ? ALL_ITEMS : ALL_ITEMS.filter(i => i.game === game);
+      const types = [...new Set(items.map(i => i.type))].sort();
+      const currentType = typeFilter.value;
+      typeFilter.innerHTML = '<option value="all">All Types</option>';
+      types.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+        typeFilter.appendChild(opt);
+      });
+      // Restore selection if still valid
+      if (types.includes(currentType)) typeFilter.value = currentType;
+    }
+
+    function renderItems() {
+      const game   = gameFilter.value;
+      const type   = typeFilter.value;
+      const query  = searchInput.value.toLowerCase().trim();
+
+      let filtered = ALL_ITEMS;
+      if (game !== 'all') filtered = filtered.filter(i => i.game === game);
+      if (type !== 'all') filtered = filtered.filter(i => i.type === type);
+      if (query) filtered = filtered.filter(i => i.name.toLowerCase().includes(query));
+
+      // Sort: items with icons first, then alphabetically
+      filtered.sort((a, b) => {
+        if (a.iconPath && !b.iconPath) return -1;
+        if (!a.iconPath && b.iconPath) return 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      countEl.textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        noResults.style.display = 'block';
+        return;
+      }
+
+      noResults.style.display = 'none';
+
+      // Build HTML in batches for performance
+      const fragment = document.createDocumentFragment();
+
+      filtered.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'itemdb-card';
+
+        const gc = GAME_COLORS[item.game] || { color: '#8a8a8a', rgb: '138, 138, 138' };
+
+        // Icon
+        const iconWrap = document.createElement('div');
+        iconWrap.className = 'itemdb-card-icon';
+        if (item.iconPath) {
+          const img = document.createElement('img');
+          img.src = item.iconPath;
+          img.alt = item.name;
+          img.loading = 'lazy';
+          img.onerror = function() {
+            this.style.display = 'none';
+            const fb = document.createElement('span');
+            fb.className = 'itemdb-icon-fallback';
+            fb.textContent = item.name.charAt(0).toUpperCase();
+            fb.style.color = gc.color;
+            iconWrap.appendChild(fb);
+          };
+          iconWrap.appendChild(img);
+        } else {
+          const fb = document.createElement('span');
+          fb.className = 'itemdb-icon-fallback';
+          fb.textContent = item.name.charAt(0).toUpperCase();
+          fb.style.color = gc.color;
+          iconWrap.appendChild(fb);
+        }
+        card.appendChild(iconWrap);
+
+        // Name
+        const nameEl = document.createElement('div');
+        nameEl.className = 'itemdb-card-name';
+        nameEl.textContent = item.name;
+        nameEl.title = item.name;
+        card.appendChild(nameEl);
+
+        // Meta (type + game)
+        const metaEl = document.createElement('div');
+        metaEl.className = 'itemdb-card-meta';
+
+        const typeBadge = document.createElement('span');
+        typeBadge.className = 'itemdb-type-badge';
+        typeBadge.textContent = item.type;
+
+        const gameBadge = document.createElement('span');
+        gameBadge.className = 'itemdb-game-badge';
+        gameBadge.textContent = item.game.replace("Demon's Souls", 'DeS').replace('Dark Souls 2', 'DS2').replace('Dark Souls 3', 'DS3').replace('Dark Souls', 'DS1').replace('Elden Ring', 'ER').replace('Bloodborne', 'BB');
+        gameBadge.style.color = gc.color;
+        gameBadge.style.borderColor = `rgba(${gc.rgb}, 0.4)`;
+
+        metaEl.appendChild(typeBadge);
+        metaEl.appendChild(gameBadge);
+        card.appendChild(metaEl);
+
+        fragment.appendChild(card);
+      });
+
+      grid.innerHTML = '';
+      grid.appendChild(fragment);
+    }
+
+    gameFilter.addEventListener('change', () => {
+      populateTypes(gameFilter.value);
+      renderItems();
+    });
+    typeFilter.addEventListener('change', renderItems);
+
+    let searchTimer;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(renderItems, 150);
+    });
+
+    // Initial render
+    populateTypes('all');
+    renderItems();
+  </script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback | SoulTrader</title>
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <%- include('partials/navbar', { title: 'Feedback', gameKey: '', pendingTradeCount: typeof pendingTradeCount !== 'undefined' ? pendingTradeCount : 0 }) %>
+
+  <div class="main-content">
+    <h1 class="section-title" style="margin-top:0.5rem;">Feedback</h1>
+
+    <div class="feedback-container">
+      <div class="feedback-user-info">
+        <p>Submitting as <strong><%= username %></strong> (<%= email %>)</p>
+      </div>
+
+      <div class="feedback-form-wrap">
+        <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:1.5rem; text-align:center;">
+          Help us improve SoulTrader. Report bugs, suggest features, or share your thoughts.
+        </p>
+        <div id="ratufa-container">
+          <script id="ratufa_loader" src="https://www.ratufa.io/c/ld.js?f=beuxtulp&n=n1.ratufa.io"></script>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('partials/auth-modals') %>
+  <%- include('partials/footer') %>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

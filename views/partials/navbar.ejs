@@ -9,6 +9,7 @@
         <a href="/<%= key %>" class="<%= typeof gameKey !== 'undefined' && gameKey === key ? 'nav-active' : '' %>"><%= cfg.title.replace(/:.+/, '').trim() %></a>
       <% }); %>
     <% } %>
+    <a href="/items" class="<%= typeof activeNav !== 'undefined' && activeNav === 'items' ? 'nav-active' : '' %>">Item DB</a>
   </div>
 
   <div class="nav-user">
@@ -20,6 +21,7 @@
         <% } %>
       </a>
       <a href="/profile">Profile</a>
+      <a href="/feedback">Feedback</a>
       <% if (typeof role !== 'undefined' && role === 'admin') { %>
         <a href="/admin" style="color: #fa9cff;">Admin</a>
       <% } %>
@@ -30,3 +32,9 @@
     <% } %>
   </div>
 </nav>
+
+<!-- Alpha Disclaimer Banner -->
+<div class="alpha-banner" id="alphaBanner">
+  <span>SoulTrader is currently in alpha. Features may change and bugs may occur. <a href="/feedback">Report issues</a></span>
+  <button class="alpha-banner-close" onclick="document.getElementById('alphaBanner').style.display='none'">&times;</button>
+</div>

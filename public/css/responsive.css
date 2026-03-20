@@ -43,9 +43,31 @@
     display: flex;
   }
 
-  /* Content */
+  /* Alpha banner wraps on mobile */
+  .alpha-banner {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.75rem;
+  }
+
+  /* Content — extra padding for stacked navbar + alpha banner */
   .main-content {
-    padding: 5.5rem 1rem 2rem;
+    padding: 7rem 1rem 2rem;
+  }
+
+  /* Item DB grid — smaller cards on mobile */
+  .itemdb-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.4rem;
+  }
+
+  .itemdb-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .itemdb-count {
+    margin-left: 0;
+    text-align: center;
   }
 
   /* Filter bar */

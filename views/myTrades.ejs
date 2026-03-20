@@ -17,6 +17,20 @@
     <h1 class="section-title" style="margin-top:0.5rem;">My Trades</h1>
 
     <%
+      const gameColorMap = {
+        'Dark Souls':    { color: '#7b86a2', rgb: '123, 134, 162' },
+        'Dark Souls 2':  { color: '#8b7eaa', rgb: '139, 126, 170' },
+        'Dark Souls 3':  { color: '#6e7fa0', rgb: '110, 127, 160' },
+        'Bloodborne':    { color: '#8b3a3a', rgb: '139, 58, 58' },
+        'Elden Ring':    { color: '#c8a84e', rgb: '200, 168, 78' },
+        "Demon's Souls": { color: '#8a8a8a', rgb: '138, 138, 138' },
+      };
+
+      function getGameBannerStyle(gameName) {
+        const gc = gameColorMap[gameName] || { color: '#8a8a8a', rgb: '138, 138, 138' };
+        return `background: rgba(${gc.rgb}, 0.2); color: ${gc.color}; border-bottom: 1px solid rgba(${gc.rgb}, 0.3);`;
+      }
+
       function getStatusBadge(trade) {
         const s = trade.status;
         if (s === 'open') return '<span class="status-badge status-open">Open</span>';
@@ -55,12 +69,12 @@
           const reqItems = Array.isArray(trade.requestedItems)  ? trade.requestedItems  : [];
         %>
           <div class="trade-card">
+            <% if (trade.game) { %>
+              <div class="trade-card-banner" style="<%- getGameBannerStyle(trade.game) %>"><%= trade.game %></div>
+            <% } %>
             <div class="offer-heading">
-              <% if (trade.game) { %>
-                <span class="game-badge"><%= trade.game %></span>
-              <% } %>
               <% if (trade.characterLevel) { %>
-                <span class="char-level-badge">SL <%= trade.characterLevel %></span>
+                <span class="char-level-badge">LVL <%= trade.characterLevel %></span>
               <% } %>
               <span class="platform"><%= trade.platform %></span>
               <span class="time-ago"><%= getTimeAgo(trade.createdAt) %></span>
@@ -168,12 +182,12 @@
           const reqItems = Array.isArray(trade.requestedItems)  ? trade.requestedItems  : [];
         %>
           <div class="trade-card">
+            <% if (trade.game) { %>
+              <div class="trade-card-banner" style="<%- getGameBannerStyle(trade.game) %>"><%= trade.game %></div>
+            <% } %>
             <div class="offer-heading">
-              <% if (trade.game) { %>
-                <span class="game-badge"><%= trade.game %></span>
-              <% } %>
               <% if (trade.characterLevel) { %>
-                <span class="char-level-badge">SL <%= trade.characterLevel %></span>
+                <span class="char-level-badge">LVL <%= trade.characterLevel %></span>
               <% } %>
               <span class="platform"><%= trade.platform %></span>
               <span class="time-ago"><%= getTimeAgo(trade.createdAt) %></span>

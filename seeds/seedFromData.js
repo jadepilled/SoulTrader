@@ -31,8 +31,45 @@ const TYPE_MAP = {
   legs: 'legs',
 };
 
-// ── Manually-defined items (consumables, rings, misc — no icon data) ────────
+// ── Boss Souls & Consumable Souls with icons (DS1) ──────────────────────────
+const DS1_SOUL_ITEMS = [
+  // Boss Souls
+  { name: 'Core of an Iron Golem',       type: 'soul', iconFile: 'Core of an Iron Golem.webp' },
+  { name: 'Soul of Gwyn, Lord of Cinder', type: 'soul', iconFile: 'Soul of Gwyn, Lord of Cinder.webp' },
+  { name: 'Soul of Gwyndolin',            type: 'soul', iconFile: 'Soul of Gwyndolin.webp' },
+  { name: 'Soul of Ornstein',             type: 'soul', iconFile: 'Soul of Ornstein.webp' },
+  { name: 'Soul of Priscilla',            type: 'soul', iconFile: 'Soul of Priscilla.webp' },
+  { name: 'Soul of Quelaag',              type: 'soul', iconFile: 'Soul of Quelaag.webp' },
+  { name: 'Soul of Sif',                  type: 'soul', iconFile: 'Soul of Sif.webp' },
+  { name: 'Soul of Smough',               type: 'soul', iconFile: 'Soul of Smough.webp' },
+  { name: 'Soul of the Moonlight Butterfly', type: 'soul', iconFile: 'Soul of the Moonlight Butterfly.webp' },
+  // Consumable Soul Items
+  { name: 'Soul of a Lost Undead',         type: 'soul', iconFile: 'Soul of a Lost Undead (200).webp' },
+  { name: 'Large Soul of a Lost Undead',   type: 'soul', iconFile: 'Large Soul of a Lost Undead (400).webp' },
+  { name: 'Soul of a Nameless Soldier',    type: 'soul', iconFile: 'Soul of a Nameless Soldier (800).webp' },
+  { name: 'Large Soul of a Nameless Soldier', type: 'soul', iconFile: 'Large Soul of a Nameless Soldier (1,000).webp' },
+  { name: 'Soul of a Proud Knight',        type: 'soul', iconFile: 'Soul of a Proud Knight (2,000).webp' },
+  { name: 'Large Soul of a Proud Knight',  type: 'soul', iconFile: 'Large Soul of a Proud Knight (3,000).webp' },
+  { name: 'Soul of a Brave Warrior',       type: 'soul', iconFile: 'Soul of a Brave Warrior (8,000).webp' },
+  { name: 'Large Soul of a Brave Warrior', type: 'soul', iconFile: 'Large Soul of a Brave Warrior (5,000).webp' },
+  { name: 'Soul of a Hero',                type: 'soul', iconFile: 'Soul of a Hero (10,000).webp' },
+  { name: 'Soul of a Great Hero',          type: 'soul', iconFile: 'Soul of a Great Hero (20,000).webp' },
+];
+
+// ── Manually-defined items (consumables, rings, misc, currencies — no icon data) ────
 const MANUAL_ITEMS = [
+  // ═══════════════════════════════════════════
+  //  CURRENCIES (all games)
+  // ═══════════════════════════════════════════
+  { game: 'Dark Souls',    type: 'currency', name: 'Souls' },
+  { game: 'Dark Souls 2',  type: 'currency', name: 'Souls' },
+  { game: 'Dark Souls 3',  type: 'currency', name: 'Souls' },
+  { game: 'Dark Souls 3',  type: 'currency', name: 'Ember' },
+  { game: 'Bloodborne',    type: 'currency', name: 'Blood Echoes' },
+  { game: 'Bloodborne',    type: 'currency', name: 'Insight' },
+  { game: 'Elden Ring',    type: 'currency', name: 'Runes' },
+  { game: "Demon's Souls", type: 'currency', name: 'Souls' },
+
   // ═══════════════════════════════════════════
   //  DARK SOULS
   // ═══════════════════════════════════════════
@@ -278,8 +315,32 @@ const MANUAL_ITEMS = [
       }
     }
 
-    // ── Phase 2: Seed manual items (consumables, rings, misc) ─────────────
-    console.log('\n=== Phase 2: Seeding manual items (consumables, rings, misc) ===\n');
+    // ── Phase 2: Seed DS1 soul items (boss souls + consumable souls with icons) ──
+    console.log('\n=== Phase 2: Seeding DS1 soul items (with icons) ===\n');
+
+    for (const entry of DS1_SOUL_ITEMS) {
+      const gameName = 'Dark Souls';
+      const iconPath = `/data/icons/ds1/souls/${entry.iconFile}`;
+
+      const [item, wasCreated] = await Item.findOrCreate({
+        where: { name: entry.name, game: gameName },
+        defaults: { name: entry.name, game: gameName, type: entry.type, iconPath },
+      });
+
+      if (wasCreated) {
+        stats[gameName].created++;
+      } else {
+        if (item.iconPath !== iconPath) {
+          await item.update({ iconPath });
+          stats[gameName].updated++;
+        } else {
+          stats[gameName].skipped++;
+        }
+      }
+    }
+
+    // ── Phase 3: Seed manual items (consumables, rings, misc, currencies) ──
+    console.log('\n=== Phase 3: Seeding manual items (consumables, rings, misc, currencies) ===\n');
 
     for (const entry of MANUAL_ITEMS) {
       if (!stats[entry.game]) {

@@ -319,8 +319,9 @@
                  data-platform="<%= offer.platform %>"
                  data-created-at="<%= offer.createdAt.getTime() %>">
 
+              <div class="trade-card-banner"><%= offer.game %></div>
+
               <div class="offer-heading">
-                <span class="game-badge"><%= offer.game %></span>
                 Offer from
                 <span class="tooltip" tabindex="0" style="<%= getUsernameStyle(offer.offerCreator.role) %>">
                   <a href="/profile/<%= offer.offerCreator.username %>" style="color:inherit; text-decoration:none;">
@@ -378,7 +379,7 @@
               <div class="trade-details">
                 <div class="platform">Platform: <%= offer.platform %></div>
                 <% if (offer.characterLevel) { %>
-                  <span class="char-level-badge">SL <%= offer.characterLevel %></span>
+                  <span class="char-level-badge">LVL <%= offer.characterLevel %></span>
                 <% } %>
                 <% if (offer.additionalNotes) { %>
                   <div class="notes">Notes: <%= offer.additionalNotes %></div>
