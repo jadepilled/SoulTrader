@@ -37,6 +37,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/icons', express.static(path.join(__dirname, 'icons')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/data', express.static(path.join(__dirname, 'data')));
 
 // Session (needed for OAuth flow only)
 app.use(session({
@@ -72,13 +73,30 @@ app.use('/profile', profileRoutes);
 app.use('/admin', adminRoutes);
 
 // Homepage
-app.get('/', (req, res) => {
-  const { gameConfigs } = require('./controllers/gameController');
+app.get('/', async (req, res) => {
+  const { gameConfigs, getUsernameStyle } = require('./controllers/gameController');
+  const { Trade } = require('./models');
+  const { Op } = require('sequelize');
+
+  let pendingTradeCount = 0;
+  if (req.user) {
+    pendingTradeCount = await Trade.count({
+      where: {
+        status: 'awaiting_confirmation',
+        [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }],
+      },
+    });
+  }
+
   res.render('index', {
     userId: req.user ? req.user.id : null,
     username: req.user ? req.user.username : null,
+    role: req.user ? req.user.role : 'user',
+    karma: req.user ? (req.user.positiveKarma - req.user.negativeKarma) : 0,
+    usernameStyle: getUsernameStyle(req.user ? req.user.role : 'user'),
     query: req.query,
     gameConfigs,
+    pendingTradeCount,
   });
 });
 

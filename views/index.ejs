@@ -10,29 +10,9 @@
   <link rel="stylesheet" href="/css/responsive.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="brand"><a href="/">SoulTrader</a></div>
-    <button class="hamburger" id="hamburgerBtn" aria-label="Menu">&#9776;</button>
-    <div class="nav-links" id="navLinks">
-      <% if (typeof gameConfigs !== 'undefined') { %>
-        <% Object.entries(gameConfigs).forEach(([key, cfg]) => { %>
-          <a href="/<%= key %>"><%= cfg.title.replace(/:.+/, '').trim() %></a>
-        <% }); %>
-      <% } %>
-      <div class="nav-user">
-        <% if (userId) { %>
-          <a href="/trade/my-trades" style="font-weight:600;">My Trades</a>
-          <a href="/profile" style="font-weight:600;">Profile</a>
-          <a href="/auth/logout" style="font-weight:600;">Log Out</a>
-        <% } else { %>
-          <a href="#" id="openSignupLink" style="font-weight:600;">Sign Up</a>
-          <a href="#" id="openLoginLink" style="font-weight:600;">Log In</a>
-        <% } %>
-      </div>
-    </div>
-  </nav>
+  <%- include('partials/navbar', { title: 'Home', gameKey: '', pendingTradeCount: typeof pendingTradeCount !== 'undefined' ? pendingTradeCount : 0 }) %>
 
-  <div class="main-content" style="padding-top:100px;">
+  <div class="main-content" style="padding-top:5rem;">
     <%- include('partials/flash-messages') %>
 
     <div class="home-grid">

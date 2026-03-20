@@ -82,6 +82,10 @@ const Trade = sequelize.define('Trade', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  characterLevel: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
 }, {
   tableName: 'trades',
   timestamps: true,

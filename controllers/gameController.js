@@ -18,8 +18,8 @@ const gameConfigs = {
     title: 'Dark Souls: Remastered',
     game: 'Dark Souls',
     gameKey: 'darksouls',
-    accentColor: '#c91010',
-    accentColorRgb: '201, 16, 16',
+    accentColor: '#8a8a8a',
+    accentColorRgb: '138, 138, 138',
     secondaryColor: '#0061ff',
     secondaryColorRgb: '0, 97, 255',
     logoUrl: 'https://i.imgur.com/B7uNYzr.png',
@@ -48,8 +48,8 @@ const gameConfigs = {
     title: 'Bloodborne',
     game: 'Bloodborne',
     gameKey: 'bloodborne',
-    accentColor: '#8b0000',
-    accentColorRgb: '139, 0, 0',
+    accentColor: '#7a7a8a',
+    accentColorRgb: '122, 122, 138',
     secondaryColor: '#c0c0c0',
     secondaryColorRgb: '192, 192, 192',
     logoUrl: 'https://i.imgur.com/0q8jRGA.png',
@@ -99,6 +99,18 @@ const renderGamePage = async (req, res, gameKey) => {
     const karma = req.user ? (req.user.positiveKarma - req.user.negativeKarma) : 0;
     const usernameStyle = getUsernameStyle(role);
 
+    // Pending trade count for navbar
+    let pendingTradeCount = 0;
+    if (userId) {
+      const { Op } = require('sequelize');
+      pendingTradeCount = await Trade.count({
+        where: {
+          status: 'awaiting_confirmation',
+          [Op.or]: [{ offerCreatorId: userId }, { acceptorId: userId }],
+        },
+      });
+    }
+
     res.render('game', {
       ...config,
       items,
@@ -111,6 +123,7 @@ const renderGamePage = async (req, res, gameKey) => {
       query: req.query,
       getUsernameStyle,
       gameConfigs,
+      pendingTradeCount,
     });
   } catch (err) {
     console.error(`Error fetching ${gameKey} data:`, err);

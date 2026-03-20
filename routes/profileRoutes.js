@@ -51,15 +51,34 @@ router.get('/:username', async (req, res) => {
       return res.status(404).send('User not found.');
     }
 
+    const { Op } = require('sequelize');
+
     // Count trades
     const completedTradeCount = await Trade.count({
       where: {
         status: 'completed',
-        [require('sequelize').Op.or]: [
+        [Op.or]: [
           { offerCreatorId: user.id },
           { acceptorId: user.id },
         ],
       },
+    });
+
+    // Recent completed trades for trade history
+    const recentTrades = await Trade.findAll({
+      where: {
+        status: 'completed',
+        [Op.or]: [
+          { offerCreatorId: user.id },
+          { acceptorId: user.id },
+        ],
+      },
+      include: [
+        { model: User, as: 'offerCreator', attributes: ['username', 'role'] },
+        { model: User, as: 'acceptor',     attributes: ['username', 'role'] },
+      ],
+      order: [['updatedAt', 'DESC']],
+      limit: 5,
     });
 
     const totalKarma = user.positiveKarma - user.negativeKarma;
@@ -75,6 +94,7 @@ router.get('/:username', async (req, res) => {
       completedTradeCount,
       totalKarma,
       positivePercent,
+      recentTrades,
       isOwnProfile,
       userId: req.user ? req.user.id : null,
       username: req.user ? req.user.username : null,
@@ -94,8 +114,15 @@ router.get('/:username', async (req, res) => {
 // ─── Update bio ──────────────────────────────────────────────────────────────
 router.post('/update', ensureAuthenticated, profileUpdateLimiter, async (req, res) => {
   try {
-    const { bio } = req.body;
-    req.user.bio = bio ? bio.substring(0, 500) : '';
+    let { bio } = req.body;
+    if (bio) {
+      bio = bio.substring(0, 500);
+      // Strip URLs/links but preserve line breaks
+      bio = bio.replace(/https?:\/\/[^\s]+/gi, '')
+               .replace(/www\.[^\s]+/gi, '')
+               .replace(/[a-z0-9.-]+\.[a-z]{2,}(\/[^\s]*)?/gi, '');
+    }
+    req.user.bio = bio || '';
     await req.user.save();
     res.redirect(`/profile/${req.user.username}?profile=updated`);
   } catch (err) {

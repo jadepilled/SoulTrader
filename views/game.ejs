@@ -162,7 +162,7 @@
   </style>
 </head>
 <body>
-  <%- include('partials/navbar') %>
+  <%- include('partials/navbar', { pendingTradeCount: typeof pendingTradeCount !== 'undefined' ? pendingTradeCount : 0 }) %>
 
   <div class="main-content">
     <!-- Game Logo -->
@@ -224,6 +224,9 @@
             <option value="Xbox">Xbox</option>
             <option value="PC">PC</option>
           </select>
+
+          <label for="characterLevel">Character Level <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
+          <input type="number" id="characterLevel" name="characterLevel" min="1" max="999" placeholder="e.g. 120" style="width:120px;" />
 
           <label for="additionalNotes">Additional Notes <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
           <textarea id="additionalNotes" name="additionalNotes" placeholder="Meeting point, character level, timezone…"></textarea>
@@ -317,9 +320,12 @@
                  data-created-at="<%= offer.createdAt.getTime() %>">
 
               <div class="offer-heading">
+                <span class="game-badge"><%= offer.game %></span>
                 Offer from
                 <span class="tooltip" tabindex="0" style="<%= getUsernameStyle(offer.offerCreator.role) %>">
-                  <%= offer.offerCreator.username %>
+                  <a href="/profile/<%= offer.offerCreator.username %>" style="color:inherit; text-decoration:none;">
+                    <%= offer.offerCreator.username %>
+                  </a>
                   <span class="tooltiptext">
                     Karma: <%= offer.offerCreator.positiveKarma - offer.offerCreator.negativeKarma %><br>
                     Role: <%= offer.offerCreator.role %>
@@ -371,6 +377,9 @@
 
               <div class="trade-details">
                 <div class="platform">Platform: <%= offer.platform %></div>
+                <% if (offer.characterLevel) { %>
+                  <span class="char-level-badge">SL <%= offer.characterLevel %></span>
+                <% } %>
                 <% if (offer.additionalNotes) { %>
                   <div class="notes">Notes: <%= offer.additionalNotes %></div>
                 <% } %>

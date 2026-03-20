@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<link rel="manifest" href="resources/site.webmanifest">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+	<meta name="description" content="Up your Hunter's style with souls.fashion, the tool for finding color-matching attire and weapons in Bloodborne. Create a striking look as you explore Yharnam and face the nightmarish beasts in fashion.">
+		<meta property="og:site_name" content="Bloodborne - Fashion Souls" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;600;700&display=swap">
+	<link rel="stylesheet" href="resources/styles.css?v=1.0.9.2">
+		<link rel="icon" type="image/x-icon" href="icon.ico">
+		<link rel="icon" type="image/png" sizes="16x16" href="favicons/icon_16x16.png">
+		<link rel="icon" type="image/png" sizes="32x32" href="favicons/icon_32x32.png">
+		<link rel="icon" type="image/png" sizes="48x48" href="favicons/icon_48x48.png">
+		<link rel="icon" type="image/png" sizes="96x96" href="favicons/icon_96x96.png">
+		<link rel="apple-touch-icon" type="image/png" sizes="167x167" href="favicons/icon_167x167.png"> 
+		<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="favicons/icon_180x180.png">
+		<link rel="icon" href="favicon.ico">
+    <title>Bloodborne - Fashion Souls v1.0.9</title>
+    
+</head>
+  <body>
+    <div id="preloader" class="preloader">
+    <img src="icons/FS_icon_white.png" alt="souls.fashion" class="preloader-logo">
+</div>
+
+  <div id="fullScreenNotice" class="full-screen-notice">
+    <div class="notice-content">
+        <p>
+            Fashion Souls is an open-source community project - if you'd like to encourage its ongoing existence, please consider <a href="https://ko-fi.com/psyopgirl" target="_blank" rel="noopener noreferrer">supporting us</a>!
+        </p>
+        <p>
+            If the site looks strange or doesn't load, press <strong>ctrl + F5</strong> to re-cache your browser. Alternatively, delete your cache manually.
+        </p>
+        <p><span id="dismissNotice" class="notice-dismiss">Click here to dismiss this message</span></p>
+    </div>
+</div>
+    <nav class="navigation">
+      <div class="topnav">
+        <a class="FashionSouls-nav" href="index">
+          <img src="icons/FS_icon_white.png" alt="Fashion Souls" class="nav-brand-icon">
+        </a>
+        <div class="content-site-copy nav-site-copy">
+          <h3 class="content-site-title">Fashion Souls</h3>
+          <p class="site-tagline">SoulsBorne Fashion Tool by psyopgirl</p>
+        </div>
+        <div class="topnav-content">
+        <div class="search-bar">
+          <div class="color-picker-group">
+            <input
+              class="color-picker"
+              type="color"
+              id="favcolor"
+              name="favcolor"
+              value="#ffffff"
+            />
+          </div>
+          <input
+            class="search-input"
+            type="text"
+            id="searchInput"
+            placeholder="Search by item"
+          />
+          <div class="search-bar-buttons">
+            <button class="toggle-search-button" id="toggleSearch">Item</button>
+          </div>
+        </div>
+        <div class="links-group">
+          <a href="index">Home</a>
+          <div class="dropdown">
+            <!-- <button class="dropbtn">Games -->
+            </button>
+            <div class="dropdown-content">
+                <a href="ds1">Dark Souls Remastered</a>
+                <a href="ds2">Dark Souls II: SotFS</a>
+                <a href="ds3">Dark Souls III</a>
+            </div>
+          </div>
+          <a href="https://discord.gg/j8HHh8ffEn">Discord</a>
+          <a href="https://github.com/jadepilled/souls-fashion">Github</a>
+          <a href="https://ko-fi.com/psyopgirl">Donate</a>
+          <a href="feedback">Feedback</a>
+                  <button class="mode-switch" id="modeToggle" aria-label="Toggle display mode" title="Toggle display mode">â—</button>
+        </div>
+        </div>
+        <button class="show-menu">
+          <img class="menu-icon" src="resources/icons/menu.svg" />
+        </button>
+      </div>
+      <div class="filters-group">
+        <div class="filter-buttons">
+          <button id="headFilter">Head</button>
+          <button id="chestFilter">Chest</button>
+          <button id="handsFilter">Hands</button>
+          <button id="legsFilter">Legs</button>
+          <button id="weaponsFilter">Weapons</button>
+          <button id="shieldsFilter">Shields</button>
+          <button id="clearFilter">Clear Filters</button>
+        </div>
+        <div class="sliders">
+          <div class="slider-container">
+            <label for="secondaryWeightSlider" class="slider-label">Secondary Colour Weight</label>
+            <input
+              type="range"
+              id="secondaryWeightSlider"
+              name="secondaryWeight"
+              min="0"
+              max="1"
+              step="0.1"
+              value="0.5"
+            />
+            <p id="sliderValue">0.5</p>
+          </div>
+          <div class="slider-container">
+            <label for="colorThresholdSlider" class="slider-label">Colour Similarity Threshold</label>
+            <input
+              type="range"
+              id="colorThresholdSlider"
+              name="colorThreshold"
+              min="0"
+              max="40"
+              step="1"
+              value="18"
+            />
+            <p id="colorThresholdValue">18</p>
+          </div>
+          <div class="slider-container">
+            <label for="gridZoomSlider" class="slider-label">Tile Size</label>
+            <input
+              type="range"
+              id="gridZoomSlider"
+              name="gridZoom"
+              min="80"
+              max="150"
+              step="1"
+              value="103"
+            />
+            <p id="gridZoomValue">103%</p>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="FashionSouls">
+      <h2 >Fashion Souls</h2>
+      <h3 class="site-tagline">SoulsBorne fashion tool by psyopgirl</h3>
+    </div>
+
+
+    <div id="contextMenu" class="custom-context-menu">
+      <ul id="contextMenuList">
+          <li id="removeItemOption">Remove Item</li>
+      </ul>
+    </div>
+
+    <div class="hover-trigger">
+      <div class="pinned">
+        <!-- <div class="tooltip">
+          <span class="tooltip-text">
+            To commit an item to the outfit simulator, right click an item card and select 'send to outfit simulator'.
+          </span>
+        </div> -->
+          <div class="pinned-buttons">
+            <!-- <a href="simulator_eldenring" class="link">
+              View Presets
+            </a> -->
+            <button id="export">Export</button>
+          </div>
+        <div class="slots" id="outfitSlots">
+          <!-- Slots will be dynamically loaded here -->
+        </div>
+      </div>
+    </div>
+    <main class="item-grid" id="itemGrid">
+      <p>Loading...</p>
+      <!-- Items will be dynamically loaded here -->
+    </main>
+
+    <footer class="footer">
+      Copyright Â© psyopgirl 2024.<br />
+      Dark Souls, Elden Ring, Bloodborne & Demon's Souls are property of Sony &
+      FromSoftware respectively.
+
+      <button class="back-to-top-button">Back to Top</button>
+    </footer>
+
+    <script src="resources/js/page-transition.js?v=1.0.9.2"></script>
+    <script src="search_items.js?v=1.0.9.2"></script>
+    <script src="resources/js/game-page.js?v=1.0.9.2"></script>
+  
+  </body>
+</html>

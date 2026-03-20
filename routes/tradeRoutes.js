@@ -83,6 +83,8 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
       iconPath: item.iconPath || null,
     }));
 
+    const charLevel = parseInt(req.body.characterLevel, 10);
+
     await Trade.create({
       offeredItems:   sanitize(offeredArr),
       requestedItems: sanitize(requestedArr),
@@ -90,6 +92,7 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
       additionalNotes: additionalNotes || null,
       game: gameName,
       offerCreatorId: req.user.id,
+      characterLevel: (!isNaN(charLevel) && charLevel >= 1 && charLevel <= 999) ? charLevel : null,
     });
 
     const gameKey = Object.keys(gameKeyMap).find(k => gameKeyMap[k] === gameName) || 'darksouls';
@@ -113,6 +116,8 @@ router.get('/details/:id', async (req, res) => {
       offeredItems:   trade.offeredItems,   // already parsed array via getter
       requestedItems: trade.requestedItems,
       game:           trade.game,
+      platform:       trade.platform,
+      characterLevel: trade.characterLevel,
     });
   } catch (err) {
     console.error('Error fetching trade details:', err);
@@ -320,6 +325,10 @@ router.get('/my-trades', async (req, res) => {
       Trade.findAll({ where: { acceptorId:     userId }, include, order: [['createdAt', 'DESC']] }),
     ]);
 
+    // Count pending trades for navbar badge
+    const pendingTradeCount = createdTrades.filter(t => t.status === 'awaiting_confirmation').length
+      + acceptedTrades.filter(t => t.status === 'awaiting_confirmation').length;
+
     res.render('myTrades', {
       createdTrades,
       acceptedTrades,
@@ -327,9 +336,12 @@ router.get('/my-trades', async (req, res) => {
       userId,
       role:    req.user.role,
       karma:   req.user.positiveKarma - req.user.negativeKarma,
+      usernameStyle: getUsernameStyle(req.user.role),
       query:   req.query,
       getUsernameStyle,
       gameKeyMap,
+      gameConfigs: require('../controllers/gameController').gameConfigs,
+      pendingTradeCount,
     });
   } catch (err) {
     console.error('Error fetching trades:', err);

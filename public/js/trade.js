@@ -5,11 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Constants ──────────────────────────────────────────────────────────────
   const gameKey        = document.getElementById('gameKeyInput')?.value || '';
   const SEARCH_URL     = '/trade/search-items';
-  const UPGRADEABLE    = ['weapon', 'shield', 'armor'];
+  const UPGRADEABLE    = ['weapon', 'shield', 'armor', 'head', 'chest', 'hands', 'legs'];
 
   // Max upgrade level per game and item type
   function maxUpgrade(type) {
     if (!UPGRADEABLE.includes(type)) return 0;
+    // Armor slot types (head/chest/hands/legs) use same limits as 'armor'
+    const normalizedType = ['head', 'chest', 'hands', 'legs'].includes(type) ? 'armor' : type;
     const map = {
       darksouls:   { weapon: 15, shield: 15, armor: 10 },
       darksouls2:  { weapon: 10, shield: 10, armor: 10 },
@@ -18,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
       eldenring:   { weapon: 25, shield: 25, armor: 0  },
       demonssouls: { weapon: 10, shield: 10, armor: 10 },
     };
-    return (map[gameKey] || {})[type] || 0;
+    return (map[gameKey] || {})[normalizedType] || 0;
   }
 
   // ── Trade Creation Modal ───────────────────────────────────────────────────
