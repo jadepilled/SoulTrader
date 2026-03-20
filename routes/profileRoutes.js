@@ -29,6 +29,38 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// ─── User preview card (JSON — for hover card) ───────────────────────────────
+router.get('/preview/:username', async (req, res) => {
+  try {
+    const user = await User.findOne({
+      where: { username: req.params.username },
+      attributes: ['username', 'role', 'positiveKarma', 'negativeKarma', 'profileImagePath', 'createdAt'],
+    });
+    if (!user) return res.status(404).json({ error: 'Not found' });
+
+    const { Op } = require('sequelize');
+    const completedTradeCount = await Trade.count({
+      where: {
+        status: 'completed',
+        [Op.or]: [{ offerCreatorId: user.id }, { acceptorId: user.id }],
+      },
+    });
+
+    res.json({
+      username:            user.username,
+      role:                user.role,
+      positiveKarma:       user.positiveKarma,
+      negativeKarma:       user.negativeKarma,
+      profileImagePath:    user.profileImagePath,
+      completedTradeCount,
+      createdAt:           user.createdAt,
+    });
+  } catch (err) {
+    console.error('Preview error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ─── View own profile (redirect) ────────────────────────────────────────────
 router.get('/', ensureAuthenticated, (req, res) => {
   res.redirect(`/profile/${req.user.username}`);

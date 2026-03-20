@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
       qtyInput.type        = 'number';
       qtyInput.className   = 'item-qty-input';
       qtyInput.min         = 1;
+      qtyInput.max         = 10_000_000;
       qtyInput.value       = 1;
       qtyInput.placeholder = 'Qty';
       qtyInput.addEventListener('input', () => {
@@ -290,7 +291,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const label = document.createElement('span');
       label.className   = 'preview-item-label';
       let text = item.name;
-      if (item.qty > 1) text += ` ×${item.qty.toLocaleString()}`;
+      const qLabel = fmtQty(item.qty);
+      if (qLabel) text += ` ×${qLabel}`;
       if (item.upgrade !== null && item.upgrade !== undefined) text += ` [+${item.upgrade}]`;
       label.textContent = text;
 
@@ -389,7 +391,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const detailsEl = document.getElementById('tradeDetails');
         if (detailsEl) {
           const fmt = items => (items || []).map(i => {
-            let s = i.name + (i.qty > 1 ? ` ×${i.qty}` : '');
+            const ql = fmtQty(i.qty);
+            let s = i.name + (ql ? ` ×${ql}` : '');
             if (i.upgrade !== null && i.upgrade !== undefined) s += ` [+${i.upgrade}]`;
             return s;
           }).join(', ');
@@ -451,4 +454,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Utility ──────────────────────────────────────────────────────────────────
 function slugify(str) {
   return str.toLowerCase().replace(/['']/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function fmtQty(n) {
+  n = parseInt(n, 10) || 1;
+  if (n <= 1) return null;
+  if (n >= 1_000_000) return parseFloat((n / 1_000_000).toFixed(2)) + 'M';
+  if (n >= 1_000)     return parseFloat((n / 1_000).toFixed(1))     + 'K';
+  return String(n);
 }

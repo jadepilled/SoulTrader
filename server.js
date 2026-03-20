@@ -61,6 +61,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Global EJS helper: format large quantities as K / M ──────────────────────
+app.locals.fmtQty = (n) => {
+  n = parseInt(n, 10) || 1;
+  if (n <= 1) return null;
+  if (n >= 1_000_000) {
+    const v = n / 1_000_000;
+    return parseFloat(v.toFixed(2)).toString() + 'M';
+  }
+  if (n >= 1_000) {
+    const v = n / 1_000;
+    return parseFloat(v.toFixed(1)).toString() + 'K';
+  }
+  return String(n);
+};
+
 // ─── EJS Setup ───────────────────────────────────────────────────────────────
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));

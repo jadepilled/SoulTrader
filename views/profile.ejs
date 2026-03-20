@@ -290,7 +290,7 @@
                 <h2>Offered</h2>
                 <% offItems.forEach(item => {
                   const metaParts = [];
-                  if (item.qty > 1) metaParts.push('\u00d7' + item.qty);
+                  const _pq = fmtQty(item.qty); if (_pq) metaParts.push('\u00d7' + _pq);
                   if (item.upgrade !== null && item.upgrade !== undefined) metaParts.push('+' + item.upgrade);
                   const meta = metaParts.join(' ');
                 %>
@@ -309,7 +309,7 @@
                 <h2>Received</h2>
                 <% reqItems.forEach(item => {
                   const metaParts = [];
-                  if (item.qty > 1) metaParts.push('\u00d7' + item.qty);
+                  const _pq = fmtQty(item.qty); if (_pq) metaParts.push('\u00d7' + _pq);
                   if (item.upgrade !== null && item.upgrade !== undefined) metaParts.push('+' + item.upgrade);
                   const meta = metaParts.join(' ');
                 %>

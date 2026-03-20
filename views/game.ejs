@@ -332,14 +332,10 @@
 
               <div class="offer-heading">
                 Offer from
-                <span class="tooltip" tabindex="0" style="<%= getUsernameStyle(offer.offerCreator.role) %>">
-                  <a href="/profile/<%= offer.offerCreator.username %>" style="color:inherit; text-decoration:none;">
-                    <%= offer.offerCreator.username %>
-                  </a>
-                  <span class="tooltiptext">
-                    Karma: <%= offer.offerCreator.positiveKarma - offer.offerCreator.negativeKarma %><br>
-                    Role: <%= offer.offerCreator.role %>
-                  </span>
+                <span class="user-hover-trigger"
+                      data-username="<%= offer.offerCreator.username %>"
+                      style="<%= getUsernameStyle(offer.offerCreator.role) %>">
+                  <a href="/profile/<%= offer.offerCreator.username %>" style="color:inherit; text-decoration:none;"><%= offer.offerCreator.username %></a>
                 </span>
                 <span class="time-ago"><%= timeStr %></span>
               </div>
@@ -349,7 +345,7 @@
                   <h2>Offers</h2>
                   <% offItems.forEach(item => {
                     const metaParts = [];
-                    if (item.qty > 1) metaParts.push('×' + item.qty);
+                    const _oq = fmtQty(item.qty); if (_oq) metaParts.push('×' + _oq);
                     if (item.upgrade !== null && item.upgrade !== undefined) metaParts.push('+' + item.upgrade);
                     const meta = metaParts.join(' ');
                   %>
@@ -368,7 +364,7 @@
                   <h2>Wants</h2>
                   <% reqItems.forEach(item => {
                     const metaParts = [];
-                    if (item.qty > 1) metaParts.push('×' + item.qty);
+                    const _rq = fmtQty(item.qty); if (_rq) metaParts.push('×' + _rq);
                     if (item.upgrade !== null && item.upgrade !== undefined) metaParts.push('+' + item.upgrade);
                     const meta = metaParts.join(' ');
                   %>
@@ -416,5 +412,6 @@
   <%- include('partials/footer') %>
   <script src="/js/auth.js"></script>
   <script src="/js/trade.js"></script>
+  <script src="/js/user-hover.js"></script>
 </body>
 </html>

@@ -86,7 +86,7 @@
                 <h2>Offered</h2>
                 <% offItems.forEach(item => {
                   const metaParts = [];
-                  if (item.qty > 1) metaParts.push('\u00d7' + item.qty);
+                  const _mq = fmtQty(item.qty); if (_mq) metaParts.push('\u00d7' + _mq);
                   if (item.upgrade !== null && item.upgrade !== undefined) metaParts.push('+' + item.upgrade);
                   const meta = metaParts.join(' ');
                 %>
@@ -105,7 +105,7 @@
                 <h2>Requested</h2>
                 <% reqItems.forEach(item => {
                   const metaParts = [];
-                  if (item.qty > 1) metaParts.push('\u00d7' + item.qty);
+                  const _mq = fmtQty(item.qty); if (_mq) metaParts.push('\u00d7' + _mq);
                   if (item.upgrade !== null && item.upgrade !== undefined) metaParts.push('+' + item.upgrade);
                   const meta = metaParts.join(' ');
                 %>
@@ -126,12 +126,10 @@
               <% if (trade.acceptor) { %>
                 <p style="font-size:0.85rem; margin:0.5rem 0;">
                   Accepted by:
-                  <span class="tooltip" tabindex="0" style="<%= getUsernameStyle(trade.acceptor.role) %>">
+                  <span class="user-hover-trigger"
+                        data-username="<%= trade.acceptor.username %>"
+                        style="<%= getUsernameStyle(trade.acceptor.role) %>">
                     <a href="/profile/<%= trade.acceptor.username %>" style="color:inherit;"><%= trade.acceptor.username %></a>
-                    <span class="tooltiptext">
-                      Karma: <%= trade.acceptor.positiveKarma - trade.acceptor.negativeKarma %><br>
-                      Role: <%= trade.acceptor.role %>
-                    </span>
                   </span>
                 </p>
               <% } %>
@@ -199,7 +197,7 @@
                 <h2>Offered</h2>
                 <% offItems.forEach(item => {
                   const metaParts = [];
-                  if (item.qty > 1) metaParts.push('\u00d7' + item.qty);
+                  const _mq = fmtQty(item.qty); if (_mq) metaParts.push('\u00d7' + _mq);
                   if (item.upgrade !== null && item.upgrade !== undefined) metaParts.push('+' + item.upgrade);
                   const meta = metaParts.join(' ');
                 %>
@@ -218,7 +216,7 @@
                 <h2>Requested</h2>
                 <% reqItems.forEach(item => {
                   const metaParts = [];
-                  if (item.qty > 1) metaParts.push('\u00d7' + item.qty);
+                  const _mq = fmtQty(item.qty); if (_mq) metaParts.push('\u00d7' + _mq);
                   if (item.upgrade !== null && item.upgrade !== undefined) metaParts.push('+' + item.upgrade);
                   const meta = metaParts.join(' ');
                 %>
@@ -238,12 +236,10 @@
             <div class="trade-details">
               <p style="font-size:0.85rem; margin:0.5rem 0;">
                 Created by:
-                <span class="tooltip" tabindex="0" style="<%= getUsernameStyle(trade.offerCreator.role) %>">
+                <span class="user-hover-trigger"
+                      data-username="<%= trade.offerCreator.username %>"
+                      style="<%= getUsernameStyle(trade.offerCreator.role) %>">
                   <a href="/profile/<%= trade.offerCreator.username %>" style="color:inherit;"><%= trade.offerCreator.username %></a>
-                  <span class="tooltiptext">
-                    Karma: <%= trade.offerCreator.positiveKarma - trade.offerCreator.negativeKarma %><br>
-                    Role: <%= trade.offerCreator.role %>
-                  </span>
                 </span>
               </p>
             </div>
@@ -281,5 +277,6 @@
   <%- include('partials/auth-modals') %>
   <%- include('partials/footer') %>
   <script src="/js/auth.js"></script>
+  <script src="/js/user-hover.js"></script>
 </body>
 </html>

@@ -74,16 +74,29 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
     if (offeredRecords.length  !== offeredNames.length)  return res.status(400).send('One or more offered items are invalid.');
     if (requestedRecords.length !== requestedNames.length) return res.status(400).send('One or more requested items are invalid.');
 
-    // Clamp qty to 1-99, upgrade to 0-25
-    const sanitize = (items) => items.map(item => ({
-      name:     String(item.name),
-      qty:      Math.min(99, Math.max(1, parseInt(item.qty, 10) || 1)),
-      upgrade:  (item.upgrade !== null && item.upgrade !== undefined) ? Math.min(25, Math.max(0, parseInt(item.upgrade, 10) || 0)) : null,
-      type:     String(item.type || 'misc'),
-      iconPath: item.iconPath || null,
-    }));
+    // Currency/soul items can go up to 10 million; regular items capped at 99
+    const CURRENCY_TYPES = ['currency', 'soul'];
+    const sanitize = (items) => items.map(item => {
+      const isCurrency = CURRENCY_TYPES.includes(String(item.type || ''));
+      const maxQty     = isCurrency ? 10_000_000 : 99;
+      return {
+        name:     String(item.name),
+        qty:      Math.min(maxQty, Math.max(1, parseInt(item.qty, 10) || 1)),
+        upgrade:  (item.upgrade !== null && item.upgrade !== undefined)
+                    ? Math.min(25, Math.max(0, parseInt(item.upgrade, 10) || 0))
+                    : null,
+        type:     String(item.type || 'misc'),
+        iconPath: item.iconPath || null,
+      };
+    });
 
+    // Validate character level against per-game cap
+    const gameLevelCaps = {
+      'Dark Souls': 713, 'Dark Souls 2': 838, 'Dark Souls 3': 802,
+      'Bloodborne': 544, 'Elden Ring': 713, "Demon's Souls": 712,
+    };
     const charLevel = parseInt(req.body.characterLevel, 10);
+    const maxLevel  = gameLevelCaps[gameName] || 999;
 
     await Trade.create({
       offeredItems:   sanitize(offeredArr),
@@ -92,7 +105,7 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
       additionalNotes: additionalNotes || null,
       game: gameName,
       offerCreatorId: req.user.id,
-      characterLevel: (!isNaN(charLevel) && charLevel >= 1 && charLevel <= 999) ? charLevel : null,
+      characterLevel: (!isNaN(charLevel) && charLevel >= 1 && charLevel <= maxLevel) ? charLevel : null,
     });
 
     const gameKey = Object.keys(gameKeyMap).find(k => gameKeyMap[k] === gameName) || 'darksouls';
