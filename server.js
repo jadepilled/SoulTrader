@@ -189,11 +189,11 @@ app.get('/users', async (req, res) => {
 
   const users = await User.findAll({
     where,
-    attributes: {
-      include: [
-        [sequelize.literal(`(SELECT COUNT(*) FROM "Trades" WHERE status = 'completed' AND ("offerCreatorId" = "User"."id" OR "acceptorId" = "User"."id"))`), 'completedTradeCount'],
-      ],
-    },
+    attributes: [
+      'id', 'username', 'role', 'positiveKarma', 'negativeKarma',
+      'profileImagePath', 'createdAt', 'isVerified', 'isBanned', 'isSponsor',
+      [sequelize.literal(`(SELECT COUNT(*) FROM "Trades" WHERE status = 'completed' AND ("offerCreatorId" = "User"."id" OR "acceptorId" = "User"."id"))`), 'completedTradeCount'],
+    ],
     order,
     limit: perPage,
     offset: (page - 1) * perPage,
@@ -240,33 +240,50 @@ app.get('/code-of-conduct', async (req, res) => {
 });
 
 // Feedback page (login required)
-app.get('/feedback', (req, res) => {
+app.get('/feedback', async (req, res) => {
   const { gameConfigs } = require('./controllers/gameController');
   const { Trade } = require('./models');
   const { Op } = require('sequelize');
 
-  if (!req.user) {
-    return res.redirect('/');
+  if (!req.user) return res.redirect('/');
+
+  let pendingTradeCount = 0;
+  pendingTradeCount = await Trade.count({
+    where: {
+      status: 'awaiting_confirmation',
+      [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }],
+    },
+  });
+
+  res.render('feedback', {
+    userId: req.user.id,
+    username: req.user.username,
+    email: req.user.email,
+    role: req.user.role,
+    gameConfigs,
+    pendingTradeCount,
+    query: req.query,
+  });
+});
+
+// Feedback POST
+app.post('/feedback', async (req, res) => {
+  if (!req.user) return res.redirect('/');
+  const { Feedback } = require('./models');
+  const { content, category } = req.body;
+  if (!content || content.trim().length === 0) return res.redirect('/feedback');
+
+  try {
+    await Feedback.create({
+      content: String(content).substring(0, 2000).trim(),
+      category: ['general', 'bug', 'feature', 'other'].includes(category) ? category : 'general',
+      authorId: req.user.id,
+    });
+    res.redirect('/feedback?success=1');
+  } catch (err) {
+    console.error('Error saving feedback:', err);
+    res.redirect('/feedback');
   }
-
-  (async () => {
-    let pendingTradeCount = 0;
-    pendingTradeCount = await Trade.count({
-      where: {
-        status: 'awaiting_confirmation',
-        [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }],
-      },
-    });
-
-    res.render('feedback', {
-      userId: req.user.id,
-      username: req.user.username,
-      email: req.user.email,
-      role: req.user.role,
-      gameConfigs,
-      pendingTradeCount,
-    });
-  })();
 });
 
 // Game pages

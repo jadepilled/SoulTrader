@@ -362,7 +362,8 @@
                     </select>
                     <button type="submit" class="btn btn-primary btn-sm">Submit</button>
                   </div>
-                  <textarea name="feedback" placeholder="Trade feedback (optional, visible on their profile)" maxlength="500"></textarea>
+                  <textarea name="feedback" placeholder="Trade feedback (optional, visible on their profile)" maxlength="200" oninput="this.nextElementSibling.textContent = this.value.length + '/200'"></textarea>
+                  <span style="font-size:0.7rem; color:var(--text-muted);">0/200</span>
                 </form>
               <% } %>
               <% if (trade.status === 'completed' && trade.creatorRated) { %>
@@ -489,10 +490,155 @@
                     </select>
                     <button type="submit" class="btn btn-primary btn-sm">Submit</button>
                   </div>
-                  <textarea name="feedback" placeholder="Trade feedback (optional, visible on their profile)" maxlength="500"></textarea>
+                  <textarea name="feedback" placeholder="Trade feedback (optional, visible on their profile)" maxlength="200" oninput="this.nextElementSibling.textContent = this.value.length + '/200'"></textarea>
+                  <span style="font-size:0.7rem; color:var(--text-muted);">0/200</span>
                 </form>
               <% } %>
               <% if (trade.status === 'completed' && trade.acceptorRated) { %>
+                <span style="color: var(--text-muted); font-size:0.8rem;">Rated</span>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <!-- ---- Completed Trades ---- -->
+    <h2 style="margin:2rem 0 1rem;">Completed Trades</h2>
+    <% if (!completedTrades || completedTrades.length === 0) { %>
+      <div class="no-offers-card">No completed trades yet.</div>
+    <% } else { %>
+      <div class="offers-grid">
+        <% completedTrades.forEach(trade => {
+          const offItems = Array.isArray(trade.offeredItems) ? trade.offeredItems : [];
+          const reqItems = Array.isArray(trade.requestedItems) ? trade.requestedItems : [];
+          const isCreator = trade.offerCreatorId === userId;
+          const partner = isCreator ? trade.acceptor : trade.offerCreator;
+          const partnerName = partner ? partner.username : 'Unknown';
+          const partnerRole = partner ? partner.role : 'user';
+        %>
+          <div class="trade-card">
+            <% if (trade.game) { %>
+              <div class="trade-card-banner" style="<%- getGameBannerStyle(trade.game) %>"><%= trade.game %></div>
+            <% } %>
+            <div class="offer-heading">
+              <% if (trade.characterLevel) { %>
+                <span class="char-level-badge">LVL <%= trade.characterLevel %></span>
+              <% } %>
+              <span class="platform"><%= trade.platform %></span>
+              <span class="time-ago"><%= getTimeAgo(trade.updatedAt || trade.createdAt) %></span>
+              <div style="margin-top:0.5rem;"><%- getStatusBadge(trade) %></div>
+            </div>
+
+            <div class="trade-card-inner">
+              <div class="offered-col">
+                <h2>Offered</h2>
+                <% offItems.forEach(item => {
+                  const metaParts = [];
+                  const _mq = fmtQty(item.qty); if (_mq) metaParts.push('\u00d7' + _mq);
+                  if (item.upgrade !== null && item.upgrade !== undefined) metaParts.push('+' + item.upgrade);
+                  const meta = metaParts.join(' ');
+                %>
+                  <div class="trade-item-row">
+                    <% if (item.iconPath) { %>
+                      <img class="trade-item-icon" src="<%= item.iconPath %>" alt="" onerror="this.style.display='none'">
+                    <% } else { %>
+                      <div class="trade-item-icon-fallback"><%= item.name.charAt(0) %></div>
+                    <% } %>
+                    <span class="trade-item-name"><%= item.name %></span>
+                    <% if (meta) { %><span class="trade-item-meta"><%= meta %></span><% } %>
+                  </div>
+                <% }); %>
+              </div>
+              <div class="requested-col">
+                <h2>Requested</h2>
+                <% reqItems.forEach(item => {
+                  const metaParts = [];
+                  const _mq = fmtQty(item.qty); if (_mq) metaParts.push('\u00d7' + _mq);
+                  if (item.upgrade !== null && item.upgrade !== undefined) metaParts.push('+' + item.upgrade);
+                  const meta = metaParts.join(' ');
+                %>
+                  <div class="trade-item-row">
+                    <% if (item.iconPath) { %>
+                      <img class="trade-item-icon" src="<%= item.iconPath %>" alt="" onerror="this.style.display='none'">
+                    <% } else { %>
+                      <div class="trade-item-icon-fallback"><%= item.name.charAt(0) %></div>
+                    <% } %>
+                    <span class="trade-item-name"><%= item.name %></span>
+                    <% if (meta) { %><span class="trade-item-meta"><%= meta %></span><% } %>
+                  </div>
+                <% }); %>
+              </div>
+            </div>
+
+            <div class="trade-details">
+              <p style="font-size:0.85rem; margin:0.5rem 0;">
+                Trade with:
+                <span class="user-hover-trigger"
+                      data-username="<%= partnerName %>"
+                      style="<%= getUsernameStyle(partnerRole) %>">
+                  <a href="/profile/<%= partnerName %>" style="color:inherit;"><%= partnerName %></a>
+                </span>
+              </p>
+
+              <%- renderTradeDetails(trade, 'creator') %>
+              <%- renderTradeDetails(trade, 'acceptor') %>
+
+              <% if (isCreator && trade.tradeFeedbackAcceptor) { %>
+                <div class="trade-feedback-block">
+                  <div class="trade-feedback-label">Feedback from <%= partnerName %></div>
+                  <%= trade.tradeFeedbackAcceptor %>
+                </div>
+              <% } %>
+              <% if (isCreator && trade.tradeFeedbackCreator) { %>
+                <div class="trade-feedback-block">
+                  <div class="trade-feedback-label">Your feedback</div>
+                  <%= trade.tradeFeedbackCreator %>
+                </div>
+              <% } %>
+              <% if (!isCreator && trade.tradeFeedbackCreator) { %>
+                <div class="trade-feedback-block">
+                  <div class="trade-feedback-label">Feedback from <%= partnerName %></div>
+                  <%= trade.tradeFeedbackCreator %>
+                </div>
+              <% } %>
+              <% if (!isCreator && trade.tradeFeedbackAcceptor) { %>
+                <div class="trade-feedback-block">
+                  <div class="trade-feedback-label">Your feedback</div>
+                  <%= trade.tradeFeedbackAcceptor %>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="trade-actions">
+              <% if (isCreator && !trade.creatorRated) { %>
+                <form action="/trade/rate/<%= trade.id %>" method="POST" class="rating-form">
+                  <div class="rating-row">
+                    <select name="rating" required style="flex:1;">
+                      <option value="" disabled selected>Rate</option>
+                      <% for (let i = 10; i >= 1; i--) { %><option value="<%= i %>"><%= i %>/10</option><% } %>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                  </div>
+                  <textarea name="feedback" placeholder="Trade feedback (optional, visible on their profile)" maxlength="200" oninput="this.nextElementSibling.textContent = this.value.length + '/200'"></textarea>
+                  <span style="font-size:0.7rem; color:var(--text-muted);">0/200</span>
+                </form>
+              <% } else if (isCreator && trade.creatorRated) { %>
+                <span style="color: var(--text-muted); font-size:0.8rem;">Rated</span>
+              <% } %>
+              <% if (!isCreator && !trade.acceptorRated) { %>
+                <form action="/trade/rate/<%= trade.id %>" method="POST" class="rating-form">
+                  <div class="rating-row">
+                    <select name="rating" required style="flex:1;">
+                      <option value="" disabled selected>Rate</option>
+                      <% for (let i = 10; i >= 1; i--) { %><option value="<%= i %>"><%= i %>/10</option><% } %>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+                  </div>
+                  <textarea name="feedback" placeholder="Trade feedback (optional, visible on their profile)" maxlength="200" oninput="this.nextElementSibling.textContent = this.value.length + '/200'"></textarea>
+                  <span style="font-size:0.7rem; color:var(--text-muted);">0/200</span>
+                </form>
+              <% } else if (!isCreator && trade.acceptorRated) { %>
                 <span style="color: var(--text-muted); font-size:0.8rem;">Rated</span>
               <% } %>
             </div>

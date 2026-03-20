@@ -257,6 +257,112 @@
       </div>
     <% } %>
 
+    <!-- Profile Comments -->
+    <div class="profile-section">
+      <h2 class="profile-section-title">Comments (<%= typeof totalComments !== 'undefined' ? totalComments : 0 %>)</h2>
+
+      <% if (typeof query !== 'undefined' && query.error) { %>
+        <p style="color:var(--danger); font-size:0.85rem; margin-bottom:1rem;"><%= query.error %></p>
+      <% } %>
+
+      <!-- Comment form (logged-in users only) -->
+      <% if (typeof userId !== 'undefined' && userId) { %>
+        <form action="/comments/<%= profileUser.id %>" method="POST" class="comment-form">
+          <textarea name="content" id="commentTextarea" maxlength="200" rows="3" placeholder="Leave a comment..." required></textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
+            <span id="commentCharCounter" style="font-size:0.72rem; color:var(--text-muted);">0/200</span>
+            <button type="submit" class="btn btn-primary btn-sm">Post</button>
+          </div>
+        </form>
+      <% } else { %>
+        <p style="color:var(--text-muted); font-size:0.85rem; font-style:italic;">Log in to leave a comment.</p>
+      <% } %>
+
+      <!-- Comment list -->
+      <div class="comment-list">
+        <% if (typeof comments !== 'undefined' && comments.length > 0) { %>
+          <% comments.forEach(comment => { %>
+            <div class="comment-card" id="comment-<%= comment.id %>">
+              <div class="comment-header">
+                <div class="comment-author">
+                  <% if (comment.author && comment.author.profileImagePath) { %>
+                    <img src="<%= comment.author.profileImagePath %>" class="comment-avatar" alt="" onerror="this.style.display='none'">
+                  <% } else { %>
+                    <div class="comment-avatar-fallback"><%= comment.author ? comment.author.username.charAt(0).toUpperCase() : '?' %></div>
+                  <% } %>
+                  <a href="/profile/<%= comment.author ? comment.author.username : '' %>"
+                     class="comment-author-name"
+                     style="<%= comment.author ? getUsernameStyle(comment.author.role) : '' %>">
+                    <%= comment.author ? comment.author.username : 'Unknown' %>
+                  </a>
+                </div>
+                <div class="comment-meta">
+                  <span class="comment-date"><%= comment.createdAt.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) %></span>
+                  <% if (comment.editedAt) { %>
+                    <span class="comment-edited">(edited)</span>
+                  <% } %>
+                </div>
+              </div>
+              <div class="comment-body" id="comment-body-<%= comment.id %>"><%= comment.content %></div>
+              <div class="comment-actions">
+                <% const canEdit   = typeof userId !== 'undefined' && userId && comment.author && comment.authorId === userId; %>
+                <% const canDelete = typeof userId !== 'undefined' && userId && (comment.authorId === userId || profileUser.id === userId || role === 'admin'); %>
+                <% if (canEdit) { %>
+                  <button class="comment-action-btn" onclick="editComment('<%= comment.id %>')">Edit</button>
+                <% } %>
+                <% if (canDelete) { %>
+                  <button class="comment-action-btn comment-delete-btn" onclick="deleteComment('<%= comment.id %>')">Delete</button>
+                <% } %>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <p style="color:var(--text-muted); font-style:italic; margin-top:1rem;">No comments yet.</p>
+        <% } %>
+      </div>
+
+      <!-- Comment pagination -->
+      <% if (typeof totalCommentPages !== 'undefined' && totalCommentPages > 1) { %>
+        <div class="pagination" style="margin-top:1rem;">
+          <% for (let i = 1; i <= totalCommentPages; i++) { %>
+            <a href="/profile/<%= profileUser.username %>?commentPage=<%= i %>"
+               class="pagination-btn <%= (typeof commentPage !== 'undefined' ? commentPage : 1) === i ? 'active' : '' %>"><%= i %></a>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Trade Feedback -->
+    <% if (typeof feedbackItems !== 'undefined' && feedbackItems.length > 0) { %>
+      <div class="profile-section">
+        <h2 class="profile-section-title">Trade Feedback (<%= feedbackItems.length %>)</h2>
+        <div class="comment-list">
+          <% feedbackItems.forEach(fb => { %>
+            <div class="comment-card" style="border-left: 3px solid var(--success); background: rgba(34, 197, 94, 0.03);">
+              <div class="comment-header">
+                <div class="comment-author">
+                  <div class="comment-avatar-fallback" style="background: rgba(34, 197, 94, 0.15); color: var(--success); font-size: 0.6rem;">TF</div>
+                  <a href="/profile/<%= fb.authorUsername %>"
+                     class="comment-author-name"
+                     style="<%= getUsernameStyle(fb.authorRole) %>">
+                    <%= fb.authorUsername %>
+                  </a>
+                  <span style="font-size:0.7rem; color:var(--text-muted); margin-left:0.25rem;">via trade</span>
+                  <% if (fb.game) { %>
+                    <span style="font-size:0.68rem; color:var(--text-muted); opacity:0.7; margin-left:0.25rem;">(<%= fb.game %>)</span>
+                  <% } %>
+                </div>
+                <div class="comment-meta">
+                  <span class="comment-date"><%= fb.date.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) %></span>
+                </div>
+              </div>
+              <div class="comment-body"><%= fb.content %></div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
     <!-- Recent Trade History -->
     <div class="profile-section">
       <h2 class="profile-section-title">Recent Trade History</h2>
@@ -344,113 +450,6 @@
     </div>
   </div>
 
-    <!-- Trade Feedback -->
-    <% if (typeof feedbackItems !== 'undefined' && feedbackItems.length > 0) { %>
-      <div class="profile-section">
-        <h2 class="profile-section-title">Trade Feedback (<%= feedbackItems.length %>)</h2>
-        <div class="comment-list">
-          <% feedbackItems.forEach(fb => { %>
-            <div class="comment-card" style="border-left: 3px solid var(--success); background: rgba(34, 197, 94, 0.03);">
-              <div class="comment-header">
-                <div class="comment-author">
-                  <div class="comment-avatar-fallback" style="background: rgba(34, 197, 94, 0.15); color: var(--success); font-size: 0.6rem;">TF</div>
-                  <a href="/profile/<%= fb.authorUsername %>"
-                     class="comment-author-name"
-                     style="<%= getUsernameStyle(fb.authorRole) %>">
-                    <%= fb.authorUsername %>
-                  </a>
-                  <span style="font-size:0.7rem; color:var(--text-muted); margin-left:0.25rem;">via trade</span>
-                  <% if (fb.game) { %>
-                    <span style="font-size:0.68rem; color:var(--text-muted); opacity:0.7; margin-left:0.25rem;">(<%= fb.game %>)</span>
-                  <% } %>
-                </div>
-                <div class="comment-meta">
-                  <span class="comment-date"><%= fb.date.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) %></span>
-                </div>
-              </div>
-              <div class="comment-body"><%= fb.content %></div>
-            </div>
-          <% }); %>
-        </div>
-      </div>
-    <% } %>
-
-    <!-- Profile Comments -->
-    <div class="profile-section">
-      <h2 class="profile-section-title">Comments (<%= typeof totalComments !== 'undefined' ? totalComments : 0 %>)</h2>
-
-      <% if (typeof query !== 'undefined' && query.error) { %>
-        <p style="color:var(--danger); font-size:0.85rem; margin-bottom:1rem;"><%= query.error %></p>
-      <% } %>
-
-      <!-- Comment form (logged-in users only) -->
-      <% if (typeof userId !== 'undefined' && userId) { %>
-        <form action="/comments/<%= profileUser.id %>" method="POST" class="comment-form">
-          <textarea name="content" maxlength="500" rows="3" placeholder="Leave a comment..." required></textarea>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.5rem;">
-            <span style="font-size:0.72rem; color:var(--text-muted);">Max 500 characters. No links or hate speech.</span>
-            <button type="submit" class="btn btn-primary btn-sm">Post</button>
-          </div>
-        </form>
-      <% } else { %>
-        <p style="color:var(--text-muted); font-size:0.85rem; font-style:italic;">Log in to leave a comment.</p>
-      <% } %>
-
-      <!-- Comment list -->
-      <div class="comment-list">
-        <% if (typeof comments !== 'undefined' && comments.length > 0) { %>
-          <% comments.forEach(comment => { %>
-            <div class="comment-card" id="comment-<%= comment.id %>">
-              <div class="comment-header">
-                <div class="comment-author">
-                  <% if (comment.author && comment.author.profileImagePath) { %>
-                    <img src="<%= comment.author.profileImagePath %>" class="comment-avatar" alt="" onerror="this.style.display='none'">
-                  <% } else { %>
-                    <div class="comment-avatar-fallback"><%= comment.author ? comment.author.username.charAt(0).toUpperCase() : '?' %></div>
-                  <% } %>
-                  <a href="/profile/<%= comment.author ? comment.author.username : '' %>"
-                     class="comment-author-name"
-                     style="<%= comment.author ? getUsernameStyle(comment.author.role) : '' %>">
-                    <%= comment.author ? comment.author.username : 'Unknown' %>
-                  </a>
-                </div>
-                <div class="comment-meta">
-                  <span class="comment-date"><%= comment.createdAt.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }) %></span>
-                  <% if (comment.editedAt) { %>
-                    <span class="comment-edited">(edited)</span>
-                  <% } %>
-                </div>
-              </div>
-              <div class="comment-body" id="comment-body-<%= comment.id %>"><%= comment.content %></div>
-              <div class="comment-actions">
-                <% const canEdit   = typeof userId !== 'undefined' && userId && comment.author && comment.authorId === userId; %>
-                <% const canDelete = typeof userId !== 'undefined' && userId && (comment.authorId === userId || profileUser.id === userId || role === 'admin'); %>
-                <% if (canEdit) { %>
-                  <button class="comment-action-btn" onclick="editComment('<%= comment.id %>')">Edit</button>
-                <% } %>
-                <% if (canDelete) { %>
-                  <button class="comment-action-btn comment-delete-btn" onclick="deleteComment('<%= comment.id %>')">Delete</button>
-                <% } %>
-              </div>
-            </div>
-          <% }); %>
-        <% } else { %>
-          <p style="color:var(--text-muted); font-style:italic; margin-top:1rem;">No comments yet.</p>
-        <% } %>
-      </div>
-
-      <!-- Comment pagination -->
-      <% if (typeof totalCommentPages !== 'undefined' && totalCommentPages > 1) { %>
-        <div class="pagination" style="margin-top:1rem;">
-          <% for (let i = 1; i <= totalCommentPages; i++) { %>
-            <a href="/profile/<%= profileUser.username %>?commentPage=<%= i %>"
-               class="pagination-btn <%= (typeof commentPage !== 'undefined' ? commentPage : 1) === i ? 'active' : '' %>"><%= i %></a>
-          <% } %>
-        </div>
-      <% } %>
-    </div>
-  </div>
-
   <%- include('partials/auth-modals') %>
   <%- include('partials/footer') %>
   <script src="/js/auth.js"></script>
@@ -460,11 +459,23 @@
       document.getElementById('profileEditPanel').classList.toggle('open');
     }
 
+    // Comment character counter
+    (function() {
+      const ta = document.getElementById('commentTextarea');
+      const counter = document.getElementById('commentCharCounter');
+      if (ta && counter) {
+        ta.addEventListener('input', function() {
+          counter.textContent = ta.value.length + '/200';
+        });
+      }
+    })();
+
     async function editComment(commentId) {
       const bodyEl = document.getElementById('comment-body-' + commentId);
       const current = bodyEl.textContent.trim();
       const newText = prompt('Edit your comment:', current);
       if (newText === null || newText.trim() === current) return;
+      if (newText.length > 200) { alert('Comment must be 200 characters or fewer.'); return; }
 
       try {
         const resp = await fetch('/comments/' + commentId, {

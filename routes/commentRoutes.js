@@ -18,8 +18,8 @@ router.post('/:profileUserId', ensureAuthenticated, commentLimiter, async (req, 
     if (!content || content.trim().length === 0) {
       return res.status(400).send('Comment cannot be empty.');
     }
-    if (content.length > 500) {
-      return res.status(400).send('Comment too long (max 500 characters).');
+    if (content.length > 200) {
+      return res.status(400).send('Comment too long (max 200 characters).');
     }
 
     const result = filterContent(content);
@@ -55,7 +55,7 @@ router.put('/:commentId', ensureAuthenticated, async (req, res) => {
 
     const { content } = req.body;
     if (!content || content.trim().length === 0) return res.status(400).json({ error: 'Comment cannot be empty.' });
-    if (content.length > 500) return res.status(400).json({ error: 'Comment too long (max 500 characters).' });
+    if (content.length > 500) return res.status(400).json({ error: 'Comment too long (max 200 characters).' });
 
     const result = filterContent(content);
     if (result.blocked) return res.status(400).json({ error: result.reason });

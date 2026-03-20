@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Trade, User, Item } = require('../models');
+const { Trade, User, Item, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const tradeEmail = require('../utils/tradeEmailService');
 const { tradeCreateLimiter, tradeAcceptLimiter } = require('../middleware/rateLimiter');
@@ -17,6 +17,30 @@ const gameKeyMap = {
   demonssouls: "Demon's Souls",
 };
 
+// ─── SUGGEST ITEMS (common items for a game, currencies first) ──────────────
+router.get('/suggest-items', async (req, res) => {
+  const { game } = req.query;
+  if (!game) return res.status(400).json({ error: 'Missing game' });
+
+  try {
+    const gameName = gameKeyMap[game] || game;
+    // Fetch currencies and souls first, then popular consumables
+    const items = await Item.findAll({
+      where: { game: gameName, type: ['currency', 'soul', 'consumable'] },
+      attributes: ['id', 'name', 'type', 'iconPath'],
+      order: [
+        [sequelize.literal("CASE WHEN type = 'currency' THEN 0 WHEN type = 'soul' THEN 1 ELSE 2 END"), 'ASC'],
+        ['name', 'ASC'],
+      ],
+      limit: 15,
+    });
+    res.json(items);
+  } catch (err) {
+    console.error('Item suggest error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ─── SEARCH ITEMS ─────────────────────────────────────────────────────────────
 router.get('/search-items', async (req, res) => {
   const { game, query } = req.query;
@@ -28,7 +52,10 @@ router.get('/search-items', async (req, res) => {
       where: { game: gameName, name: { [Op.iLike]: `%${query}%` } },
       attributes: ['id', 'name', 'type', 'iconPath'],
       limit: 20,
-      order: [['name', 'ASC']],
+      order: [
+        [sequelize.literal("CASE WHEN type = 'currency' THEN 0 WHEN type = 'soul' THEN 1 ELSE 2 END"), 'ASC'],
+        ['name', 'ASC'],
+      ],
     });
     res.json(items);
   } catch (err) {
@@ -332,8 +359,8 @@ router.post('/rate/:id', ensureVerified, async (req, res) => {
     if (isCreator  && trade.creatorRated)  return res.status(400).send('Already rated.');
     if (isAcceptor && trade.acceptorRated) return res.status(400).send('Already rated.');
 
-    // Sanitise feedback text (optional, max 500 chars, strip links)
-    let feedback = req.body.feedback ? String(req.body.feedback).substring(0, 500).trim() : null;
+    // Sanitise feedback text (optional, max 200 chars, strip links)
+    let feedback = req.body.feedback ? String(req.body.feedback).substring(0, 200).trim() : null;
     if (feedback) {
       feedback = feedback.replace(/https?:\/\/[^\s]+/gi, '')
                          .replace(/www\.[^\s]+/gi, '')
@@ -374,9 +401,10 @@ router.get('/my-trades', async (req, res) => {
       { model: User, as: 'acceptor',     attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox'] },
     ];
 
-    const [createdTrades, acceptedTrades] = await Promise.all([
-      Trade.findAll({ where: { offerCreatorId: userId }, include, order: [['createdAt', 'DESC']] }),
-      Trade.findAll({ where: { acceptorId:     userId }, include, order: [['createdAt', 'DESC']] }),
+    const [createdTrades, acceptedTrades, completedTrades] = await Promise.all([
+      Trade.findAll({ where: { offerCreatorId: userId, status: { [Op.ne]: 'completed' } }, include, order: [['createdAt', 'DESC']] }),
+      Trade.findAll({ where: { acceptorId: userId, status: { [Op.ne]: 'completed' } }, include, order: [['createdAt', 'DESC']] }),
+      Trade.findAll({ where: { status: 'completed', [Op.or]: [{ offerCreatorId: userId }, { acceptorId: userId }] }, include, order: [['updatedAt', 'DESC']], limit: 50 }),
     ]);
 
     // Count pending trades for navbar badge
@@ -386,6 +414,7 @@ router.get('/my-trades', async (req, res) => {
     res.render('myTrades', {
       createdTrades,
       acceptedTrades,
+      completedTrades,
       username: req.user.username,
       userId,
       role:    req.user.role,

@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 
-const Comment = sequelize.define('Comment', {
+const Feedback = sequelize.define('Feedback', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
@@ -10,14 +10,14 @@ const Comment = sequelize.define('Comment', {
   content: {
     type: DataTypes.TEXT,
     allowNull: false,
-    validate: { len: [1, 200] },
+    validate: { len: [1, 2000] },
   },
-  editedAt: {
-    type: DataTypes.DATE,
-    allowNull: true,
+  category: {
+    type: DataTypes.STRING,
+    defaultValue: 'general',
   },
 }, {
-  tableName: 'comments',
+  tableName: 'feedback',
 });
 
-module.exports = Comment;
+module.exports = Feedback;

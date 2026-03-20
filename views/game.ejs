@@ -324,7 +324,9 @@
           %>
             <div class="trade-card"
                  data-platform="<%= offer.platform %>"
-                 data-created-at="<%= offer.createdAt.getTime() %>">
+                 data-created-at="<%= offer.createdAt.getTime() %>"
+                 data-trade-id="<%= offer.id %>"
+                 data-own="<%= (userId && userId === offer.offerCreatorId) ? 'true' : 'false' %>">
 
               <div class="trade-card-banner"><%= offer.game %></div>
 

@@ -59,6 +59,47 @@ document.addEventListener('DOMContentLoaded', () => {
   // Types that get a free-text quantity input instead of +/- buttons
   const FREE_QTY_TYPES = ['currency', 'soul'];
 
+  // Core currencies that round to nearest 1000 and init at 1000
+  const CORE_CURRENCIES = ['Souls', 'Runes', 'Blood Echoes'];
+
+  // Suggestion cache (fetched once per page load)
+  let suggestCache = null;
+  let suggestFetching = false;
+  const suggestCallbacks = [];
+
+  function fetchSuggestions(cb) {
+    if (suggestCache) { cb(suggestCache); return; }
+    suggestCallbacks.push(cb);
+    if (suggestFetching) return;
+    suggestFetching = true;
+    fetch(`/trade/suggest-items?game=${encodeURIComponent(gameKey)}`)
+      .then(r => r.json())
+      .then(items => {
+        suggestCache = Array.isArray(items) ? items : [];
+        suggestCallbacks.forEach(fn => fn(suggestCache));
+        suggestCallbacks.length = 0;
+      })
+      .catch(() => {
+        suggestCache = [];
+        suggestCallbacks.forEach(fn => fn(suggestCache));
+        suggestCallbacks.length = 0;
+      });
+  }
+
+  // Parse shorthand quantities like "330k" → 330000, "1.5m" → 1500000
+  function parseShorthand(raw) {
+    if (typeof raw !== 'string') return NaN;
+    raw = raw.trim();
+    const m = raw.match(/^(\d+(?:\.\d+)?)\s*([kKmM])$/);
+    if (m) {
+      const num = parseFloat(m[1]);
+      const suffix = m[2].toLowerCase();
+      if (suffix === 'k') return Math.round(num * 1_000);
+      if (suffix === 'm') return Math.round(num * 1_000_000);
+    }
+    return parseInt(raw, 10);
+  }
+
   // ── Collect items from a grid as a structured array ────────────────────────
   function collectItems(gridId) {
     const grid = document.getElementById(gridId);
@@ -68,10 +109,10 @@ document.addEventListener('DOMContentLoaded', () => {
       type:     box.dataset.type,
       iconPath: box.dataset.iconPath || null,
       // Support both free-text input (.item-qty-input) and +/- span (.item-qty-value)
-      qty:      parseInt(
+      qty:      parseShorthand(
                   box.querySelector('.item-qty-input')?.value ||
                   box.querySelector('.item-qty-value')?.textContent ||
-                  '1', 10),
+                  '1') || 1,
       upgrade:  box.dataset.upgradeable === 'true'
                   ? parseInt(box.querySelector('.item-upgrade-select')?.value || '0', 10)
                   : null,
@@ -126,16 +167,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (FREE_QTY_TYPES.includes(item.type)) {
       // Free-text numeric input for currencies and soul items
+      const isCore = CORE_CURRENCIES.includes(item.name);
+      const initVal = isCore ? 1000 : 1;
+      const minVal  = isCore ? 1000 : 1;
       const qtyInput = document.createElement('input');
-      qtyInput.type        = 'number';
+      qtyInput.type        = 'text';
       qtyInput.className   = 'item-qty-input';
-      qtyInput.min         = 1;
-      qtyInput.max         = 10_000_000;
-      qtyInput.value       = 1;
+      qtyInput.value       = initVal;
       qtyInput.placeholder = 'Qty';
+      qtyInput.dataset.lastValid = String(initVal);
+      qtyInput.dataset.isCore    = String(isCore);
       qtyInput.addEventListener('input', () => {
-        const v = parseInt(qtyInput.value, 10);
-        if (isNaN(v) || v < 1) qtyInput.value = 1;
+        // Sync hidden field; don't force a value so user can freely type
+        const parsed = parseShorthand(qtyInput.value);
+        if (!isNaN(parsed) && parsed >= 1) {
+          qtyInput.dataset.lastValid = String(parsed);
+        }
+        syncHidden(gridId, hiddenId);
+      });
+      qtyInput.addEventListener('blur', () => {
+        let val = parseShorthand(qtyInput.value);
+        if (isNaN(val) || val < minVal) {
+          val = parseInt(qtyInput.dataset.lastValid, 10) || minVal;
+        }
+        // Core currency rounding
+        if (isCore) {
+          val = Math.max(minVal, Math.round(val / 1000) * 1000);
+        }
+        // Clamp
+        val = Math.max(minVal, Math.min(val, 10_000_000));
+        qtyInput.value = val;
+        qtyInput.dataset.lastValid = String(val);
         syncHidden(gridId, hiddenId);
       });
       qtyWrap.appendChild(qtyInput);
@@ -210,50 +272,70 @@ document.addEventListener('DOMContentLoaded', () => {
     syncHidden(gridId, hiddenId);
   }
 
+  // ── Shared dropdown renderer ────────────────────────────────────────────────
+  function renderDropdown(items, dropdown, gridId, hiddenId, input) {
+    dropdown.innerHTML = '';
+    if (!Array.isArray(items) || items.length === 0) { dropdown.style.display = 'none'; return; }
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.className = 'dropdown-item';
+      if (item.iconPath) {
+        const dImg = document.createElement('img');
+        dImg.src       = item.iconPath;
+        dImg.alt       = '';
+        dImg.className = 'dropdown-item-icon';
+        dImg.onerror   = () => { dImg.style.display = 'none'; };
+        li.appendChild(dImg);
+      }
+      const dName = document.createElement('span');
+      dName.textContent = item.name;
+      const dType = document.createElement('span');
+      dType.className   = 'dropdown-item-type';
+      dType.textContent = item.type;
+      li.appendChild(dName);
+      li.appendChild(dType);
+      li.addEventListener('click', () => {
+        addItemToGrid(item, gridId, hiddenId);
+        input.value            = '';
+        dropdown.style.display = 'none';
+      });
+      dropdown.appendChild(li);
+    });
+    dropdown.style.display = 'block';
+  }
+
   // ── Item search autocomplete ───────────────────────────────────────────────
   function setupSearch(inputId, dropdownId, gridId, hiddenId) {
     const input    = document.getElementById(inputId);
     const dropdown = document.getElementById(dropdownId);
     if (!input || !dropdown) return;
 
+    // Show suggestions when focused with empty input
+    input.addEventListener('focus', () => {
+      if (input.value.trim()) return;
+      fetchSuggestions(items => {
+        if (input.value.trim()) return; // user typed while fetching
+        renderDropdown(items, dropdown, gridId, hiddenId, input);
+      });
+    });
+
     let timer;
     input.addEventListener('input', () => {
       clearTimeout(timer);
       timer = setTimeout(async () => {
         const q = input.value.trim();
-        if (!q) { dropdown.style.display = 'none'; return; }
+        if (!q) {
+          // Show suggestions when input cleared
+          fetchSuggestions(items => {
+            if (input.value.trim()) return;
+            renderDropdown(items, dropdown, gridId, hiddenId, input);
+          });
+          return;
+        }
         try {
           const resp  = await fetch(`${SEARCH_URL}?game=${encodeURIComponent(gameKey)}&query=${encodeURIComponent(q)}`);
           const items = await resp.json();
-          dropdown.innerHTML = '';
-          if (!Array.isArray(items) || items.length === 0) { dropdown.style.display = 'none'; return; }
-          items.forEach(item => {
-            const li = document.createElement('li');
-            li.className = 'dropdown-item';
-            // Small icon in dropdown
-            if (item.iconPath) {
-              const dImg = document.createElement('img');
-              dImg.src    = item.iconPath;
-              dImg.alt    = '';
-              dImg.className = 'dropdown-item-icon';
-              dImg.onerror = () => { dImg.style.display = 'none'; };
-              li.appendChild(dImg);
-            }
-            const dName = document.createElement('span');
-            dName.textContent = item.name;
-            const dType = document.createElement('span');
-            dType.className   = 'dropdown-item-type';
-            dType.textContent = item.type;
-            li.appendChild(dName);
-            li.appendChild(dType);
-            li.addEventListener('click', () => {
-              addItemToGrid(item, gridId, hiddenId);
-              input.value        = '';
-              dropdown.style.display = 'none';
-            });
-            dropdown.appendChild(li);
-          });
-          dropdown.style.display = 'block';
+          renderDropdown(items, dropdown, gridId, hiddenId, input);
         } catch (err) {
           console.error('Search error:', err);
           dropdown.style.display = 'none';
@@ -323,6 +405,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ── Hide trades helpers ────────────────────────────────────────────────────
+  const hiddenKey = `soultrader_hidden_${gameKey}`;
+  function getHidden() { try { return JSON.parse(localStorage.getItem(hiddenKey) || '[]'); } catch { return []; } }
+  function setHidden(arr) { localStorage.setItem(hiddenKey, JSON.stringify(arr)); }
+  let showHiddenActive = false;
+
   // ── Filter / sort ──────────────────────────────────────────────────────────
   const tradeCards     = Array.from(document.querySelectorAll('.trade-card'));
   const offersGrid     = document.querySelector('.offers-grid');
@@ -330,15 +418,62 @@ document.addEventListener('DOMContentLoaded', () => {
   const sortSelect     = document.getElementById('sortSelect');
   const searchInput    = document.getElementById('searchInput');
 
+  // Add "Show Hidden" toggle button to filter bar
+  const filterBar = document.querySelector('.filter-bar');
+  let showHiddenBtn = null;
+  if (filterBar) {
+    const grp = document.createElement('div');
+    grp.className = 'filter-group';
+    showHiddenBtn = document.createElement('button');
+    showHiddenBtn.type      = 'button';
+    showHiddenBtn.className = 'btn btn-secondary btn-show-hidden';
+    showHiddenBtn.textContent = 'Show Hidden';
+    showHiddenBtn.style.display = getHidden().length ? '' : 'none';
+    showHiddenBtn.addEventListener('click', () => {
+      showHiddenActive = !showHiddenActive;
+      showHiddenBtn.textContent = showHiddenActive ? 'Hide Hidden' : 'Show Hidden';
+      applyFilters();
+    });
+    grp.appendChild(showHiddenBtn);
+    filterBar.appendChild(grp);
+  }
+
+  // Add hide buttons to non-own trade cards
+  tradeCards.forEach(card => {
+    if (card.dataset.own === 'true') return;
+    const tradeId = card.dataset.tradeId;
+    if (!tradeId) return;
+    const actionsDiv = card.querySelector('.trade-actions');
+    if (!actionsDiv) return;
+    const hideBtn = document.createElement('button');
+    hideBtn.type      = 'button';
+    hideBtn.className = 'btn btn-hide-trade';
+    hideBtn.innerHTML = '&times;';
+    hideBtn.title     = 'Hide this trade';
+    hideBtn.addEventListener('click', () => {
+      const hidden = getHidden();
+      if (!hidden.includes(tradeId)) {
+        hidden.push(tradeId);
+        setHidden(hidden);
+      }
+      applyFilters();
+      if (showHiddenBtn) showHiddenBtn.style.display = '';
+    });
+    actionsDiv.appendChild(hideBtn);
+  });
+
   function applyFilters() {
     if (!offersGrid) return;
     const platform = (platformSelect?.value || 'all').toLowerCase();
     const sort     = sortSelect?.value || 'desc';
     const query    = (searchInput?.value || '').toLowerCase().trim();
+    const hidden   = getHidden();
 
     let visible = tradeCards.filter(card => {
       if (platform !== 'all' && (card.dataset.platform || '').toLowerCase() !== platform) return false;
       if (query && !card.innerText.toLowerCase().includes(query)) return false;
+      const tid = card.dataset.tradeId;
+      if (tid && hidden.includes(tid) && !showHiddenActive) return false;
       return true;
     });
 
@@ -349,7 +484,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     tradeCards.forEach(c => (c.style.display = 'none'));
-    visible.forEach(c => { c.style.display = 'flex'; offersGrid.appendChild(c); });
+    visible.forEach(c => {
+      const tid = c.dataset.tradeId;
+      const isHidden = tid && hidden.includes(tid);
+      c.style.display = 'flex';
+      c.style.opacity = isHidden ? '0.45' : '1';
+      // Show/hide unhide button
+      let unhideBtn = c.querySelector('.btn-unhide-trade');
+      if (isHidden && showHiddenActive) {
+        if (!unhideBtn) {
+          unhideBtn = document.createElement('button');
+          unhideBtn.type      = 'button';
+          unhideBtn.className = 'btn btn-secondary btn-unhide-trade';
+          unhideBtn.textContent = 'Unhide';
+          unhideBtn.addEventListener('click', () => {
+            const h = getHidden().filter(id => id !== tid);
+            setHidden(h);
+            applyFilters();
+            if (showHiddenBtn && h.length === 0) {
+              showHiddenBtn.style.display = 'none';
+              showHiddenActive = false;
+              showHiddenBtn.textContent = 'Show Hidden';
+            }
+          });
+          c.querySelector('.trade-actions')?.appendChild(unhideBtn);
+        }
+        unhideBtn.style.display = '';
+      } else if (unhideBtn) {
+        unhideBtn.style.display = 'none';
+      }
+      offersGrid.appendChild(c);
+    });
+
+    // Update show-hidden button visibility
+    if (showHiddenBtn) {
+      showHiddenBtn.style.display = hidden.length ? '' : 'none';
+    }
   }
 
   platformSelect?.addEventListener('change', applyFilters);

@@ -20,18 +20,47 @@
         <p>Submitting as <strong><%= username %></strong> (<%= email %>)</p>
       </div>
 
+      <% if (typeof query !== 'undefined' && query.success) { %>
+        <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.25); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem; color: var(--success); text-align: center;">
+          Thank you for your feedback! We appreciate you taking the time to help improve SoulTrader.
+        </div>
+      <% } %>
+
       <div class="feedback-form-wrap">
         <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:1.5rem; text-align:center;">
           Help us improve SoulTrader. Report bugs, suggest features, or share your thoughts.
         </p>
-        <form id="feedback-form">
-          <!-- Ratufa injects its fields into this form -->
+        <form action="/feedback" method="POST" id="feedback-form">
+          <label for="feedback-category">Category</label>
+          <select id="feedback-category" name="category" style="margin-bottom: 1rem;">
+            <option value="general">General Feedback</option>
+            <option value="bug">Bug Report</option>
+            <option value="feature">Feature Request</option>
+            <option value="other">Other</option>
+          </select>
+
+          <label for="feedback-content">Your Feedback</label>
+          <textarea
+            id="feedback-content"
+            name="content"
+            rows="6"
+            maxlength="2000"
+            required
+            placeholder="Tell us what's on your mind..."
+            style="resize: vertical; min-height: 120px;"
+            oninput="document.getElementById('feedback-chars').textContent = this.value.length + '/2000'"
+          ></textarea>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+            <span id="feedback-chars" style="font-size: 0.72rem; color: var(--text-muted);">0/2000</span>
+            <button type="submit" class="btn btn-primary">Submit Feedback</button>
+          </div>
         </form>
-        <script id="ratufa_loader" src="https://www.ratufa.io/c/ld.js?f=beuxtulp&n=n1.ratufa.io"></script>
       </div>
     </div>
   </div>
 
+  <%- include('partials/auth-modals') %>
   <%- include('partials/footer') %>
+  <script src="/js/auth.js"></script>
 </body>
 </html>
