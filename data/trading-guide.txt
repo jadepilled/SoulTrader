@@ -1,0 +1,22 @@
+Trading Guide
+
+You might have seen SoulTrader and thought something along the lines of "hold on a minute, there's no trading mechanic in Dark Souls..." and you'd be right. There is, however, a workaround - using the multiplayer system, especially in more recent games featuring password matchmaking, players can match with their friends intentionally and easily transfer items by dropping them. 
+
+Dark Souls: Remastered, Elden Ring, Dark Souls III
+DS1/DS3:
+https://darksouls.wiki.fextralife.com/Player+Trade
+Password summoning in Dark Souls (Remastered/DS3) allows players to bypass level restrictions to co-op by setting a matching password in the Network settings. Both players must be in human/embered form, use the White Sign Soapstone, and have their matchmaking region set to "Global" or "Unrestricted". 
+    Set Password: Go to the Network Settings menu and enter the same agreed-upon matchmaking password (case-sensitive).
+    Humanity/Ember: The host must be in Human form (DS1) or use an Ember (DS3) to see signs.
+    Placement: The player being summoned places their sign using the White Sign Soapstone.
+    Boss Requirement: The area boss must still be alive for the host to summon 
+	
+Elden Ring:
+https://gamerant.com/elden-ring-how-trade-other-players/
+https://eldenring.wiki.fextralife.com/Player+Trade
+
+
+
+Dark Souls II + Scholar of the First Sin
+https://darksouls2.wiki.fextralife.com/Player+Trade
+Only uses `Soul Memory` (total cumulative souls earned by player) tiers for matchmatking. Players can purchase the Name Engraved Ring from Sweet Shalquoir the cat in Majula for 5,500 souls. Both players should wear it and select the same god to significantly increase the chance of seeing each other's signs.

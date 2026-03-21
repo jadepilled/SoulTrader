@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Trades | SoulTrader</title>
-  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link rel="icon" type="image/png" href="/icons/favicon.png">
   <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/responsive.css">
@@ -52,71 +52,6 @@
       color: var(--text-muted);
       margin-bottom: 0.35rem;
     }
-    /* Confirm modal */
-    .confirm-modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      z-index: 5000;
-      align-items: center;
-      justify-content: center;
-    }
-    .confirm-modal-overlay.active {
-      display: flex;
-    }
-    .confirm-modal-box {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 1.5rem;
-      max-width: 480px;
-      width: 90%;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .confirm-modal-box h3 {
-      margin-bottom: 0.75rem;
-      font-size: 1.1rem;
-    }
-    .confirm-modal-box label {
-      display: block;
-      font-size: 0.85rem;
-      margin-top: 0.6rem;
-      margin-bottom: 0.25rem;
-      color: var(--text-secondary);
-    }
-    .confirm-modal-box input,
-    .confirm-modal-box textarea {
-      width: 100%;
-      padding: 0.45rem 0.6rem;
-      background: var(--bg-input);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius);
-      color: var(--text-primary);
-      font-family: var(--font);
-      font-size: 0.85rem;
-    }
-    .confirm-modal-box textarea {
-      resize: vertical;
-      min-height: 60px;
-    }
-    .confirm-warning {
-      margin-top: 1rem;
-      padding: 0.6rem;
-      background: rgba(234, 179, 8, 0.08);
-      border: 1px solid rgba(234, 179, 8, 0.2);
-      border-radius: var(--radius);
-      font-size: 0.82rem;
-      color: var(--warning);
-      line-height: 1.5;
-    }
-    .confirm-modal-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-    .confirm-modal-actions .btn { flex: 1; }
     /* Rating form */
     .rating-form {
       display: flex;
@@ -344,14 +279,12 @@
                 <button type="button" class="btn btn-success btn-full" onclick="openConfirmModal('<%= trade.id %>', 'creator')">Confirm Trade</button>
               <% } %>
               <% if (trade.status === 'awaiting_confirmation') { %>
-                <form action="/trade/decline/<%= trade.id %>" method="POST" style="flex:1;" onsubmit="return confirm('Decline this trade?');">
-                  <button type="submit" class="btn btn-danger btn-full">Decline</button>
-                </form>
+                <button type="button" class="btn btn-danger btn-full" onclick="showStyledConfirm('Decline this trade? This action cannot be undone.', () => { document.getElementById('decline-form-<%= trade.id %>').submit(); })">Decline</button>
+                <form id="decline-form-<%= trade.id %>" action="/trade/decline/<%= trade.id %>" method="POST" style="display:none;"></form>
               <% } %>
               <% if (trade.status === 'open') { %>
-                <form action="/trade/cancel/<%= trade.id %>" method="POST" style="flex:1;" onsubmit="return confirm('Cancel this trade?');">
-                  <button type="submit" class="btn btn-danger btn-full">Cancel</button>
-                </form>
+                <button type="button" class="btn btn-danger btn-full" onclick="showStyledConfirm('Cancel this trade offer?', () => { document.getElementById('cancel-form-<%= trade.id %>').submit(); })">Cancel</button>
+                <form id="cancel-form-<%= trade.id %>" action="/trade/cancel/<%= trade.id %>" method="POST" style="display:none;"></form>
               <% } %>
               <% if (trade.status === 'completed' && !trade.creatorRated) { %>
                 <form action="/trade/rate/<%= trade.id %>" method="POST" class="rating-form">
@@ -477,9 +410,8 @@
                 <button type="button" class="btn btn-success btn-full" onclick="openConfirmModal('<%= trade.id %>', 'acceptor')">Confirm Trade</button>
               <% } %>
               <% if (trade.status === 'awaiting_confirmation') { %>
-                <form action="/trade/decline/<%= trade.id %>" method="POST" style="flex:1;" onsubmit="return confirm('Decline this trade?');">
-                  <button type="submit" class="btn btn-danger btn-full">Decline</button>
-                </form>
+                <button type="button" class="btn btn-danger btn-full" onclick="showStyledConfirm('Decline this trade? This action cannot be undone.', () => { document.getElementById('decline-form-a-<%= trade.id %>').submit(); })">Decline</button>
+                <form id="decline-form-a-<%= trade.id %>" action="/trade/decline/<%= trade.id %>" method="POST" style="display:none;"></form>
               <% } %>
               <% if (trade.status === 'completed' && !trade.acceptorRated) { %>
                 <form action="/trade/rate/<%= trade.id %>" method="POST" class="rating-form">
@@ -663,18 +595,52 @@
         </label>
 
         <div class="confirm-modal-actions">
-          <button type="button" class="btn btn-danger" onclick="closeConfirmModal()">Cancel</button>
+          <button type="button" class="btn btn-secondary" onclick="closeConfirmModal()">Cancel</button>
           <button type="submit" class="btn btn-success" id="confirmSubmitBtn" disabled>Confirm Trade</button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- ═══ Styled Confirm Modal (replaces browser confirm()) ═══ -->
+  <div class="confirm-modal-overlay" id="styledConfirmModal">
+    <div class="confirm-modal-box">
+      <h3 id="styledConfirmTitle">Confirm</h3>
+      <p id="styledConfirmMessage" style="color:var(--text-secondary);margin-bottom:1rem;font-size:0.9rem;"></p>
+      <div class="confirm-modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeStyledConfirm()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="styledConfirmYes">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Post-Trade Feedback Prompt Modal ═══ -->
+  <div class="feedback-prompt-overlay" id="feedbackPromptModal">
+    <div class="feedback-prompt-box">
+      <h3>Thanks for trading on SoulTrader!</h3>
+      <p class="feedback-prompt-sub">How was your experience? Leave feedback for your trade partner.</p>
+      <form id="feedbackPromptForm" method="POST" class="rating-form">
+        <div class="rating-row">
+          <select name="rating" required style="flex:1;">
+            <option value="" disabled selected>Rate 1–10</option>
+            <% for (let i = 10; i >= 1; i--) { %><option value="<%= i %>"><%= i %>/10</option><% } %>
+          </select>
+          <button type="submit" class="btn btn-primary btn-sm">Submit</button>
+        </div>
+        <textarea name="feedback" placeholder="Trade feedback (optional, visible on their profile)" maxlength="200" oninput="this.nextElementSibling.textContent = this.value.length + '/200'"></textarea>
+        <span style="font-size:0.7rem; color:var(--text-muted);">0/200</span>
+      </form>
+      <button type="button" class="feedback-prompt-skip" onclick="closeFeedbackPrompt()">Skip for now</button>
+    </div>
+  </div>
+
+  <%- include('partials/preloader') %>
   <%- include('partials/auth-modals') %>
   <%- include('partials/footer') %>
   <script src="/js/auth.js"></script>
   <script src="/js/user-hover.js"></script>
   <script>
+    // ── Confirm Trade Modal ──
     function openConfirmModal(tradeId, role) {
       const modal = document.getElementById('confirmTradeModal');
       const form = document.getElementById('confirmTradeForm');
@@ -688,17 +654,65 @@
     function closeConfirmModal() {
       document.getElementById('confirmTradeModal').classList.remove('active');
     }
-    // Enable submit only when checkbox is checked
     document.getElementById('confirmCheckbox').addEventListener('change', function() {
       document.getElementById('confirmSubmitBtn').disabled = !this.checked;
     });
-    // Close on overlay click
     document.getElementById('confirmTradeModal').addEventListener('click', function(e) {
       if (e.target === this) closeConfirmModal();
     });
-    // Close on Escape
+
+    // ── Styled Confirm Modal (replaces browser confirm()) ──
+    let _styledConfirmCb = null;
+    function showStyledConfirm(message, onConfirm) {
+      const modal = document.getElementById('styledConfirmModal');
+      document.getElementById('styledConfirmMessage').textContent = message;
+      _styledConfirmCb = onConfirm;
+      modal.classList.add('active');
+    }
+    function closeStyledConfirm() {
+      document.getElementById('styledConfirmModal').classList.remove('active');
+      _styledConfirmCb = null;
+    }
+    document.getElementById('styledConfirmYes').addEventListener('click', () => {
+      if (_styledConfirmCb) _styledConfirmCb();
+      closeStyledConfirm();
+    });
+    document.getElementById('styledConfirmModal').addEventListener('click', function(e) {
+      if (e.target === this) closeStyledConfirm();
+    });
+
+    // ── Post-Trade Feedback Prompt ──
+    function closeFeedbackPrompt() {
+      document.getElementById('feedbackPromptModal').classList.remove('active');
+    }
+    document.getElementById('feedbackPromptModal').addEventListener('click', function(e) {
+      if (e.target === this) closeFeedbackPrompt();
+    });
+
+    // Check if we should show the feedback prompt (query param: feedbackFor=<tradeId>)
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const feedbackTradeId = params.get('feedbackFor');
+      if (feedbackTradeId) {
+        const form = document.getElementById('feedbackPromptForm');
+        if (form) {
+          form.action = '/trade/rate/' + feedbackTradeId;
+          document.getElementById('feedbackPromptModal').classList.add('active');
+        }
+        // Clean URL
+        const url = new URL(window.location);
+        url.searchParams.delete('feedbackFor');
+        window.history.replaceState({}, '', url);
+      }
+    })();
+
+    // Close any modal on Escape
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') closeConfirmModal();
+      if (e.key === 'Escape') {
+        closeConfirmModal();
+        closeStyledConfirm();
+        closeFeedbackPrompt();
+      }
     });
   </script>
 </body>

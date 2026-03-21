@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %> | SoulTrader</title>
-  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link rel="icon" type="image/png" href="/icons/favicon.png">
   <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/responsive.css">
@@ -526,13 +526,14 @@
               </div>
 
               <div class="trade-actions">
-                <% if (userId && userId !== offer.offerCreatorId) { %>
+                <% if (offer.status === 'awaiting_confirmation') { %>
+                  <span style="font-size:0.72rem;padding:0.2rem 0.5rem;background:rgba(200,168,78,0.12);color:#c8a84e;border:1px solid rgba(200,168,78,0.25);border-radius:var(--radius);">Awaiting Confirmation</span>
+                <% } else if (userId && userId !== offer.offerCreatorId) { %>
                   <button class="btn btn-success btn-accept" data-trade-id="<%= offer.id %>">Accept</button>
                 <% } %>
-                <% if (userId && (userId === offer.offerCreatorId || role === 'admin')) { %>
-                  <form action="/trade/rescind/<%= offer.id %>" method="POST" style="flex:1;" onsubmit="return confirm('Cancel this trade offer?')">
-                    <button type="submit" class="btn btn-danger btn-full">Cancel</button>
-                  </form>
+                <% if (userId && (userId === offer.offerCreatorId || role === 'admin') && offer.status === 'open') { %>
+                  <button type="button" class="btn btn-danger btn-full" onclick="showStyledConfirm('Cancel this trade offer?', () => { document.getElementById('rescind-form-<%= offer.id %>').submit(); })">Cancel</button>
+                  <form id="rescind-form-<%= offer.id %>" action="/trade/rescind/<%= offer.id %>" method="POST" style="display:none;"></form>
                 <% } %>
               </div>
             </div>
@@ -542,11 +543,45 @@
     </section>
   </div>
 
+  <!-- ═══ Styled Confirm Modal (replaces browser confirm()) ═══ -->
+  <div class="confirm-modal-overlay" id="styledConfirmModal">
+    <div class="confirm-modal-box">
+      <h3 id="styledConfirmTitle">Confirm</h3>
+      <p id="styledConfirmMessage" style="color:var(--text-secondary);margin-bottom:1rem;font-size:0.9rem;"></p>
+      <div class="confirm-modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeStyledConfirm()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="styledConfirmYes">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <%- include('partials/preloader') %>
   <%- include('partials/auth-modals') %>
   <%- include('partials/footer') %>
   <script src="/js/auth.js"></script>
   <script src="/js/trade.js"></script>
   <script src="/js/user-hover.js"></script>
+  <script>
+    // ── Styled Confirm Modal ──
+    let _styledConfirmCb = null;
+    function showStyledConfirm(message, onConfirm) {
+      const modal = document.getElementById('styledConfirmModal');
+      document.getElementById('styledConfirmMessage').textContent = message;
+      _styledConfirmCb = onConfirm;
+      modal.classList.add('active');
+    }
+    function closeStyledConfirm() {
+      document.getElementById('styledConfirmModal').classList.remove('active');
+      _styledConfirmCb = null;
+    }
+    document.getElementById('styledConfirmYes').addEventListener('click', () => {
+      if (_styledConfirmCb) _styledConfirmCb();
+      closeStyledConfirm();
+    });
+    document.getElementById('styledConfirmModal').addEventListener('click', function(e) {
+      if (e.target === this) closeStyledConfirm();
+    });
+  </script>
   <script>
     // ── Meeting Point Picker (creator) ──
     function selectMeetingPoint(btn) {

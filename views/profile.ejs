@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= profileUser.username %> | SoulTrader</title>
-  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link rel="icon" type="image/png" href="/icons/favicon.png">
   <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/responsive.css">
@@ -81,7 +81,29 @@
             <div class="stat-label">Negative</div>
           </div>
           <div class="profile-stat">
-            <div class="stat-value"><%= positivePercent %>%</div>
+            <%
+              // Smooth color interpolation: 0-40% red, 40-70% yellow, 70-100% green
+              const pct = parseInt(positivePercent, 10) || 0;
+              let ratingColor;
+              if (pct <= 40) {
+                ratingColor = '#ef4444'; // red
+              } else if (pct <= 55) {
+                const t = (pct - 40) / 15;
+                const r = Math.round(239 + t * (234 - 239));
+                const g = Math.round(68 + t * (179 - 68));
+                const b = Math.round(68 + t * (8 - 68));
+                ratingColor = `rgb(${r},${g},${b})`;
+              } else if (pct <= 75) {
+                const t = (pct - 55) / 20;
+                const r = Math.round(234 + t * (34 - 234));
+                const g = Math.round(179 + t * (197 - 179));
+                const b = Math.round(8 + t * (94 - 8));
+                ratingColor = `rgb(${r},${g},${b})`;
+              } else {
+                ratingColor = '#22c55e'; // green
+              }
+            %>
+            <div class="stat-value" style="color: <%= ratingColor %>;"><%= positivePercent %>%</div>
             <div class="stat-label">Rating</div>
           </div>
           <div class="profile-stat">
@@ -283,8 +305,8 @@
             <% } else { %>
               <div style="display:flex; align-items:center; gap:0.5rem;">
                 <span class="linked-badge">Steam: <%= profileUser.steamUsername %></span>
-                <form action="/auth/unlink/steam" method="POST" style="display:inline;">
-                  <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Unlink Steam account?')">Unlink</button>
+                <form id="unlink-steam-form" action="/auth/unlink/steam" method="POST" style="display:inline;">
+                  <button type="button" class="btn btn-danger btn-sm" onclick="showStyledConfirm('Unlink your Steam account?', () => { document.getElementById('unlink-steam-form').submit(); })">Unlink</button>
                 </form>
               </div>
             <% } %>
@@ -294,8 +316,8 @@
             <% } else { %>
               <div style="display:flex; align-items:center; gap:0.5rem;">
                 <span class="linked-badge">Discord: <%= profileUser.discordUsername %></span>
-                <form action="/auth/unlink/discord" method="POST" style="display:inline;">
-                  <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Unlink Discord account?')">Unlink</button>
+                <form id="unlink-discord-form" action="/auth/unlink/discord" method="POST" style="display:inline;">
+                  <button type="button" class="btn btn-danger btn-sm" onclick="showStyledConfirm('Unlink your Discord account?', () => { document.getElementById('unlink-discord-form').submit(); })">Unlink</button>
                 </form>
               </div>
             <% } %>
@@ -497,10 +519,44 @@
     </div>
   </div>
 
+  <!-- ═══ Styled Confirm Modal ═══ -->
+  <div class="confirm-modal-overlay" id="styledConfirmModal">
+    <div class="confirm-modal-box">
+      <h3 id="styledConfirmTitle">Confirm</h3>
+      <p id="styledConfirmMessage" style="color:var(--text-secondary);margin-bottom:1rem;font-size:0.9rem;"></p>
+      <div class="confirm-modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeStyledConfirm()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="styledConfirmYes">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <%- include('partials/preloader') %>
   <%- include('partials/auth-modals') %>
   <%- include('partials/footer') %>
   <script src="/js/auth.js"></script>
   <script src="/js/user-hover.js"></script>
+  <script>
+    // ── Styled Confirm Modal ──
+    let _styledConfirmCb = null;
+    function showStyledConfirm(message, onConfirm) {
+      const modal = document.getElementById('styledConfirmModal');
+      document.getElementById('styledConfirmMessage').textContent = message;
+      _styledConfirmCb = onConfirm;
+      modal.classList.add('active');
+    }
+    function closeStyledConfirm() {
+      document.getElementById('styledConfirmModal').classList.remove('active');
+      _styledConfirmCb = null;
+    }
+    document.getElementById('styledConfirmYes').addEventListener('click', () => {
+      if (_styledConfirmCb) _styledConfirmCb();
+      closeStyledConfirm();
+    });
+    document.getElementById('styledConfirmModal').addEventListener('click', function(e) {
+      if (e.target === this) closeStyledConfirm();
+    });
+  </script>
   <script>
     function toggleProfileEdit() {
       document.getElementById('profileEditPanel').classList.toggle('open');
@@ -547,17 +603,18 @@
       } catch { alert('Network error.'); }
     }
 
-    async function deleteComment(commentId) {
-      if (!confirm('Delete this comment?')) return;
-      try {
-        const resp = await fetch('/comments/' + commentId, { method: 'DELETE' });
-        const data = await resp.json();
-        if (data.success) {
-          document.getElementById('comment-' + commentId).remove();
-        } else {
-          alert(data.error || 'Failed to delete comment.');
-        }
-      } catch { alert('Network error.'); }
+    function deleteComment(commentId) {
+      showStyledConfirm('Delete this comment?', async () => {
+        try {
+          const resp = await fetch('/comments/' + commentId, { method: 'DELETE' });
+          const data = await resp.json();
+          if (data.success) {
+            document.getElementById('comment-' + commentId).remove();
+          } else {
+            alert(data.error || 'Failed to delete comment.');
+          }
+        } catch { alert('Network error.'); }
+      });
     }
   </script>
 </body>

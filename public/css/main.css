@@ -2233,3 +2233,185 @@ textarea {
 .mp-other-input.visible {
   display: block;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRELOADER
+   ═══════════════════════════════════════════════════════════════════════════ */
+#preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #0d0d0d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.35s ease;
+}
+#preloader.preloader-fade {
+  opacity: 0;
+  pointer-events: none;
+}
+.preloader-icon {
+  width: 80px;
+  height: 80px;
+  animation: preloaderPulse 1.6s ease-in-out infinite;
+}
+@keyframes preloaderPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.95); }
+  50%      { opacity: 1;   transform: scale(1.05); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STYLED CONFIRM MODAL (replaces browser confirm())
+   ═══════════════════════════════════════════════════════════════════════════ */
+.confirm-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 5000;
+  align-items: center;
+  justify-content: center;
+}
+.confirm-modal-overlay.active {
+  display: flex;
+}
+.confirm-modal-box {
+  background: var(--bg-secondary, #151515);
+  border: 1px solid var(--border-color, #2a2a2a);
+  border-radius: var(--radius-lg, 1.2rem);
+  padding: 1.5rem;
+  max-width: 480px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.confirm-modal-box h3 {
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+.confirm-modal-box label {
+  display: block;
+  font-size: 0.85rem;
+  margin-top: 0.6rem;
+  margin-bottom: 0.25rem;
+  color: var(--text-secondary, #999);
+}
+.confirm-modal-box input,
+.confirm-modal-box textarea {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  background: var(--bg-input, #141414);
+  border: 1px solid var(--border-color, #2a2a2a);
+  border-radius: var(--radius, 8px);
+  color: var(--text-primary, #e8e8e8);
+  font-family: var(--font);
+  font-size: 0.85rem;
+}
+.confirm-modal-box textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+.confirm-warning {
+  margin-top: 1rem;
+  padding: 0.6rem;
+  background: rgba(234, 179, 8, 0.08);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+  border-radius: var(--radius, 8px);
+  font-size: 0.82rem;
+  color: var(--warning, #eab308);
+  line-height: 1.5;
+}
+.confirm-modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.confirm-modal-actions .btn {
+  flex: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FEEDBACK COLOR INTERPOLATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+.karma-positive { color: var(--success, #22c55e); }
+.karma-negative { color: var(--danger, #ef4444); }
+.karma-neutral  { color: var(--text-muted, #666); }
+
+/* ── Post-trade feedback prompt modal ────────────────────────────────── */
+.feedback-prompt-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 5100;
+  align-items: center;
+  justify-content: center;
+}
+.feedback-prompt-overlay.active {
+  display: flex;
+}
+.feedback-prompt-box {
+  background: var(--bg-secondary, #151515);
+  border: 1px solid var(--border-color, #2a2a2a);
+  border-radius: var(--radius-lg, 1.2rem);
+  padding: 1.75rem;
+  max-width: 480px;
+  width: 90%;
+  text-align: center;
+}
+.feedback-prompt-box h3 {
+  font-size: 1.15rem;
+  margin-bottom: 0.35rem;
+}
+.feedback-prompt-box .feedback-prompt-sub {
+  color: var(--text-secondary, #999);
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+.feedback-prompt-box .rating-form {
+  text-align: left;
+}
+.feedback-prompt-box .rating-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.feedback-prompt-box textarea {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg-input, #141414);
+  border: 1px solid var(--border-color, #2a2a2a);
+  border-radius: var(--radius, 8px);
+  color: var(--text-primary, #e8e8e8);
+  font-family: var(--font);
+  font-size: 0.82rem;
+  resize: vertical;
+  min-height: 50px;
+  margin-top: 0.5rem;
+}
+.feedback-prompt-box select {
+  flex: 1;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg-input, #141414);
+  border: 1px solid var(--border-color, #2a2a2a);
+  border-radius: var(--radius, 8px);
+  color: var(--text-primary, #e8e8e8);
+  font-family: var(--font);
+  font-size: 0.85rem;
+}
+.feedback-prompt-skip {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--text-muted, #666);
+  font-size: 0.78rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.feedback-prompt-skip:hover {
+  color: var(--text-secondary, #999);
+}

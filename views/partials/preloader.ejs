@@ -1,0 +1,13 @@
+<!-- Preloader -->
+<div id="preloader">
+  <img src="/icons/soultrader_icon_large_dark_transparent.png" alt="SoulTrader" class="preloader-icon" />
+</div>
+<script>
+  window.addEventListener('load', function() {
+    const preloader = document.getElementById('preloader');
+    if (preloader) {
+      preloader.classList.add('preloader-fade');
+      setTimeout(() => { preloader.remove(); }, 400);
+    }
+  });
+</script>

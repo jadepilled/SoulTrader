@@ -214,6 +214,7 @@ router.post('/accept/:id', tradeAcceptLimiter, ensureVerified, async (req, res) 
 
     trade.status    = 'awaiting_confirmation';
     trade.acceptorId = req.user.id;
+    trade.acceptedAt = new Date();
     trade.acceptorInGameName     = inGameName     ? String(inGameName).substring(0, 100).trim()     : null;
     trade.acceptorMeetingPoint   = meetingPoint   ? String(meetingPoint).substring(0, 200).trim()   : null;
     trade.acceptorAdditionalInfo = additionalInfo ? String(additionalInfo).substring(0, 500).trim() : null;
@@ -264,6 +265,8 @@ router.post('/confirm/:id', async (req, res) => {
       await trade.save();
       tradeEmail.sendTradeCompletedEmail(trade.offerCreator.email, trade.offerCreator.username, trade.acceptor.username, trade).catch(e => console.error(e));
       tradeEmail.sendTradeCompletedEmail(trade.acceptor.email,     trade.acceptor.username,     trade.offerCreator.username, trade).catch(e => console.error(e));
+      // Redirect with feedback prompt — trade just completed
+      return res.redirect(`/trade/my-trades?feedbackFor=${trade.id}`);
     } else {
       await trade.save();
       const other     = isCreator ? trade.acceptor     : trade.offerCreator;
@@ -271,7 +274,7 @@ router.post('/confirm/:id', async (req, res) => {
       tradeEmail.sendTradeConfirmedByPartyEmail(other.email, confirmer.username, other.username, trade).catch(e => console.error(e));
     }
 
-    return res.redirect('/trade/my-trades');
+    return res.redirect('/trade/my-trades?confirmed=1');
   } catch (err) {
     console.error('Error confirming trade:', err);
     res.status(500).send('Server error.');

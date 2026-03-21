@@ -5,6 +5,7 @@ const { Message, User, Report } = require('../models');
 const { ensureAuthenticated, ensureVerified } = require('../middleware/roleMiddleware');
 const { filterContent } = require('../utils/contentFilter');
 const { getUsernameStyle, gameConfigs } = require('../controllers/gameController');
+const { sendNewMessageEmail } = require('../utils/messageEmailService');
 const rateLimit = require('express-rate-limit');
 
 const messageLimiter = rateLimit({
@@ -182,11 +183,25 @@ router.post('/:username', ensureAuthenticated, ensureVerified, messageLimiter, a
     if (!recipient) return res.status(404).send('User not found.');
     if (recipient.id === userId) return res.status(400).send('You cannot message yourself.');
 
+    // Check if this is the first message from this sender to this recipient
+    const priorMessageCount = await Message.count({
+      where: { senderId: userId, recipientId: recipient.id },
+    });
+
     await Message.create({
       content: result.text,
       senderId: userId,
       recipientId: recipient.id,
     });
+
+    // Send email notification on first message from this user
+    if (priorMessageCount === 0) {
+      const recipientFull = await User.findByPk(recipient.id, { attributes: ['email', 'username'] });
+      if (recipientFull && recipientFull.email) {
+        sendNewMessageEmail(recipientFull.email, recipientFull.username, req.user.username)
+          .catch(err => console.error('New message email failed:', err));
+      }
+    }
 
     res.redirect(`/messages/${recipient.username}`);
   } catch (err) {

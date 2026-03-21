@@ -356,6 +356,47 @@ sequelize.sync({ alter: true })
   .then(() => {
     app.listen(PORT, () => {
       console.log(`SoulTrader running on port ${PORT}`);
+
+      // ── Trade expiry: revert awaiting_confirmation trades older than 24 hours ──
+      const expireStaleAccepts = async () => {
+        try {
+          const { Trade: T } = require('./models');
+          const { Op: O } = require('sequelize');
+          const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+          const expired = await T.findAll({
+            where: {
+              status: 'awaiting_confirmation',
+              acceptedAt: { [O.lt]: cutoff },
+            },
+          });
+          for (const trade of expired) {
+            trade.status = 'open';
+            trade.acceptorId = null;
+            trade.acceptedAt = null;
+            trade.acceptorInGameName = null;
+            trade.acceptorMeetingPoint = null;
+            trade.acceptorAdditionalInfo = null;
+            trade.creatorConfirmed = false;
+            trade.acceptorConfirmed = false;
+            await trade.save();
+          }
+          if (expired.length > 0) console.log(`[TradeExpiry] Reverted ${expired.length} expired trade(s).`);
+        } catch (err) {
+          console.error('[TradeExpiry] Error:', err.message);
+        }
+      };
+      // Run expiry check every 15 minutes
+      setInterval(expireStaleAccepts, 15 * 60 * 1000);
+      expireStaleAccepts(); // Run once on startup
+
+      // ── Weekly digest — runs every 7 days (Sunday midnight UTC) ──
+      const { sendWeeklyDigests } = require('./utils/weeklyDigest');
+      setInterval(() => {
+        const now = new Date();
+        if (now.getUTCDay() === 0 && now.getUTCHours() === 0) {
+          sendWeeklyDigests().catch(err => console.error('[WeeklyDigest] Error:', err));
+        }
+      }, 60 * 60 * 1000); // Check hourly
     });
   })
   .catch((err) => {

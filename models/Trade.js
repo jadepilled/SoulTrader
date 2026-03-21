@@ -100,6 +100,8 @@ const Trade = sequelize.define('Trade', {
   creatorDiscordName:     { type: DataTypes.STRING, allowNull: true },
   creatorMeetingPoint:    { type: DataTypes.STRING, allowNull: true },
   creatorAdditionalInfo:  { type: DataTypes.TEXT,   allowNull: true },
+  // ── Timestamps for trade lifecycle ──
+  acceptedAt:             { type: DataTypes.DATE,   allowNull: true },
   // ── Trade feedback (filled when rating) ──
   tradeFeedbackCreator:   { type: DataTypes.TEXT,   allowNull: true },
   tradeFeedbackAcceptor:  { type: DataTypes.TEXT,   allowNull: true },

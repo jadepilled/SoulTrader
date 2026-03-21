@@ -126,11 +126,26 @@ const renderGamePage = async (req, res, gameKey) => {
     const config = gameConfigs[gameKey];
     if (!config) return res.status(404).send('Game not found');
 
+    const { Op } = require('sequelize');
     const items = await Item.findAll({ where: { game: config.game } });
     const sort = req.query.sort === 'asc' ? 'ASC' : 'DESC';
 
+    // Show open trades AND awaiting_confirmation trades within the 24-hour window
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const offers = await Trade.findAll({
-      where: { status: 'open', game: config.game },
+      where: {
+        game: config.game,
+        [Op.or]: [
+          { status: 'open' },
+          {
+            status: 'awaiting_confirmation',
+            [Op.or]: [
+              { acceptedAt: { [Op.gte]: twentyFourHoursAgo } },
+              { acceptedAt: null }, // Legacy trades without acceptedAt
+            ],
+          },
+        ],
+      },
       include: [
         { model: User, as: 'offerCreator', attributes: ['username', 'positiveKarma', 'negativeKarma', 'role'] },
       ],
@@ -146,7 +161,6 @@ const renderGamePage = async (req, res, gameKey) => {
     // Pending trade count for navbar
     let pendingTradeCount = 0;
     if (userId) {
-      const { Op } = require('sequelize');
       pendingTradeCount = await Trade.count({
         where: {
           status: 'awaiting_confirmation',
