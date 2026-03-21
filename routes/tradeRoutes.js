@@ -12,7 +12,6 @@ const gameKeyMap = {
   darksouls:   'Dark Souls',
   darksouls2:  'Dark Souls 2',
   darksouls3:  'Dark Souls 3',
-  bloodborne:  'Bloodborne',
   eldenring:   'Elden Ring',
   demonssouls: "Demon's Souls",
 };
@@ -90,9 +89,6 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
 
     const gameName = gameKeyMap[game] || game;
 
-    // Force Bloodborne to PlayStation
-    if (gameName === 'Bloodborne') platform = 'PlayStation';
-
     // Validate game variant for DS1/DS2
     const validVariants = {
       'Dark Souls': ['Dark Souls', 'Dark Souls: Remastered'],
@@ -138,7 +134,7 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
     // Validate character level against per-game cap
     const gameLevelCaps = {
       'Dark Souls': 713, 'Dark Souls 2': 838, 'Dark Souls 3': 802,
-      'Bloodborne': 544, 'Elden Ring': 713, "Demon's Souls": 712,
+      'Elden Ring': 713, "Demon's Souls": 712,
     };
     const charLevel = parseInt(req.body.characterLevel, 10);
     const maxLevel  = gameLevelCaps[gameName] || 999;

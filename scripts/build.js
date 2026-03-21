@@ -33,7 +33,6 @@ const GAME_MAP = {
   ds1: 'Dark Souls',
   ds2: 'Dark Souls 2',
   ds3: 'Dark Souls 3',
-  bloodborne: 'Bloodborne',
   eldenring: 'Elden Ring',
   demonssouls: "Demon's Souls",
 };
@@ -77,8 +76,6 @@ const MANUAL_ITEMS = [
   { game: 'Dark Souls 2',  type: 'currency', name: 'Souls' },
   { game: 'Dark Souls 3',  type: 'currency', name: 'Souls' },
   { game: 'Dark Souls 3',  type: 'currency', name: 'Ember' },
-  { game: 'Bloodborne',    type: 'currency', name: 'Blood Echoes' },
-  { game: 'Bloodborne',    type: 'currency', name: 'Insight' },
   { game: 'Elden Ring',    type: 'currency', name: 'Runes' },
   { game: "Demon's Souls", type: 'currency', name: 'Souls' },
   // Dark Souls consumables
@@ -168,25 +165,6 @@ const MANUAL_ITEMS = [
   { game: 'Dark Souls 3', type: 'ring', name: 'Covetous Silver Serpent Ring' },
   { game: 'Dark Souls 3', type: 'ring', name: 'Covetous Gold Serpent Ring' },
   { game: 'Dark Souls 3', type: 'ring', name: 'Ring of Steel Protection' },
-  // Bloodborne consumables
-  { game: 'Bloodborne', type: 'consumable', name: 'Blood Stone Shard' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Twin Blood Stone Shards' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Blood Stone Chunk' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Blood Rock' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Coldblood Dew' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Ritual Blood (1)' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Ritual Blood (5)' },
-  { game: 'Bloodborne', type: 'consumable', name: "Sage's Hair" },
-  { game: 'Bloodborne', type: 'consumable', name: "Sage's Wrist" },
-  { game: 'Bloodborne', type: 'consumable', name: 'Red Jelly' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Bastard of Loran' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Yellow Backbone' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Cursed Damp Blood Gem' },
-  // Bloodborne misc
-  { game: 'Bloodborne', type: 'misc', name: 'Radial Blood Gem' },
-  { game: 'Bloodborne', type: 'misc', name: 'Triangle Blood Gem' },
-  { game: 'Bloodborne', type: 'misc', name: 'Waning Blood Gem' },
-  { game: 'Bloodborne', type: 'misc', name: 'Circular Blood Gem' },
   // Elden Ring consumables
   { game: 'Elden Ring', type: 'consumable', name: 'Smithing Stone (1)' },
   { game: 'Elden Ring', type: 'consumable', name: 'Smithing Stone (2)' },

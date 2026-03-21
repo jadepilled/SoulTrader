@@ -46,8 +46,9 @@ function computeBadges(user, completedTradeCount = 0) {
   const karma = (user.positiveKarma || 0) - 2 * (user.negativeKarma || 0);
 
   // ── Role badges ──
-  if (user.role === 'admin')     badges.push({ name: 'Admin',     color: '#fa9cff', textColor: '#111', category: 'role' });
-  if (user.role === 'moderator') badges.push({ name: 'Moderator', color: '#5b9bff', textColor: '#fff', category: 'role' });
+  if (user.role === 'super_admin') badges.push({ name: 'Super Admin', color: '#b388ff', textColor: '#111', category: 'role' });
+  if (user.role === 'admin')       badges.push({ name: 'Admin',       color: '#fa9cff', textColor: '#111', category: 'role' });
+  if (user.role === 'moderator')   badges.push({ name: 'Moderator',   color: '#5b9bff', textColor: '#fff', category: 'role' });
 
   // ── Special badges ──
   if (user.username === 'psyopgirl') badges.push({ name: 'CEO',     color: '#ffd700', textColor: '#111', category: 'special' });
@@ -79,4 +80,67 @@ function computeBadges(user, completedTradeCount = 0) {
   return badges;
 }
 
-module.exports = { computeBadges, textColorForBg, TRADE_TIERS, KARMA_TIERS };
+/**
+ * Compute available display roles a user can select for their profile theme.
+ * Includes their actual role badge + all unlocked karma/trade tier badges at
+ * or below their current level.
+ */
+function getAvailableDisplayRoles(user, completedTradeCount = 0) {
+  const roles = [];
+  const karma = (user.positiveKarma || 0) - 2 * (user.negativeKarma || 0);
+
+  // ── Staff roles (only their own actual role, not higher) ──
+  const staffRoles = ['super_admin', 'admin', 'moderator'];
+  const staffColors = {
+    super_admin: '#b388ff',
+    admin: '#fa9cff',
+    moderator: '#5b9bff',
+  };
+  const staffLabels = {
+    super_admin: 'Super Admin',
+    admin: 'Admin',
+    moderator: 'Moderator',
+  };
+  if (staffRoles.includes(user.role)) {
+    roles.push({ name: staffLabels[user.role], value: user.role, color: staffColors[user.role], category: 'role' });
+  }
+
+  // ── Karma tiers: include ALL tiers at or below user's current karma level ──
+  if (karma >= 5) {
+    // Iterate from lowest to highest; include all that the user qualifies for
+    const sortedKarma = [...KARMA_TIERS].sort((a, b) => a.min - b.min);
+    for (const tier of sortedKarma) {
+      if (karma >= tier.min) {
+        roles.push({ name: tier.name, value: 'karma:' + tier.name, color: tier.color, category: 'karma' });
+      }
+    }
+  }
+
+  // ── Trade tiers: include ALL tiers at or below user's current trade count ──
+  if (completedTradeCount >= 1) {
+    const sortedTrade = [...TRADE_TIERS].sort((a, b) => a.min - b.min);
+    for (const tier of sortedTrade) {
+      if (completedTradeCount >= tier.min) {
+        roles.push({ name: tier.name, value: 'trade:' + tier.name, color: tier.color, category: 'trade' });
+      }
+    }
+  }
+
+  return roles;
+}
+
+/**
+ * Validate and resolve a display role value into its display name and color.
+ * Returns null if the display role is invalid or no longer earned.
+ */
+function resolveDisplayRole(displayRoleValue, user, completedTradeCount = 0) {
+  if (!displayRoleValue) return null;
+
+  const available = getAvailableDisplayRoles(user, completedTradeCount);
+  const match = available.find(r => r.value === displayRoleValue);
+  if (!match) return null; // No longer qualified
+
+  return { name: match.name, color: match.color, category: match.category };
+}
+
+module.exports = { computeBadges, textColorForBg, TRADE_TIERS, KARMA_TIERS, getAvailableDisplayRoles, resolveDisplayRole };

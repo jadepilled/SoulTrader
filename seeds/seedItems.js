@@ -231,47 +231,6 @@ const ITEMS = [
   { game: 'Dark Souls 3', type: 'ring', name: 'Ring of Steel Protection' },
 
   // ═══════════════════════════════════════════
-  //  BLOODBORNE
-  // ═══════════════════════════════════════════
-
-  { game: 'Bloodborne', type: 'weapon', name: 'Hunter Axe' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Saw Cleaver' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Saw Spear' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Threaded Cane' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Kirkhammer' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Ludwig\'s Holy Blade' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Burial Blade' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Blade of Mercy' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Chikage' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Rakuyo' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Holy Moonlight Sword' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Simon\'s Bowblade' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Whirligig Saw' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Amygdalan Arm' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Kos Parasite' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Hunter Pistol' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Hunter Blunderbuss' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Evelyn' },
-  { game: 'Bloodborne', type: 'weapon', name: 'Repeating Pistol' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Blood Stone Shard' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Twin Blood Stone Shards' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Blood Stone Chunk' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Blood Rock' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Coldblood Dew' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Ritual Blood (1)' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Ritual Blood (5)' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Sage\'s Hair' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Sage\'s Wrist' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Red Jelly' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Bastard of Loran' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Yellow Backbone' },
-  { game: 'Bloodborne', type: 'consumable', name: 'Cursed Damp Blood Gem' },
-  { game: 'Bloodborne', type: 'misc', name: 'Radial Blood Gem' },
-  { game: 'Bloodborne', type: 'misc', name: 'Triangle Blood Gem' },
-  { game: 'Bloodborne', type: 'misc', name: 'Waning Blood Gem' },
-  { game: 'Bloodborne', type: 'misc', name: 'Circular Blood Gem' },
-
-  // ═══════════════════════════════════════════
   //  ELDEN RING
   // ═══════════════════════════════════════════
 

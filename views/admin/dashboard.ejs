@@ -101,7 +101,9 @@
                     <option value="">Role...</option>
                     <option value="user">User</option>
                     <option value="moderator">Mod</option>
-                    <option value="admin">Admin</option>
+                    <% if (role === 'super_admin') { %>
+                      <option value="admin">Admin</option>
+                    <% } %>
                   </select>
                 </div>
               </td>

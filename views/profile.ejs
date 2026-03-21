@@ -8,6 +8,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/responsive.css">
+  <%
+    // Helper for display role tinting (used in head style + body)
+    function hexToRgb(hex) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? `${parseInt(result[1],16)},${parseInt(result[2],16)},${parseInt(result[3],16)}` : '255,255,255';
+    }
+  %>
+  <% if (typeof resolvedDisplayRole !== 'undefined' && resolvedDisplayRole) { %>
+    <style>
+      .profile-section {
+        border-color: rgba(<%= hexToRgb(resolvedDisplayRole.color) %>, 0.15) !important;
+        box-shadow: inset 0 0 40px rgba(<%= hexToRgb(resolvedDisplayRole.color) %>, 0.02) !important;
+      }
+    </style>
+  <% } %>
 </head>
 <body>
   <%- include('partials/navbar', { title: profileUser.username + "'s Profile", gameKey: '', pendingTradeCount: typeof pendingTradeCount !== 'undefined' ? pendingTradeCount : 0 }) %>
@@ -16,7 +31,19 @@
     <%- include('partials/flash-messages') %>
 
     <!-- Profile Header Card -->
-    <div class="profile-header">
+    <%
+      // Compute theme tint from display role
+      const _displayRole = typeof resolvedDisplayRole !== 'undefined' ? resolvedDisplayRole : null;
+      const _themeTint = _displayRole ? _displayRole.color : null;
+      const _tintRgb = _themeTint ? hexToRgb(_themeTint) : null;
+      const _headerStyle = _tintRgb
+        ? `border-color: rgba(${_tintRgb}, 0.2); box-shadow: 0 1rem 2.2rem rgba(0,0,0,0.26), inset 0 0 60px rgba(${_tintRgb}, 0.04);`
+        : '';
+      const _sectionStyle = _tintRgb
+        ? `border-color: rgba(${_tintRgb}, 0.15); box-shadow: inset 0 0 40px rgba(${_tintRgb}, 0.02);`
+        : '';
+    %>
+    <div class="profile-header" style="<%= _headerStyle %>">
       <div class="profile-avatar-col">
         <img
           src="<%= profileUser.profileImagePath || '/images/default-avatar.svg' %>"
@@ -40,7 +67,9 @@
 
       <div class="profile-info">
         <h1 style="<%= getUsernameStyle(profileUser.role) %>"><%= profileUser.username %></h1>
-        <div class="profile-role"><%= profileUser.role %></div>
+        <div class="profile-role" <% if (_displayRole) { %>style="color: <%= _displayRole.color %>;"<% } %>>
+          <%= _displayRole ? _displayRole.name : (profileUser.role === 'super_admin' ? 'Super Admin' : profileUser.role) %>
+        </div>
         <div class="profile-member-since">
           Member since <%= profileUser.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) %>
           <% if (profileUser.lastOnline) { %>
@@ -331,6 +360,29 @@
             <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.75rem;">Save Privacy Settings</button>
           </form>
 
+          <!-- Display Role / Profile Theme -->
+          <% if (typeof availableDisplayRoles !== 'undefined' && availableDisplayRoles.length > 0) { %>
+            <form action="/profile/update-display-role" method="POST" style="margin-bottom:2rem;">
+              <h3 class="profile-subsection-title">Profile Theme</h3>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.75rem;">
+                Choose a display role to theme your profile. This replaces the role label beneath your name and tints your profile with that role's colour.
+              </p>
+              <div class="display-role-options">
+                <label class="display-role-option">
+                  <input type="radio" name="displayRole" value="none" <%= !profileUser.displayRole ? 'checked' : '' %> />
+                  <span class="display-role-chip" style="background: rgba(255,255,255,0.06); color: var(--text-muted);">Default</span>
+                </label>
+                <% availableDisplayRoles.forEach(dr => { %>
+                  <label class="display-role-option">
+                    <input type="radio" name="displayRole" value="<%= dr.value %>" <%= profileUser.displayRole === dr.value ? 'checked' : '' %> />
+                    <span class="display-role-chip" style="background: <%= dr.color %>20; color: <%= dr.color %>; border-color: <%= dr.color %>40;"><%= dr.name %></span>
+                  </label>
+                <% }); %>
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.75rem;">Save Theme</button>
+            </form>
+          <% } %>
+
           <!-- Verified Accounts -->
           <h3 class="profile-subsection-title">Verified Accounts</h3>
           <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
@@ -412,7 +464,7 @@
               <div class="comment-body" id="comment-body-<%= comment.id %>"><%= comment.content %></div>
               <div class="comment-actions">
                 <% const canEdit   = typeof userId !== 'undefined' && userId && comment.author && comment.authorId === userId; %>
-                <% const canDelete = typeof userId !== 'undefined' && userId && (comment.authorId === userId || profileUser.id === userId || role === 'admin'); %>
+                <% const canDelete = typeof userId !== 'undefined' && userId && (comment.authorId === userId || profileUser.id === userId || role === 'admin' || role === 'super_admin'); %>
                 <% if (canEdit) { %>
                   <button class="comment-action-btn" onclick="editComment('<%= comment.id %>')">Edit</button>
                 <% } %>
@@ -516,7 +568,6 @@
               'Dark Souls':    { color: '#7b86a2', rgb: '123, 134, 162' },
               'Dark Souls 2':  { color: '#8b7eaa', rgb: '139, 126, 170' },
               'Dark Souls 3':  { color: '#6e7fa0', rgb: '110, 127, 160' },
-              'Bloodborne':    { color: '#8b3a3a', rgb: '139, 58, 58' },
               'Elden Ring':    { color: '#c8a84e', rgb: '200, 168, 78' },
               "Demon's Souls": { color: '#8a8a8a', rgb: '138, 138, 138' },
             };

@@ -1,13 +1,20 @@
 module.exports = {
+  ensureSuperAdmin: (req, res, next) => {
+    if (req.user && req.user.role === 'super_admin') {
+      return next();
+    }
+    res.status(403).send('Forbidden: You do not have the required permissions.');
+  },
+
   ensureAdmin: (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'super_admin')) {
       return next();
     }
     res.status(403).send('Forbidden: You do not have the required permissions.');
   },
 
   ensureModerator: (req, res, next) => {
-    if (req.user && (req.user.role === 'admin' || req.user.role === 'moderator')) {
+    if (req.user && (req.user.role === 'moderator' || req.user.role === 'admin' || req.user.role === 'super_admin')) {
       return next();
     }
     res.status(403).send('Forbidden: You do not have the required permissions.');

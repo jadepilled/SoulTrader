@@ -71,8 +71,8 @@ app.use(async (req, res, next) => {
       res.locals.unreadMessageCount = await Message.count({
         where: { recipientId: req.user.id, readAt: null },
       });
-      // Pending report count for admins only
-      if (req.user.role === 'admin') {
+      // Pending report count for admins and super admins
+      if (req.user.role === 'admin' || req.user.role === 'super_admin') {
         res.locals.pendingReportCount = await Report.count({
           where: { status: 'pending' },
         });
@@ -373,7 +373,6 @@ app.post('/feedback', async (req, res) => {
 app.get('/darksouls', gameController.darksouls);
 app.get('/darksouls2', gameController.darksouls2);
 app.get('/darksouls3', gameController.darksouls3);
-app.get('/bloodborne', gameController.bloodborne);
 app.get('/eldenring', gameController.eldenring);
 app.get('/demonssouls', gameController.demonssouls);
 
@@ -381,7 +380,18 @@ app.get('/demonssouls', gameController.demonssouls);
 const PORT = process.env.PORT || 5000;
 
 sequelize.sync({ alter: true })
-  .then(() => {
+  .then(async () => {
+    // One-time: promote psyopgirl to super_admin
+    try {
+      const { User: U } = require('./models');
+      const u = await U.findOne({ where: { username: 'psyopgirl' } });
+      if (u && u.role !== 'super_admin') {
+        u.role = 'super_admin';
+        await u.save();
+        console.log('[Startup] Promoted psyopgirl to super_admin.');
+      }
+    } catch (e) { /* silently ignore */ }
+
     app.listen(PORT, () => {
       console.log(`SoulTrader running on port ${PORT}`);
 

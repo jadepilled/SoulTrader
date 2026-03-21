@@ -144,6 +144,12 @@ const User = sequelize.define('User', {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
+  // Display role — selected theme role for profile
+  displayRole: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: null,
+  },
   // Tracking flags
   hasSeenTradingGuide: {
     type: DataTypes.BOOLEAN,

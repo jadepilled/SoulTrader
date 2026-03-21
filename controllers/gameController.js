@@ -2,6 +2,7 @@ const { Item, Trade, User } = require('../models');
 
 // ─── Role-based username styling ─────────────────────────────────────────────
 const roleColors = {
+  super_admin: { textColor: '#b388ff', shadowColor: 'darkpurple' },
   admin: { textColor: '#fa9cff', shadowColor: 'darkpink' },
   moderator: { textColor: '#5b9bff', shadowColor: 'darkblue' },
   user: { textColor: '#eee', shadowColor: 'gray' },
@@ -34,7 +35,7 @@ const gameConfigs = {
     accentColorRgb: '139, 126, 170',
     secondaryColor: '#6e5f8e',
     secondaryColorRgb: '110, 95, 142',
-    logoUrl: 'https://i.imgur.com/TFHkXED.png',
+    logoUrl: 'https://i.imgur.com/eCmTcB8.png',
     levelCap: 838,
     variants: ['Dark Souls II', 'Dark Souls II: SotFS'],
   },
@@ -46,20 +47,8 @@ const gameConfigs = {
     accentColorRgb: '110, 127, 160',
     secondaryColor: '#5a6e8c',
     secondaryColorRgb: '90, 110, 140',
-    logoUrl: 'https://i.imgur.com/sETyDch.png',
+    logoUrl: 'https://i.imgur.com/LCWgr1Z.png',
     levelCap: 802,
-  },
-  bloodborne: {
-    title: 'Bloodborne',
-    game: 'Bloodborne',
-    gameKey: 'bloodborne',
-    accentColor: '#8b3a3a',
-    accentColorRgb: '139, 58, 58',
-    secondaryColor: '#6e2e2e',
-    secondaryColorRgb: '110, 46, 46',
-    logoUrl: 'https://i.imgur.com/0q8jRGA.png',
-    levelCap: 544,
-    forcePlatform: 'PlayStation',
   },
   eldenring: {
     title: 'Elden Ring',
@@ -69,7 +58,7 @@ const gameConfigs = {
     accentColorRgb: '200, 168, 78',
     secondaryColor: '#5b9bff',
     secondaryColorRgb: '91, 155, 255',
-    logoUrl: 'https://i.imgur.com/7aq4TkU.png',
+    logoUrl: 'https://i.imgur.com/9EQTlmP.png',
     levelCap: 713,
   },
   demonssouls: {
@@ -80,7 +69,7 @@ const gameConfigs = {
     accentColorRgb: '138, 138, 138',
     secondaryColor: '#6e6e6e',
     secondaryColorRgb: '110, 110, 110',
-    logoUrl: 'https://i.imgur.com/R9wKWFE.png',
+    logoUrl: 'https://i.imgur.com/fzs2DYZ.png',
     levelCap: 712,
   },
 };
@@ -202,7 +191,6 @@ const renderGamePage = async (req, res, gameKey) => {
 exports.darksouls = (req, res) => renderGamePage(req, res, 'darksouls');
 exports.darksouls2 = (req, res) => renderGamePage(req, res, 'darksouls2');
 exports.darksouls3 = (req, res) => renderGamePage(req, res, 'darksouls3');
-exports.bloodborne = (req, res) => renderGamePage(req, res, 'bloodborne');
 exports.eldenring = (req, res) => renderGamePage(req, res, 'eldenring');
 exports.demonssouls = (req, res) => renderGamePage(req, res, 'demonssouls');
 

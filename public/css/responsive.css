@@ -109,8 +109,8 @@
   }
 
   /* Homepage */
-  .game-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .game-grid a {
+    width: calc(50% - 0.5rem);
   }
 
   .home-grid .main-image {
@@ -152,8 +152,8 @@
 }
 
 @media (max-width: 480px) {
-  .game-grid {
-    grid-template-columns: 1fr;
+  .game-grid a {
+    width: 100%;
   }
 
   .navbar {

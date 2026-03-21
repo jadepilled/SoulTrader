@@ -482,6 +482,7 @@
               <div class="trade-card-banner"
                    <% if (_vc.bg) { %>style="background:<%= _vc.bg %>; color:<%= _vc.color %>; border-bottom:1px solid <%= _vc.border %>;"<% } %>
               ><%= _bannerText %></div>
+              <div class="trade-card-platform-banner"><%= offer.platform %></div>
 
               <div class="offer-heading">
                 Offer from
@@ -535,7 +536,6 @@
               </div>
 
               <div class="trade-details">
-                <div class="platform">Platform: <%= offer.platform %></div>
                 <% if (offer.characterLevel) { %>
                   <span class="char-level-badge">LVL <%= offer.characterLevel %></span>
                 <% } %>
@@ -550,7 +550,7 @@
                 <% } else if (userId && userId !== offer.offerCreatorId) { %>
                   <button class="btn btn-success btn-accept" data-trade-id="<%= offer.id %>">Accept</button>
                 <% } %>
-                <% if (userId && (userId === offer.offerCreatorId || role === 'admin') && offer.status === 'open') { %>
+                <% if (userId && (userId === offer.offerCreatorId || role === 'admin' || role === 'super_admin') && offer.status === 'open') { %>
                   <button type="button" class="btn btn-danger btn-full" onclick="showStyledConfirm('Cancel this trade offer?', () => { document.getElementById('rescind-form-<%= offer.id %>').submit(); })">Cancel</button>
                   <form id="rescind-form-<%= offer.id %>" action="/trade/rescind/<%= offer.id %>" method="POST" style="display:none;"></form>
                 <% } %>

@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
       darksouls:   { weapon: 15, shield: 15, armor: 10 },
       darksouls2:  { weapon: 10, shield: 10, armor: 10 },
       darksouls3:  { weapon: 10, shield: 10, armor: 0  },
-      bloodborne:  { weapon: 10, shield: 0,  armor: 0  },
       eldenring:   { weapon: 25, shield: 25, armor: 0  },
       demonssouls: { weapon: 10, shield: 10, armor: 10 },
     };
@@ -33,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     darksouls: 713,
     darksouls2: 838,
     darksouls3: 802,
-    bloodborne: 544,
     eldenring: 713,
     demonssouls: 712,
   };

@@ -79,7 +79,7 @@ router.delete('/:commentId', ensureAuthenticated, async (req, res) => {
 
     const isAuthor       = comment.authorId === req.user.id;
     const isProfileOwner = comment.profileUserId === req.user.id;
-    const isAdmin        = req.user.role === 'admin';
+    const isAdmin        = req.user.role === 'admin' || req.user.role === 'super_admin';
 
     if (!isAuthor && !isProfileOwner && !isAdmin) {
       return res.status(403).json({ error: 'Forbidden.' });

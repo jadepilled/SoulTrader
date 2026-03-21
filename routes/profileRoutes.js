@@ -8,7 +8,7 @@ const { User, Trade, Comment } = require('../models');
 const { ensureAuthenticated } = require('../middleware/roleMiddleware');
 const { getUsernameStyle, gameConfigs } = require('../controllers/gameController');
 const { profileUpdateLimiter } = require('../middleware/rateLimiter');
-const { computeBadges } = require('../utils/badges');
+const { computeBadges, getAvailableDisplayRoles, resolveDisplayRole } = require('../utils/badges');
 
 // Configure multer for memory storage (we'll process with sharp before saving)
 const upload = multer({
@@ -80,7 +80,7 @@ router.get('/:username', async (req, res) => {
         'bio', 'profileImagePath', 'steamUsername', 'discordUsername',
         'steamId', 'discordId', 'createdAt', 'isVerified', 'isBanned', 'isSponsor',
         'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox', 'lastOnline',
-        'hideDiscord', 'hideSteam', 'hidePSN', 'hideXbox',
+        'hideDiscord', 'hideSteam', 'hidePSN', 'hideXbox', 'displayRole',
       ],
     });
 
@@ -200,6 +200,19 @@ router.get('/:username', async (req, res) => {
       });
     }
 
+    // Resolve display role (validate it's still earned)
+    const resolvedDisplayRole = resolveDisplayRole(user.displayRole, user, completedTradeCount);
+    // If stored display role is no longer valid, clear it
+    if (user.displayRole && !resolvedDisplayRole) {
+      user.displayRole = null;
+      user.save().catch(() => {});
+    }
+
+    // Available display roles for own profile selector
+    const availableDisplayRoles = isOwnProfile
+      ? getAvailableDisplayRoles(user, completedTradeCount)
+      : [];
+
     res.render('profile', {
       profileUser: user,
       completedTradeCount,
@@ -213,6 +226,8 @@ router.get('/:username', async (req, res) => {
       totalCommentPages,
       totalComments,
       feedbackItems,
+      resolvedDisplayRole,
+      availableDisplayRoles,
       userId: req.user ? req.user.id : null,
       username: req.user ? req.user.username : null,
       role: req.user ? req.user.role : 'user',
@@ -263,6 +278,43 @@ router.post('/update-contact', ensureAuthenticated, profileUpdateLimiter, async 
     res.redirect(`/profile/${req.user.username}?profile=updated`);
   } catch (err) {
     console.error('Error updating contact details:', err);
+    res.status(500).send('Server error.');
+  }
+});
+
+// ─── Update display role ────────────────────────────────────────────────────
+router.post('/update-display-role', ensureAuthenticated, profileUpdateLimiter, async (req, res) => {
+  try {
+    const { displayRole } = req.body;
+
+    if (!displayRole || displayRole === 'none') {
+      // Clear display role
+      req.user.displayRole = null;
+      await req.user.save();
+      return res.redirect(`/profile/${req.user.username}?profile=updated`);
+    }
+
+    // Validate the selected role is available to this user
+    const { Op } = require('sequelize');
+    const completedTradeCount = await Trade.count({
+      where: {
+        status: 'completed',
+        [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }],
+      },
+    });
+
+    const available = getAvailableDisplayRoles(req.user, completedTradeCount);
+    const isValid = available.some(r => r.value === displayRole);
+
+    if (!isValid) {
+      return res.status(400).send('You have not unlocked that display role.');
+    }
+
+    req.user.displayRole = displayRole;
+    await req.user.save();
+    res.redirect(`/profile/${req.user.username}?profile=updated`);
+  } catch (err) {
+    console.error('Error updating display role:', err);
     res.status(500).send('Server error.');
   }
 });

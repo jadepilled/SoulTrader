@@ -27,7 +27,6 @@
           <option value="Dark Souls">Dark Souls</option>
           <option value="Dark Souls 2">Dark Souls 2</option>
           <option value="Dark Souls 3">Dark Souls 3</option>
-          <option value="Bloodborne">Bloodborne</option>
           <option value="Elden Ring">Elden Ring</option>
           <option value="Demon's Souls">Demon's Souls</option>
         </select>
@@ -66,7 +65,6 @@
       'Dark Souls':    { color: '#7b86a2', rgb: '123, 134, 162' },
       'Dark Souls 2':  { color: '#8b7eaa', rgb: '139, 126, 170' },
       'Dark Souls 3':  { color: '#6e7fa0', rgb: '110, 127, 160' },
-      'Bloodborne':    { color: '#8b3a3a', rgb: '139, 58, 58' },
       'Elden Ring':    { color: '#c8a84e', rgb: '200, 168, 78' },
       "Demon's Souls": { color: '#8a8a8a', rgb: '138, 138, 138' },
     };
@@ -176,7 +174,7 @@
 
         const gameBadge = document.createElement('span');
         gameBadge.className = 'itemdb-game-badge';
-        gameBadge.textContent = item.game.replace("Demon's Souls", 'DeS').replace('Dark Souls 2', 'DS2').replace('Dark Souls 3', 'DS3').replace('Dark Souls', 'DS1').replace('Elden Ring', 'ER').replace('Bloodborne', 'BB');
+        gameBadge.textContent = item.game.replace("Demon's Souls", 'DeS').replace('Dark Souls 2', 'DS2').replace('Dark Souls 3', 'DS3').replace('Dark Souls', 'DS1').replace('Elden Ring', 'ER');
         gameBadge.style.color = gc.color;
         gameBadge.style.borderColor = `rgba(${gc.rgb}, 0.4)`;
 

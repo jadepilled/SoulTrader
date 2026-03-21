@@ -99,8 +99,8 @@ router.post('/users/:id/ban', async (req, res) => {
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found.' });
 
-    if (user.role === 'admin') {
-      return res.status(400).json({ error: 'Cannot ban an admin.' });
+    if (user.role === 'admin' || user.role === 'super_admin') {
+      return res.status(400).json({ error: 'Cannot ban an admin or super admin.' });
     }
 
     user.isBanned = true;
@@ -135,13 +135,33 @@ router.post('/users/:id/unban', async (req, res) => {
 router.post('/users/:id/role', async (req, res) => {
   try {
     const { role } = req.body;
-    const validRoles = ['user', 'moderator', 'admin'];
+    const validRoles = ['user', 'moderator', 'admin', 'super_admin'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ error: 'Invalid role.' });
     }
 
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    // Nobody can change a super_admin's role
+    if (user.role === 'super_admin') {
+      return res.status(400).json({ error: 'Cannot modify a Super Admin.' });
+    }
+
+    // Only super_admin can set role to admin or super_admin
+    if (['admin', 'super_admin'].includes(role) && req.user.role !== 'super_admin') {
+      return res.status(400).json({ error: 'Only Super Admins can promote to admin or higher.' });
+    }
+
+    // Admins cannot change other admins' roles
+    if (user.role === 'admin' && req.user.role !== 'super_admin') {
+      return res.status(400).json({ error: 'Only Super Admins can modify admin roles.' });
+    }
+
+    // Mods cannot modify other mods (mods can only change users)
+    if (user.role === 'moderator' && req.user.role === 'moderator') {
+      return res.status(400).json({ error: 'Moderators cannot modify other moderators.' });
+    }
 
     user.role = role;
     await user.save();

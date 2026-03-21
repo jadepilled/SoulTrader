@@ -616,8 +616,17 @@ textarea {
   margin-bottom: 0.5rem;
 }
 
-.trade-details .platform {
-  margin-bottom: 0.25rem;
+.trade-card-platform-banner {
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0.2rem 0.75rem;
+  margin: -0.75rem -1rem 0.75rem -1rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: center;
 }
 
 .trade-details .notes {
@@ -1204,14 +1213,16 @@ textarea {
 }
 
 .game-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   width: 100%;
+  justify-content: center;
 }
 
 .game-grid a {
   display: block;
+  width: calc(33.333% - 0.667rem);
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1516,6 +1527,38 @@ textarea {
   height: 16px;
   accent-color: var(--accent, #c8a84e);
   cursor: pointer;
+}
+
+/* ── Display Role Selector ── */
+.display-role-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.display-role-option {
+  cursor: pointer;
+}
+.display-role-option input[type="radio"] {
+  display: none;
+}
+.display-role-chip {
+  display: inline-block;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.display-role-option input[type="radio"]:checked + .display-role-chip {
+  box-shadow: 0 0 0 2px currentColor;
+  transform: scale(1.05);
+}
+.display-role-chip:hover {
+  transform: scale(1.05);
+  filter: brightness(1.15);
 }
 
 /* ── Flash Info (guide prompts) ── */
