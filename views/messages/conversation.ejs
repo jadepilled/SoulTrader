@@ -128,7 +128,7 @@
       margin-top: 0.3rem;
     }
 
-    .message-report-btn {
+    .message-action-btn {
       position: absolute;
       top: 0.4rem;
       right: 0.4rem;
@@ -141,11 +141,17 @@
       transition: opacity 0.2s, color 0.2s;
       padding: 0.15rem 0.3rem;
     }
-    .message-received:hover .message-report-btn {
+    .message-received:hover .message-action-btn,
+    .message-sent:hover .message-action-btn {
       opacity: 1;
     }
-    .message-report-btn:hover {
+    .message-action-btn:hover {
       color: var(--danger, #e74c3c);
+    }
+    .message-deleted {
+      font-style: italic;
+      color: var(--text-muted);
+      opacity: 0.6;
     }
 
     .report-inline-form {
@@ -234,31 +240,42 @@
       <% if (typeof messages !== 'undefined' && messages.length > 0) { %>
         <% messages.forEach(msg => { %>
           <% const isSent = msg.senderId === userId; %>
-          <div class="message-bubble <%= isSent ? 'message-sent' : 'message-received' %>">
-            <% if (!isSent) { %>
-              <button class="message-report-btn" onclick="toggleReport('<%= msg.id %>')" title="Report message">&#9873;</button>
-            <% } %>
-            <div class="message-sender-row">
-              <% const sender = isSent ? currentUser : otherUser; %>
-              <% if (sender.profileImagePath) { %>
-                <img src="<%= sender.profileImagePath %>" class="message-sender-avatar" alt="" onerror="this.style.display='none'">
-              <% } else { %>
-                <div class="message-sender-avatar-fallback"><%= sender.username.charAt(0).toUpperCase() %></div>
-              <% } %>
-              <span class="message-sender-name" style="<%= getUsernameStyle(sender.role || 'user') %>"><%= sender.username %></span>
-            </div>
-            <div class="message-content"><%= msg.content %></div>
-            <div class="message-time"><%= msg.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></div>
-            <% if (!isSent) { %>
-              <div class="report-inline-form" id="report-<%= msg.id %>">
-                <form action="/messages/report/<%= msg.id %>" method="POST">
-                  <textarea name="reason" maxlength="500" placeholder="Reason for reporting this message..." required></textarea>
-                  <div class="report-actions">
-                    <button type="button" class="report-cancel-btn" onclick="toggleReport('<%= msg.id %>')">Cancel</button>
-                    <button type="submit" class="btn btn-danger btn-sm">Report</button>
-                  </div>
-                </form>
+          <div class="message-bubble <%= isSent ? 'message-sent' : 'message-received' %><%= msg.deletedAt ? ' message-deleted' : '' %>" id="msg-<%= msg.id %>">
+            <% if (msg.deletedAt) { %>
+              <div class="message-sender-row">
+                <% const sender = isSent ? currentUser : otherUser; %>
+                <span class="message-sender-name" style="<%= getUsernameStyle(sender.role || 'user') %>"><%= sender.username %></span>
               </div>
+              <div class="message-content" style="font-style:italic; color:var(--text-muted);">message deleted</div>
+              <div class="message-time"><%= msg.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></div>
+            <% } else { %>
+              <% if (!isSent) { %>
+                <button class="message-action-btn" onclick="toggleReport('<%= msg.id %>')" title="Report message">&#9873;</button>
+              <% } else { %>
+                <button class="message-action-btn" onclick="deleteMessage('<%= msg.id %>')" title="Delete message">&#128465;</button>
+              <% } %>
+              <div class="message-sender-row">
+                <% const sender = isSent ? currentUser : otherUser; %>
+                <% if (sender.profileImagePath) { %>
+                  <img src="<%= sender.profileImagePath %>" class="message-sender-avatar" alt="" onerror="this.style.display='none'">
+                <% } else { %>
+                  <div class="message-sender-avatar-fallback"><%= sender.username.charAt(0).toUpperCase() %></div>
+                <% } %>
+                <span class="message-sender-name" style="<%= getUsernameStyle(sender.role || 'user') %>"><%= sender.username %></span>
+              </div>
+              <div class="message-content"><%= msg.content %></div>
+              <div class="message-time"><%= msg.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></div>
+              <% if (!isSent) { %>
+                <div class="report-inline-form" id="report-<%= msg.id %>">
+                  <form action="/messages/report/<%= msg.id %>" method="POST">
+                    <textarea name="reason" maxlength="500" placeholder="Reason for reporting this message..." required></textarea>
+                    <div class="report-actions">
+                      <button type="button" class="report-cancel-btn" onclick="toggleReport('<%= msg.id %>')">Cancel</button>
+                      <button type="submit" class="btn btn-danger btn-sm">Report</button>
+                    </div>
+                  </form>
+                </div>
+              <% } %>
             <% } %>
           </div>
         <% }); %>
@@ -305,6 +322,35 @@
     function toggleReport(msgId) {
       const form = document.getElementById('report-' + msgId);
       if (form) form.classList.toggle('open');
+    }
+
+    // Delete a sent message
+    async function deleteMessage(msgId) {
+      if (!confirm('Delete this message? The other user will see "message deleted" in its place.')) return;
+      try {
+        const resp = await fetch('/messages/delete/' + msgId, { method: 'POST' });
+        const data = await resp.json();
+        if (data.success) {
+          const bubble = document.getElementById('msg-' + msgId);
+          if (bubble) {
+            bubble.classList.add('message-deleted');
+            const content = bubble.querySelector('.message-content');
+            if (content) {
+              content.textContent = 'message deleted';
+              content.style.fontStyle = 'italic';
+              content.style.color = 'var(--text-muted)';
+            }
+            // Remove action button
+            const actionBtn = bubble.querySelector('.message-action-btn');
+            if (actionBtn) actionBtn.remove();
+            // Remove avatar
+            const avatar = bubble.querySelector('.message-sender-avatar, .message-sender-avatar-fallback');
+            if (avatar) avatar.remove();
+          }
+        } else {
+          alert(data.error || 'Failed to delete message.');
+        }
+      } catch { alert('Network error.'); }
     }
   </script>
 </body>

@@ -24,6 +24,7 @@ const gameConfigs = {
     secondaryColorRgb: '91, 109, 142',
     logoUrl: 'https://i.imgur.com/B7uNYzr.png',
     levelCap: 713,
+    variants: ['Dark Souls', 'Dark Souls: Remastered'],
   },
   darksouls2: {
     title: 'Dark Souls II: Scholar of the First Sin',
@@ -35,6 +36,7 @@ const gameConfigs = {
     secondaryColorRgb: '110, 95, 142',
     logoUrl: 'https://i.imgur.com/TFHkXED.png',
     levelCap: 838,
+    variants: ['Dark Souls II', 'Dark Souls II: SotFS'],
   },
   darksouls3: {
     title: 'Dark Souls III',
@@ -57,6 +59,7 @@ const gameConfigs = {
     secondaryColorRgb: '110, 46, 46',
     logoUrl: 'https://i.imgur.com/0q8jRGA.png',
     levelCap: 544,
+    forcePlatform: 'PlayStation',
   },
   eldenring: {
     title: 'Elden Ring',
@@ -81,6 +84,41 @@ const gameConfigs = {
     levelCap: 712,
   },
 };
+
+// ─── Compute game-specific stats ─────────────────────────────────────────────
+async function computeGameStats(gameName) {
+  const { Op } = require('sequelize');
+  const sequelize = require('../config/db');
+
+  const totalTrades = await Trade.count({ where: { status: 'completed', game: gameName } });
+  const totalUsers = await User.count();
+
+  // Fetch completed trades to compute items and currency volume
+  const completedTrades = await Trade.findAll({
+    where: { status: 'completed', game: gameName },
+    attributes: ['offeredItems', 'requestedItems'],
+    raw: true,
+  });
+
+  let totalItems = 0;
+  let currencyVolume = 0;
+
+  completedTrades.forEach(t => {
+    try {
+      const offered = JSON.parse(t.offeredItems || '[]');
+      const requested = JSON.parse(t.requestedItems || '[]');
+      const all = [...offered, ...requested];
+      totalItems += all.length;
+      all.forEach(item => {
+        if (item.type === 'currency' || item.type === 'soul') {
+          currencyVolume += parseInt(item.qty, 10) || 0;
+        }
+      });
+    } catch { /* skip malformed */ }
+  });
+
+  return { totalTrades, totalUsers, totalItems, currencyVolume };
+}
 
 // ─── Shared game page handler ────────────────────────────────────────────────
 const renderGamePage = async (req, res, gameKey) => {
@@ -117,6 +155,13 @@ const renderGamePage = async (req, res, gameKey) => {
       });
     }
 
+    // Game stats
+    const gameStats = await computeGameStats(config.game);
+
+    // Meeting points
+    const meetingPoints = require('../data/meeting-points.json');
+    const gameMeetingPoints = meetingPoints[gameKey] || [];
+
     res.render('game', {
       ...config,
       items,
@@ -130,6 +175,8 @@ const renderGamePage = async (req, res, gameKey) => {
       getUsernameStyle,
       gameConfigs,
       pendingTradeCount,
+      gameStats,
+      meetingPoints: gameMeetingPoints,
     });
   } catch (err) {
     console.error(`Error fetching ${gameKey} data:`, err);
@@ -147,3 +194,4 @@ exports.demonssouls = (req, res) => renderGamePage(req, res, 'demonssouls');
 
 exports.getUsernameStyle = getUsernameStyle;
 exports.gameConfigs = gameConfigs;
+exports.computeGameStats = computeGameStats;

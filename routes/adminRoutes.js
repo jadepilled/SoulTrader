@@ -243,6 +243,53 @@ router.get('/reports', async (req, res) => {
   }
 });
 
+// ─── Admin: View conversation between two users ────────────────────────────
+router.get('/conversation/:user1/:user2', async (req, res) => {
+  try {
+    const user1 = await User.findOne({ where: { username: req.params.user1 }, attributes: ['id', 'username', 'role', 'profileImagePath'] });
+    const user2 = await User.findOne({ where: { username: req.params.user2 }, attributes: ['id', 'username', 'role', 'profileImagePath'] });
+    if (!user1 || !user2) return res.status(404).send('User(s) not found.');
+
+    const { Op } = Sequelize;
+    const messages = await Message.findAll({
+      where: {
+        [Op.or]: [
+          { senderId: user1.id, recipientId: user2.id },
+          { senderId: user2.id, recipientId: user1.id },
+        ],
+      },
+      order: [['createdAt', 'ASC']],
+      include: [
+        { model: User, as: 'sender', attributes: ['id', 'username', 'profileImagePath', 'role'] },
+      ],
+    });
+
+    const pendingTradeCount = await Trade.count({
+      where: {
+        status: 'awaiting_confirmation',
+        [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }],
+      },
+    });
+
+    res.render('admin/conversation', {
+      user1,
+      user2,
+      messages,
+      userId: req.user.id,
+      username: req.user.username,
+      role: req.user.role,
+      getUsernameStyle,
+      gameConfigs,
+      pendingTradeCount,
+      query: req.query,
+      isAdmin: true,
+    });
+  } catch (err) {
+    console.error('Error loading admin conversation:', err);
+    res.status(500).send('Server error.');
+  }
+});
+
 router.post('/reports/:reportId', async (req, res) => {
   try {
     const report = await Report.findByPk(req.params.reportId);

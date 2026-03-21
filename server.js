@@ -115,7 +115,7 @@ app.use('/reports', reportRoutes);
 // Homepage
 app.get('/', async (req, res) => {
   const { gameConfigs, getUsernameStyle } = require('./controllers/gameController');
-  const { Trade } = require('./models');
+  const { Trade, User } = require('./models');
   const { Op } = require('sequelize');
 
   let pendingTradeCount = 0;
@@ -128,6 +128,32 @@ app.get('/', async (req, res) => {
     });
   }
 
+  // Global stats for homepage tracker
+  const totalTrades = await Trade.count({ where: { status: 'completed' } });
+  const totalUsers = await User.count();
+
+  // Compute total items traded and currency volume from completed trades
+  const completedTrades = await Trade.findAll({
+    where: { status: 'completed' },
+    attributes: ['offeredItems', 'requestedItems'],
+    raw: true,
+  });
+  let totalItems = 0;
+  let currencyVolume = 0;
+  completedTrades.forEach(t => {
+    try {
+      const offered = JSON.parse(t.offeredItems || '[]');
+      const requested = JSON.parse(t.requestedItems || '[]');
+      const all = [...offered, ...requested];
+      totalItems += all.length;
+      all.forEach(item => {
+        if (item.type === 'currency' || item.type === 'soul') {
+          currencyVolume += parseInt(item.qty, 10) || 0;
+        }
+      });
+    } catch { /* skip */ }
+  });
+
   res.render('index', {
     userId: req.user ? req.user.id : null,
     username: req.user ? req.user.username : null,
@@ -137,6 +163,7 @@ app.get('/', async (req, res) => {
     query: req.query,
     gameConfigs,
     pendingTradeCount,
+    siteStats: { totalTrades, totalUsers, totalItems, currencyVolume },
   });
 });
 

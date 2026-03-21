@@ -439,7 +439,7 @@
           %>
           <div class="trade-card">
             <% if (trade.game) { %>
-              <div class="trade-card-banner" style="background: rgba(<%= pgc.rgb %>, 0.2); color: <%= pgc.color %>; border-bottom: 1px solid rgba(<%= pgc.rgb %>, 0.3);"><%= trade.game %></div>
+              <div class="trade-card-banner" style="background: rgba(<%= pgc.rgb %>, 0.2); color: <%= pgc.color %>; border-bottom: 1px solid rgba(<%= pgc.rgb %>, 0.3);"><%= trade.gameVariant || trade.game %></div>
             <% } %>
             <div class="offer-heading">
               Trade with

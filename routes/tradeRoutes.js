@@ -69,7 +69,8 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
   try {
     if (!req.user) return res.status(401).send('Unauthorized');
 
-    const { offeredItems, requestedItems, platform, additionalNotes, game } = req.body;
+    const { offeredItems, requestedItems, additionalNotes, game } = req.body;
+    let platform = req.body.platform;
 
     if (!offeredItems || !requestedItems || !platform || !game) {
       return res.status(400).send('Missing required fields.');
@@ -88,6 +89,23 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
     if (!Array.isArray(requestedArr) || requestedArr.length === 0) return res.status(400).send('Please add at least one requested item.');
 
     const gameName = gameKeyMap[game] || game;
+
+    // Force Bloodborne to PlayStation
+    if (gameName === 'Bloodborne') platform = 'PlayStation';
+
+    // Validate game variant for DS1/DS2
+    const validVariants = {
+      'Dark Souls': ['Dark Souls', 'Dark Souls: Remastered'],
+      'Dark Souls 2': ['Dark Souls II', 'Dark Souls II: SotFS'],
+    };
+    let gameVariant = req.body.gameVariant || null;
+    if (validVariants[gameName]) {
+      if (!gameVariant || !validVariants[gameName].includes(gameVariant)) {
+        return res.status(400).send('Please select a game version.');
+      }
+    } else {
+      gameVariant = null; // No variants for other games
+    }
 
     // Validate item names exist in DB for this game
     const offeredNames  = offeredArr.map(i => i.name);
@@ -134,6 +152,7 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
       platform,
       additionalNotes: additionalNotes || null,
       game: gameName,
+      gameVariant,
       offerCreatorId: req.user.id,
       characterLevel: (!isNaN(charLevel) && charLevel >= 1 && charLevel <= maxLevel) ? charLevel : null,
       creatorInGameName: creatorInGameName ? String(creatorInGameName).substring(0, 100).trim() : null,
@@ -162,6 +181,7 @@ router.get('/details/:id', async (req, res) => {
       offeredItems:   trade.offeredItems,   // already parsed array via getter
       requestedItems: trade.requestedItems,
       game:           trade.game,
+      gameVariant:    trade.gameVariant,
       platform:       trade.platform,
       characterLevel: trade.characterLevel,
     });

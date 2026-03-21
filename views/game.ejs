@@ -181,6 +181,39 @@
 
     <%- include('partials/flash-messages') %>
 
+    <!-- Stats Tracker -->
+    <% if (typeof gameStats !== 'undefined') { %>
+      <%
+        function fmtStat(n) {
+          n = parseInt(n, 10) || 0;
+          if (n >= 1000000) return parseFloat((n / 1000000).toFixed(1)) + 'M';
+          if (n >= 1000)    return parseFloat((n / 1000).toFixed(1)) + 'K';
+          return String(n);
+        }
+      %>
+      <div class="stats-tracker">
+        <div class="stats-tracker-item">
+          <span class="stats-tracker-value"><%= fmtStat(gameStats.totalTrades) %></span>
+          <span class="stats-tracker-label">Trades</span>
+        </div>
+        <div class="stats-tracker-divider"></div>
+        <div class="stats-tracker-item">
+          <span class="stats-tracker-value"><%= fmtStat(gameStats.totalItems) %></span>
+          <span class="stats-tracker-label">Items Traded</span>
+        </div>
+        <div class="stats-tracker-divider"></div>
+        <div class="stats-tracker-item">
+          <span class="stats-tracker-value"><%= fmtStat(gameStats.currencyVolume) %></span>
+          <span class="stats-tracker-label">Currency</span>
+        </div>
+        <div class="stats-tracker-divider"></div>
+        <div class="stats-tracker-item">
+          <span class="stats-tracker-value"><%= fmtStat(gameStats.totalUsers) %></span>
+          <span class="stats-tracker-label">Traders</span>
+        </div>
+      </div>
+    <% } %>
+
     <!-- ═══ Trade Creation Modal ═══ -->
     <div id="create-offer-modal" class="modal-overlay">
       <div class="modal-content">
@@ -225,14 +258,31 @@
             <span class="item-grid-empty">Search above to add items</span>
           </div>
 
-          <!-- Platform & notes -->
-          <label for="platform">Platform</label>
-          <select id="platform" name="platform" required>
-            <option value="" disabled selected>Select platform</option>
-            <option value="PlayStation">PlayStation</option>
-            <option value="Xbox">Xbox</option>
-            <option value="PC">PC</option>
-          </select>
+          <!-- Game variant (DS1/DS2 only) -->
+          <% if (typeof variants !== 'undefined' && variants && variants.length > 0) { %>
+            <label for="gameVariant">Game Version <span style="color:var(--danger);font-size:0.8rem;">*</span></label>
+            <select id="gameVariant" name="gameVariant" required>
+              <option value="" disabled selected>Select version</option>
+              <% variants.forEach(v => { %>
+                <option value="<%= v %>"><%= v %></option>
+              <% }); %>
+            </select>
+          <% } %>
+
+          <!-- Platform -->
+          <% if (typeof forcePlatform !== 'undefined' && forcePlatform) { %>
+            <input type="hidden" name="platform" value="<%= forcePlatform %>" />
+            <label>Platform</label>
+            <div style="padding:0.4rem 0.6rem;background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:var(--radius);font-size:0.85rem;color:var(--text-primary);margin-bottom:0.75rem;"><%= forcePlatform %></div>
+          <% } else { %>
+            <label for="platform">Platform</label>
+            <select id="platform" name="platform" required>
+              <option value="" disabled selected>Select platform</option>
+              <option value="PlayStation">PlayStation</option>
+              <option value="Xbox">Xbox</option>
+              <option value="PC">PC</option>
+            </select>
+          <% } %>
 
           <label for="characterLevel">Character Level <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
           <input type="number" id="characterLevel" name="characterLevel" min="1" max="999" placeholder="e.g. 120" style="width:120px;" />
@@ -240,8 +290,38 @@
           <label for="creatorInGameName">In-Game Character Name <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
           <input type="text" id="creatorInGameName" name="creatorInGameName" placeholder="Your character name" maxlength="100" />
 
-          <label for="creatorMeetingPoint">Preferred Meeting Point <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
-          <input type="text" id="creatorMeetingPoint" name="creatorMeetingPoint" placeholder="e.g. Firelink Shrine" maxlength="200" />
+          <!-- Meeting Point Picker -->
+          <label>Preferred Meeting Point <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
+          <input type="hidden" id="creatorMeetingPoint" name="creatorMeetingPoint" value="" />
+          <div class="meeting-point-picker">
+            <div class="meeting-point-options" id="meetingPointOptions">
+              <% if (typeof meetingPoints !== 'undefined' && meetingPoints.length > 0) { %>
+                <%
+                  // Sort: hubs first (non-DLC), then non-DLC, then DLC
+                  const sortedMPs = [...meetingPoints].sort((a, b) => {
+                    if (a.hub && !a.dlc && !(b.hub && !b.dlc)) return -1;
+                    if (b.hub && !b.dlc && !(a.hub && !a.dlc)) return 1;
+                    if (!a.dlc && b.dlc) return -1;
+                    if (a.dlc && !b.dlc) return 1;
+                    return 0;
+                  });
+                %>
+                <% sortedMPs.forEach(mp => { %>
+                  <button type="button" class="mp-option" data-value="<%= mp.name %>"
+                          onclick="selectMeetingPoint(this)">
+                    <%= mp.name %>
+                    <% if (mp.hub) { %><span class="mp-hub-badge">Hub</span><% } %>
+                    <% if (mp.dlc) { %><span class="mp-dlc-badge">DLC</span><% } %>
+                  </button>
+                <% }); %>
+                <button type="button" class="mp-option" data-value="other"
+                        onclick="selectMeetingPoint(this)">
+                  Other
+                </button>
+              <% } %>
+            </div>
+            <input type="text" id="meetingPointOtherInput" class="mp-other-input" maxlength="100" placeholder="Specify meeting point..." />
+          </div>
 
           <label for="additionalNotes">Additional Notes <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
           <textarea id="additionalNotes" name="additionalNotes" placeholder="Timezone, availability…"></textarea>
@@ -258,8 +338,39 @@
         <h2>Accept Trade Offer</h2>
         <form id="acceptTradeForm">
           <input type="hidden" id="tradeId" name="tradeId" />
-          <label for="meetingPoint">Preferred Meeting Point</label>
-          <input type="text" id="meetingPoint" name="meetingPoint" placeholder="e.g. Firelink Shrine" />
+          <input type="hidden" id="meetingPoint" name="meetingPoint" value="" />
+
+          <!-- Meeting Point Picker for acceptor -->
+          <label>Preferred Meeting Point <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
+          <div class="meeting-point-picker">
+            <div class="meeting-point-options" id="acceptMeetingPointOptions">
+              <% if (typeof meetingPoints !== 'undefined' && meetingPoints.length > 0) { %>
+                <%
+                  const sortedAcceptMPs = [...meetingPoints].sort((a, b) => {
+                    if (a.hub && !a.dlc && !(b.hub && !b.dlc)) return -1;
+                    if (b.hub && !b.dlc && !(a.hub && !a.dlc)) return 1;
+                    if (!a.dlc && b.dlc) return -1;
+                    if (a.dlc && !b.dlc) return 1;
+                    return 0;
+                  });
+                %>
+                <% sortedAcceptMPs.forEach(mp => { %>
+                  <button type="button" class="mp-option" data-value="<%= mp.name %>"
+                          onclick="selectAcceptMeetingPoint(this)">
+                    <%= mp.name %>
+                    <% if (mp.hub) { %><span class="mp-hub-badge">Hub</span><% } %>
+                    <% if (mp.dlc) { %><span class="mp-dlc-badge">DLC</span><% } %>
+                  </button>
+                <% }); %>
+                <button type="button" class="mp-option" data-value="other"
+                        onclick="selectAcceptMeetingPoint(this)">
+                  Other
+                </button>
+              <% } %>
+            </div>
+            <input type="text" id="acceptMeetingPointOtherInput" class="mp-other-input" maxlength="100" placeholder="Specify meeting point..." />
+          </div>
+
           <label for="inGameName">In-Game Character Name</label>
           <input type="text" id="inGameName" name="inGameName" placeholder="Your character name" />
           <label for="additionalInfo">Additional Information</label>
@@ -338,7 +449,20 @@
                  data-trade-id="<%= offer.id %>"
                  data-own="<%= (userId && userId === offer.offerCreatorId) ? 'true' : 'false' %>">
 
-              <div class="trade-card-banner"><%= offer.game %></div>
+              <%
+                const _bannerText = offer.gameVariant || offer.game;
+                // Variant-specific banner colors
+                const _variantColors = {
+                  'Dark Souls': { bg: 'rgba(123, 134, 162, 0.15)', color: '#7b86a2', border: 'rgba(123, 134, 162, 0.3)' },
+                  'Dark Souls: Remastered': { bg: 'rgba(180, 155, 110, 0.15)', color: '#b49b6e', border: 'rgba(180, 155, 110, 0.3)' },
+                  'Dark Souls II': { bg: 'rgba(139, 126, 170, 0.15)', color: '#8b7eaa', border: 'rgba(139, 126, 170, 0.3)' },
+                  'Dark Souls II: SotFS': { bg: 'rgba(110, 95, 142, 0.15)', color: '#6e5f8e', border: 'rgba(110, 95, 142, 0.3)' },
+                };
+                const _vc = _variantColors[_bannerText] || {};
+              %>
+              <div class="trade-card-banner"
+                   <% if (_vc.bg) { %>style="background:<%= _vc.bg %>; color:<%= _vc.color %>; border-bottom:1px solid <%= _vc.border %>;"<% } %>
+              ><%= _bannerText %></div>
 
               <div class="offer-heading">
                 Offer from
@@ -423,5 +547,48 @@
   <script src="/js/auth.js"></script>
   <script src="/js/trade.js"></script>
   <script src="/js/user-hover.js"></script>
+  <script>
+    // ── Meeting Point Picker (creator) ──
+    function selectMeetingPoint(btn) {
+      // Deselect all
+      document.querySelectorAll('#meetingPointOptions .mp-option').forEach(b => b.classList.remove('mp-selected'));
+      btn.classList.add('mp-selected');
+
+      const hidden = document.getElementById('creatorMeetingPoint');
+      const otherInput = document.getElementById('meetingPointOtherInput');
+
+      if (btn.dataset.value === 'other') {
+        otherInput.classList.add('visible');
+        otherInput.focus();
+        // Sync value on input
+        otherInput.oninput = () => { hidden.value = otherInput.value; };
+        hidden.value = otherInput.value;
+      } else {
+        otherInput.classList.remove('visible');
+        otherInput.oninput = null;
+        hidden.value = btn.dataset.value;
+      }
+    }
+
+    // ── Meeting Point Picker (acceptor) ──
+    function selectAcceptMeetingPoint(btn) {
+      document.querySelectorAll('#acceptMeetingPointOptions .mp-option').forEach(b => b.classList.remove('mp-selected'));
+      btn.classList.add('mp-selected');
+
+      const hidden = document.getElementById('meetingPoint');
+      const otherInput = document.getElementById('acceptMeetingPointOtherInput');
+
+      if (btn.dataset.value === 'other') {
+        otherInput.classList.add('visible');
+        otherInput.focus();
+        otherInput.oninput = () => { hidden.value = otherInput.value; };
+        hidden.value = otherInput.value;
+      } else {
+        otherInput.classList.remove('visible');
+        otherInput.oninput = null;
+        hidden.value = btn.dataset.value;
+      }
+    }
+  </script>
 </body>
 </html>

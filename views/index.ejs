@@ -15,6 +15,39 @@
   <div class="main-content">
     <%- include('partials/flash-messages') %>
 
+    <!-- Stats Tracker -->
+    <% if (typeof siteStats !== 'undefined') { %>
+      <div class="stats-tracker">
+        <%
+          function fmtStat(n) {
+            n = parseInt(n, 10) || 0;
+            if (n >= 1000000) return parseFloat((n / 1000000).toFixed(1)) + 'M';
+            if (n >= 1000)    return parseFloat((n / 1000).toFixed(1)) + 'K';
+            return String(n);
+          }
+        %>
+        <div class="stats-tracker-item">
+          <span class="stats-tracker-value"><%= fmtStat(siteStats.totalTrades) %></span>
+          <span class="stats-tracker-label">Trades</span>
+        </div>
+        <div class="stats-tracker-divider"></div>
+        <div class="stats-tracker-item">
+          <span class="stats-tracker-value"><%= fmtStat(siteStats.totalItems) %></span>
+          <span class="stats-tracker-label">Items Traded</span>
+        </div>
+        <div class="stats-tracker-divider"></div>
+        <div class="stats-tracker-item">
+          <span class="stats-tracker-value"><%= fmtStat(siteStats.currencyVolume) %></span>
+          <span class="stats-tracker-label">Souls Traded</span>
+        </div>
+        <div class="stats-tracker-divider"></div>
+        <div class="stats-tracker-item">
+          <span class="stats-tracker-value"><%= fmtStat(siteStats.totalUsers) %></span>
+          <span class="stats-tracker-label">Traders</span>
+        </div>
+      </div>
+    <% } %>
+
     <div class="home-grid">
       <img src="https://i.imgur.com/ZA6Hkr1.png" class="main-image" alt="SoulTrader">
       <div class="game-grid">

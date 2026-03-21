@@ -195,6 +195,28 @@ router.post('/:username', ensureAuthenticated, ensureVerified, messageLimiter, a
   }
 });
 
+// ─── Delete a sent message ──────────────────────────────────────────────────
+router.post('/delete/:messageId', ensureAuthenticated, async (req, res) => {
+  try {
+    const message = await Message.findByPk(req.params.messageId);
+    if (!message) return res.status(404).json({ error: 'Message not found.' });
+
+    // Only sender can delete their own messages
+    if (message.senderId !== req.user.id) {
+      return res.status(403).json({ error: 'You can only delete messages you sent.' });
+    }
+
+    // Soft delete — mark as deleted but keep in DB for admin review
+    message.deletedAt = new Date();
+    await message.save();
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting message:', err);
+    return res.status(500).json({ error: 'Server error.' });
+  }
+});
+
 // ─── Report a message ───────────────────────────────────────────────────────
 router.post('/report/:messageId', ensureAuthenticated, ensureVerified, async (req, res) => {
   try {

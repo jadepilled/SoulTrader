@@ -189,6 +189,9 @@
               <% if (report.messageContent) { %>
                 <div class="report-message-label">Reported Message</div>
                 <div class="report-message-content"><%= report.messageContent %></div>
+                <% if (report.reporter && report.reportedUser) { %>
+                  <a href="/admin/conversation/<%= report.reporter.username %>/<%= report.reportedUser.username %>" style="font-size:0.75rem; color:var(--accent); text-decoration:none;">View full conversation &rarr;</a>
+                <% } %>
               <% } %>
 
               <% if (report.adminNotes) { %>

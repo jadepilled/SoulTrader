@@ -252,7 +252,7 @@
         %>
           <div class="trade-card">
             <% if (trade.game) { %>
-              <div class="trade-card-banner" style="<%- getGameBannerStyle(trade.game) %>"><%= trade.game %></div>
+              <div class="trade-card-banner" style="<%- getGameBannerStyle(trade.game) %>"><%= trade.gameVariant || trade.game %></div>
             <% } %>
             <div class="offer-heading">
               <% if (trade.characterLevel) { %>
@@ -387,7 +387,7 @@
         %>
           <div class="trade-card">
             <% if (trade.game) { %>
-              <div class="trade-card-banner" style="<%- getGameBannerStyle(trade.game) %>"><%= trade.game %></div>
+              <div class="trade-card-banner" style="<%- getGameBannerStyle(trade.game) %>"><%= trade.gameVariant || trade.game %></div>
             <% } %>
             <div class="offer-heading">
               <% if (trade.characterLevel) { %>
@@ -519,7 +519,7 @@
         %>
           <div class="trade-card">
             <% if (trade.game) { %>
-              <div class="trade-card-banner" style="<%- getGameBannerStyle(trade.game) %>"><%= trade.game %></div>
+              <div class="trade-card-banner" style="<%- getGameBannerStyle(trade.game) %>"><%= trade.gameVariant || trade.game %></div>
             <% } %>
             <div class="offer-heading">
               <% if (trade.characterLevel) { %>

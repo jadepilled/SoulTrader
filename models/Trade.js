@@ -26,6 +26,10 @@ const Trade = sequelize.define('Trade', {
     allowNull: false,
     defaultValue: 'Dark Souls',
   },
+  gameVariant: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   platform: {
     type: DataTypes.STRING,
     allowNull: false,
