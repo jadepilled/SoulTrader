@@ -44,6 +44,9 @@
   <% if (query.profile === 'updated') { %>
     <div class="flash-message flash-success">Profile updated successfully.</div>
   <% } %>
+  <% if (query.success && typeof query.success === 'string') { %>
+    <div class="flash-message flash-success"><%= query.success %></div>
+  <% } %>
   <% if (query.warning === 'notVerified') { %>
     <div class="flash-message flash-warning">
       Please verify your email before accessing all features. Didn't get an email?

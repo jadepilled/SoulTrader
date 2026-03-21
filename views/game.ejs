@@ -237,8 +237,14 @@
           <label for="characterLevel">Character Level <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
           <input type="number" id="characterLevel" name="characterLevel" min="1" max="999" placeholder="e.g. 120" style="width:120px;" />
 
+          <label for="creatorInGameName">In-Game Character Name <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
+          <input type="text" id="creatorInGameName" name="creatorInGameName" placeholder="Your character name" maxlength="100" />
+
+          <label for="creatorMeetingPoint">Preferred Meeting Point <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
+          <input type="text" id="creatorMeetingPoint" name="creatorMeetingPoint" placeholder="e.g. Firelink Shrine" maxlength="200" />
+
           <label for="additionalNotes">Additional Notes <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
-          <textarea id="additionalNotes" name="additionalNotes" placeholder="Meeting point, character level, timezone…"></textarea>
+          <textarea id="additionalNotes" name="additionalNotes" placeholder="Timezone, availability…"></textarea>
 
           <button type="submit" class="btn btn-success btn-full" style="margin-top:1rem;">Post Trade Offer</button>
         </form>
@@ -269,6 +275,9 @@
         <button class="close-btn" onclick="closeConfirmationModal()">&times;</button>
         <h2>Confirm Trade</h2>
         <div id="tradeDetails" style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.9rem;line-height:1.6;"></div>
+        <div style="padding:0.75rem;background:rgba(200,168,78,0.08);border:1px solid rgba(200,168,78,0.2);border-radius:var(--radius);margin-bottom:1rem;font-size:0.85rem;color:var(--text-secondary);">
+          This action is final. Once you accept, the trade will move to awaiting confirmation from both parties.
+        </div>
         <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.9rem;">
           <input type="checkbox" id="confirmationCheckbox" />
           <span>I confirm I have these items and am willing to trade them.</span>
@@ -281,7 +290,8 @@
     <section>
       <div class="filter-bar">
         <% if (userId) { %>
-          <button id="create-offer-btn" class="btn btn-primary">+ Create Trade Offer</button>
+          <button id="create-offer-btn" class="btn btn-primary"
+                  data-has-discord="<%= typeof currentUser !== 'undefined' && currentUser && currentUser.contactDiscord ? 'true' : 'false' %>">+ Create Trade Offer</button>
         <% } %>
         <div class="filter-group">
           <label for="platformSelect">Platform</label>

@@ -653,23 +653,18 @@
     <div class="confirm-modal-box">
       <h3>Confirm Trade</h3>
       <form id="confirmTradeForm" method="POST">
-        <label for="confirmInGameName">In-Game Character Name</label>
-        <input type="text" id="confirmInGameName" name="inGameName" placeholder="Your character name" />
-
-        <label for="confirmMeetingPoint">Preferred Meeting Point</label>
-        <input type="text" id="confirmMeetingPoint" name="meetingPoint" placeholder="e.g. Firelink Shrine" />
-
-        <label for="confirmAdditionalInfo">Additional Information</label>
-        <textarea id="confirmAdditionalInfo" name="additionalInfo" placeholder="Timezone, availability, etc."></textarea>
-
         <div class="confirm-warning">
           <strong>This action is final.</strong> Once both parties confirm, the trade is marked as completed and cannot be undone. Please ensure you have completed the in-game trade before confirming.
-          <br><br>You must have a Discord name set in your <a href="/profile" style="color:var(--warning); text-decoration:underline;">profile</a> before confirming.
         </div>
+
+        <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.9rem;margin:1rem 0;">
+          <input type="checkbox" id="confirmCheckbox" />
+          <span>I confirm I have completed this trade in-game.</span>
+        </label>
 
         <div class="confirm-modal-actions">
           <button type="button" class="btn btn-danger" onclick="closeConfirmModal()">Cancel</button>
-          <button type="submit" class="btn btn-success">Confirm Trade</button>
+          <button type="submit" class="btn btn-success" id="confirmSubmitBtn" disabled>Confirm Trade</button>
         </div>
       </form>
     </div>
@@ -683,12 +678,20 @@
     function openConfirmModal(tradeId, role) {
       const modal = document.getElementById('confirmTradeModal');
       const form = document.getElementById('confirmTradeForm');
+      const checkbox = document.getElementById('confirmCheckbox');
+      const submitBtn = document.getElementById('confirmSubmitBtn');
       form.action = '/trade/confirm/' + tradeId;
+      checkbox.checked = false;
+      submitBtn.disabled = true;
       modal.classList.add('active');
     }
     function closeConfirmModal() {
       document.getElementById('confirmTradeModal').classList.remove('active');
     }
+    // Enable submit only when checkbox is checked
+    document.getElementById('confirmCheckbox').addEventListener('change', function() {
+      document.getElementById('confirmSubmitBtn').disabled = !this.checked;
+    });
     // Close on overlay click
     document.getElementById('confirmTradeModal').addEventListener('click', function(e) {
       if (e.target === this) closeConfirmModal();

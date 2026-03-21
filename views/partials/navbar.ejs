@@ -29,12 +29,27 @@
               <span class="nav-trade-badge"><%= pendingTradeCount %></span>
             <% } %>
           </a>
+          <a href="/messages" class="nav-dropdown-item">
+            Messages
+            <% if (typeof unreadMessageCount !== 'undefined' && unreadMessageCount > 0) { %>
+              <span class="nav-trade-badge"><%= unreadMessageCount %></span>
+            <% } %>
+          </a>
           <a href="/profile" class="nav-dropdown-item">Profile</a>
           <a href="/users" class="nav-dropdown-item">Community</a>
           <a href="/code-of-conduct" class="nav-dropdown-item">Conduct</a>
           <a href="/feedback" class="nav-dropdown-item">Feedback</a>
           <% if (typeof role !== 'undefined' && role === 'admin') { %>
-            <a href="/admin" class="nav-dropdown-item" style="color: #fa9cff;">Admin</a>
+            <a href="/admin" class="nav-dropdown-item" style="color: #fa9cff;">Admin
+              <% if (typeof pendingReportCount !== 'undefined' && pendingReportCount > 0) { %>
+                <span class="nav-trade-badge" style="background: var(--danger, #e74c3c);"><%= pendingReportCount %></span>
+              <% } %>
+            </a>
+            <a href="/admin/reports" class="nav-dropdown-item" style="color: #fa9cff;">Reports
+              <% if (typeof pendingReportCount !== 'undefined' && pendingReportCount > 0) { %>
+                <span class="nav-trade-badge" style="background: var(--danger, #e74c3c);"><%= pendingReportCount %></span>
+              <% } %>
+            </a>
           <% } %>
           <div class="nav-dropdown-divider"></div>
           <a href="/auth/logout" class="nav-dropdown-item nav-dropdown-logout">Log Out</a>

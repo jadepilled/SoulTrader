@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { User, Trade } = require('../models');
+const { User, Trade, Report, Message } = require('../models');
 const { ensureAdmin } = require('../middleware/roleMiddleware');
 const { getUsernameStyle, gameConfigs } = require('../controllers/gameController');
 const Sequelize = require('sequelize');
@@ -32,6 +32,19 @@ router.get('/', async (req, res) => {
       attributes: ['id', 'username', 'email', 'role', 'isBanned', 'createdAt'],
     });
 
+    const pendingReportCount = await Report.count({ where: { status: 'pending' } });
+
+    let pendingTradeCount = 0;
+    if (req.user) {
+      const { Op } = Sequelize;
+      pendingTradeCount = await Trade.count({
+        where: {
+          status: 'awaiting_confirmation',
+          [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }],
+        },
+      });
+    }
+
     res.render('admin/dashboard', {
       totalUsers,
       totalTrades,
@@ -41,6 +54,7 @@ router.get('/', async (req, res) => {
       bannedUsers,
       tradesByGame,
       recentUsers,
+      pendingReportCount,
       userId: req.user.id,
       username: req.user.username,
       role: req.user.role,
@@ -48,6 +62,7 @@ router.get('/', async (req, res) => {
       usernameStyle: getUsernameStyle(req.user.role),
       getUsernameStyle,
       gameConfigs,
+      pendingTradeCount,
     });
   } catch (err) {
     console.error('Admin dashboard error:', err);
@@ -179,6 +194,76 @@ router.delete('/trades/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting trade:', err);
     res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// ─── Reports ────────────────────────────────────────────────────────────────
+router.get('/reports', async (req, res) => {
+  try {
+    const reports = await Report.findAll({
+      order: [['createdAt', 'DESC']],
+      include: [
+        { model: User, as: 'reporter', attributes: ['id', 'username', 'role'] },
+        { model: User, as: 'reportedUser', attributes: ['id', 'username', 'role'] },
+        { model: Message, as: 'reportedMessage', attributes: ['id', 'content', 'createdAt'] },
+      ],
+    });
+
+    // Flatten message content for the template
+    const enrichedReports = reports.map(r => {
+      const plain = r.get({ plain: true });
+      plain.messageContent = plain.reportedMessage ? plain.reportedMessage.content : null;
+      return plain;
+    });
+
+    const pendingReportCount = enrichedReports.filter(r => r.status === 'pending').length;
+
+    const { Op } = Sequelize;
+    const pendingTradeCount = await Trade.count({
+      where: {
+        status: 'awaiting_confirmation',
+        [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }],
+      },
+    });
+
+    res.render('admin/reports', {
+      reports: enrichedReports,
+      pendingReportCount,
+      pendingTradeCount,
+      userId: req.user.id,
+      username: req.user.username,
+      role: req.user.role,
+      getUsernameStyle,
+      gameConfigs,
+      query: req.query,
+    });
+  } catch (err) {
+    console.error('Error loading reports:', err);
+    res.status(500).send('Server error.');
+  }
+});
+
+router.post('/reports/:reportId', async (req, res) => {
+  try {
+    const report = await Report.findByPk(req.params.reportId);
+    if (!report) return res.status(404).send('Report not found.');
+
+    const { action, adminNotes } = req.body;
+    if (action === 'reviewed') {
+      report.status = 'reviewed';
+    } else if (action === 'dismissed') {
+      report.status = 'dismissed';
+    } else {
+      return res.status(400).send('Invalid action.');
+    }
+
+    report.adminNotes = adminNotes || null;
+    await report.save();
+
+    res.redirect('/admin/reports');
+  } catch (err) {
+    console.error('Error processing report:', err);
+    res.status(500).send('Server error.');
   }
 });
 

@@ -43,6 +43,25 @@
         <div class="profile-role"><%= profileUser.role %></div>
         <div class="profile-member-since">
           Member since <%= profileUser.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) %>
+          <% if (profileUser.lastOnline) { %>
+            <span style="margin-left: 0.75rem; color: var(--text-muted); font-size: 0.82rem;">
+              <%
+                const _now = new Date();
+                const _last = new Date(profileUser.lastOnline);
+                const _diffMs = _now - _last;
+                const _diffMin = Math.floor(_diffMs / 60000);
+                let _lastOnlineStr;
+                if (_diffMin < 3)       _lastOnlineStr = 'Online now';
+                else if (_diffMin < 60) _lastOnlineStr = 'Last seen ' + _diffMin + 'm ago';
+                else if (_diffMin < 1440) _lastOnlineStr = 'Last seen ' + Math.floor(_diffMin / 60) + 'h ago';
+                else                     _lastOnlineStr = 'Last seen ' + Math.floor(_diffMin / 1440) + 'd ago';
+              %>
+              <% if (_diffMin < 3) { %>
+                <span style="color: var(--success);">&#9679;</span>
+              <% } %>
+              <%= _lastOnlineStr %>
+            </span>
+          <% } %>
         </div>
 
         <!-- Stats -->
@@ -140,9 +159,37 @@
 
         <% if (isOwnProfile) { %>
           <button class="profile-edit-toggle" onclick="toggleProfileEdit()">Edit Profile</button>
+        <% } else { %>
+          <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.75rem;">
+            <% if (typeof userId !== 'undefined' && userId) { %>
+              <a href="/messages/<%= profileUser.username %>" class="btn btn-primary btn-sm">Send Message</a>
+            <% } %>
+            <% if (typeof userId !== 'undefined' && userId && typeof role !== 'undefined') { %>
+              <button class="btn btn-sm" style="border-color: var(--danger); color: var(--danger);" onclick="document.getElementById('reportUserPanel').classList.toggle('open')">Report User</button>
+            <% } %>
+          </div>
         <% } %>
       </div>
     </div>
+
+    <!-- Report User Panel (hidden by default) -->
+    <% if (!isOwnProfile && typeof userId !== 'undefined' && userId) { %>
+      <div id="reportUserPanel" class="profile-edit-panel">
+        <div class="profile-section">
+          <h2 class="profile-section-title">Report <%= profileUser.username %></h2>
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.75rem;">
+            Reports are reviewed by admin staff. Please provide a clear reason.
+          </p>
+          <form action="/reports/user/<%= profileUser.id %>" method="POST">
+            <textarea name="reason" maxlength="500" rows="3" placeholder="Reason for reporting this user..." required style="margin-bottom:0.5rem;"></textarea>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.72rem; color:var(--text-muted);">Max 500 characters</span>
+              <button type="submit" class="btn btn-danger btn-sm">Submit Report</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    <% } %>
 
     <!-- Edit Panel (hidden by default, own profile only) -->
     <% if (isOwnProfile) { %>

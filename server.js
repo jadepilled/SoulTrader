@@ -19,6 +19,8 @@ const oauthRoutes = require('./routes/oauthRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const commentRoutes = require('./routes/commentRoutes');
+const messageRoutes = require('./routes/messageRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 
@@ -56,9 +58,28 @@ app.use(passport.session());
 // JWT auth middleware (runs on every request, sets req.user)
 app.use(authenticateUser);
 
-// Make current user available to all EJS views
-app.use((req, res, next) => {
+// Make current user available to all EJS views + global notification counts
+app.use(async (req, res, next) => {
   res.locals.currentUser = req.user || null;
+  res.locals.unreadMessageCount = 0;
+  res.locals.pendingReportCount = 0;
+
+  if (req.user) {
+    try {
+      const { Message, Report } = require('./models');
+      // Unread message count for all logged-in users
+      res.locals.unreadMessageCount = await Message.count({
+        where: { recipientId: req.user.id, readAt: null },
+      });
+      // Pending report count for admins only
+      if (req.user.role === 'admin') {
+        res.locals.pendingReportCount = await Report.count({
+          where: { status: 'pending' },
+        });
+      }
+    } catch (e) { /* silently ignore */ }
+  }
+
   next();
 });
 
@@ -88,6 +109,8 @@ app.use('/trade', tradeRoutes);
 app.use('/profile', profileRoutes);
 app.use('/admin', adminRoutes);
 app.use('/comments', commentRoutes);
+app.use('/messages', messageRoutes);
+app.use('/reports', reportRoutes);
 
 // Homepage
 app.get('/', async (req, res) => {
@@ -152,6 +175,7 @@ app.get('/items', async (req, res) => {
 
 // Users / Community page
 app.get('/users', async (req, res) => {
+  try {
   const { gameConfigs, getUsernameStyle } = require('./controllers/gameController');
   const { User, Trade } = require('./models');
   const { computeBadges } = require('./utils/badges');
@@ -192,7 +216,7 @@ app.get('/users', async (req, res) => {
     attributes: [
       'id', 'username', 'role', 'positiveKarma', 'negativeKarma',
       'profileImagePath', 'createdAt', 'isVerified', 'isBanned', 'isSponsor',
-      [sequelize.literal(`(SELECT COUNT(*) FROM "Trades" WHERE status = 'completed' AND ("offerCreatorId" = "User"."id" OR "acceptorId" = "User"."id"))`), 'completedTradeCount'],
+      [sequelize.literal(`(SELECT COUNT(*) FROM trades WHERE status = 'completed' AND ("offerCreatorId" = "User"."id" OR "acceptorId" = "User"."id"))`), 'completedTradeCount'],
     ],
     order,
     limit: perPage,
@@ -216,6 +240,10 @@ app.get('/users', async (req, res) => {
     users: enriched, totalUsers, totalPages, page,
     search, sort, filter,
   });
+  } catch (err) {
+    console.error('Error loading users page:', err);
+    res.status(500).send('Server error.');
+  }
 });
 
 // Code of Conduct

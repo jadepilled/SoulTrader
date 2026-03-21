@@ -51,7 +51,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (tradeModal && tradeBtn) {
     const closeBtn = tradeModal.querySelector('.close-btn');
-    tradeBtn.addEventListener('click', () => { tradeModal.style.display = 'flex'; });
+    tradeBtn.addEventListener('click', () => {
+      // Check if user has Discord set (data attribute on button)
+      if (tradeBtn.dataset.hasDiscord === 'false') {
+        // Show flash message instead of opening modal
+        // Insert flash message right after the filter bar
+        const mainContent = document.querySelector('.main-content');
+        const msg = document.createElement('div');
+        msg.className = 'flash-message flash-error';
+        msg.style.marginBottom = '1rem';
+        msg.innerHTML = 'Please set your Discord name in your <a href="/profile" style="color:inherit;text-decoration:underline;">profile</a> before creating a trade offer.';
+        if (mainContent) {
+          const filterBar = mainContent.querySelector('.filter-bar');
+          if (filterBar && filterBar.parentElement) {
+            filterBar.parentElement.insertBefore(msg, filterBar);
+          } else {
+            mainContent.prepend(msg);
+          }
+        }
+        setTimeout(() => msg.remove(), 8000);
+        return;
+      }
+      tradeModal.style.display = 'flex';
+    });
     if (closeBtn) closeBtn.addEventListener('click', () => { tradeModal.style.display = 'none'; });
     window.addEventListener('click', e => { if (e.target === tradeModal) tradeModal.style.display = 'none'; });
   }
@@ -447,8 +469,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!actionsDiv) return;
     const hideBtn = document.createElement('button');
     hideBtn.type      = 'button';
-    hideBtn.className = 'btn btn-hide-trade';
-    hideBtn.innerHTML = '&times;';
+    hideBtn.className = 'btn btn-secondary btn-sm';
+    hideBtn.textContent = 'Hide';
     hideBtn.title     = 'Hide this trade';
     hideBtn.addEventListener('click', () => {
       const hidden = getHidden();

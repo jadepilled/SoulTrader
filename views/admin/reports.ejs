@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports | Admin | SoulTrader</title>
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <style>
+    .reports-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .pending-count-badge {
+      background: var(--danger, #e74c3c);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+    }
+    .reports-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .report-card {
+      padding: 1rem;
+      background: rgba(18, 18, 18, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius);
+      box-shadow: 0 1rem 2.2rem rgba(0, 0, 0, 0.26);
+    }
+    .report-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+    }
+    .report-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.82rem;
+    }
+    .report-meta-label {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+    .report-status {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0.15rem 0.45rem;
+      border-radius: var(--radius);
+    }
+    .report-status-pending {
+      background: rgba(200, 168, 78, 0.15);
+      color: #c8a84e;
+      border: 1px solid rgba(200, 168, 78, 0.3);
+    }
+    .report-status-reviewed {
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--success, #22c55e);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+    .report-status-dismissed {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .report-users {
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+    .report-users a {
+      text-decoration: none;
+    }
+    .report-time {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+    .report-reason {
+      padding: 0.65rem 0.85rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      line-height: 1.45;
+      margin-bottom: 0.65rem;
+    }
+    .report-reason-label,
+    .report-message-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.3rem;
+    }
+    .report-message-content {
+      padding: 0.65rem 0.85rem;
+      background: rgba(200, 168, 78, 0.05);
+      border: 1px solid rgba(200, 168, 78, 0.12);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      line-height: 1.45;
+      margin-bottom: 0.65rem;
+      font-style: italic;
+    }
+    .report-admin-actions {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .admin-notes-input {
+      flex: 1;
+      min-width: 180px;
+      font-size: 0.82rem;
+    }
+    .report-admin-notes {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      padding: 0.4rem 0.65rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-left: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+    .report-admin-notes strong {
+      color: var(--text);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      margin-top: 2rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <%- include('../partials/navbar', { title: 'Admin Reports', gameKey: '', pendingTradeCount: typeof pendingTradeCount !== 'undefined' ? pendingTradeCount : 0 }) %>
+
+  <div class="main-content">
+    <%- include('../partials/flash-messages') %>
+
+    <div class="profile-section">
+      <div class="reports-header">
+        <h2 class="profile-section-title" style="margin-bottom:0;">Reports</h2>
+        <% if (typeof pendingReportCount !== 'undefined' && pendingReportCount > 0) { %>
+          <span class="pending-count-badge"><%= pendingReportCount %> pending</span>
+        <% } %>
+      </div>
+
+      <% if (typeof reports !== 'undefined' && reports.length > 0) { %>
+        <div class="reports-list">
+          <% reports.forEach(report => { %>
+            <div class="report-card">
+              <div class="report-header">
+                <div class="report-meta">
+                  <span class="report-time"><%= report.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></span>
+                </div>
+                <span class="report-status report-status-<%= report.status || 'pending' %>"><%= report.status || 'pending' %></span>
+              </div>
+
+              <div class="report-users">
+                <span class="report-meta-label">Reporter:</span>
+                <a href="/profile/<%= report.reporter ? report.reporter.username : '' %>" style="<%= report.reporter ? getUsernameStyle(report.reporter.role || 'user') : '' %>"><%= report.reporter ? report.reporter.username : 'Unknown' %></a>
+                &nbsp;&rarr;&nbsp;
+                <span class="report-meta-label">Reported:</span>
+                <a href="/profile/<%= report.reportedUser ? report.reportedUser.username : '' %>" style="<%= report.reportedUser ? getUsernameStyle(report.reportedUser.role || 'user') : '' %>"><%= report.reportedUser ? report.reportedUser.username : 'Unknown' %></a>
+              </div>
+
+              <div class="report-reason-label">Reason</div>
+              <div class="report-reason"><%= report.reason %></div>
+
+              <% if (report.messageContent) { %>
+                <div class="report-message-label">Reported Message</div>
+                <div class="report-message-content"><%= report.messageContent %></div>
+              <% } %>
+
+              <% if (report.adminNotes) { %>
+                <div class="report-admin-notes">
+                  <strong>Admin Notes:</strong> <%= report.adminNotes %>
+                </div>
+              <% } %>
+
+              <% if (!report.status || report.status === 'pending') { %>
+                <form action="/admin/reports/<%= report.id %>" method="POST" class="report-admin-actions">
+                  <input type="text" name="adminNotes" class="admin-notes-input" placeholder="Admin notes (optional)" maxlength="500">
+                  <button type="submit" name="action" value="reviewed" class="btn btn-primary btn-sm">Mark Reviewed</button>
+                  <button type="submit" name="action" value="dismissed" class="btn btn-sm">Dismiss</button>
+                </form>
+              <% } %>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <p class="empty-state">No reports to review.</p>
+      <% } %>
+    </div>
+  </div>
+
+  <%- include('../partials/auth-modals') %>
+  <%- include('../partials/footer') %>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

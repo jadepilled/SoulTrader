@@ -125,6 +125,9 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
     const charLevel = parseInt(req.body.characterLevel, 10);
     const maxLevel  = gameLevelCaps[gameName] || 999;
 
+    const creatorInGameName = req.body.creatorInGameName;
+    const creatorMeetingPoint = req.body.creatorMeetingPoint;
+
     await Trade.create({
       offeredItems:   sanitize(offeredArr),
       requestedItems: sanitize(requestedArr),
@@ -133,6 +136,9 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
       game: gameName,
       offerCreatorId: req.user.id,
       characterLevel: (!isNaN(charLevel) && charLevel >= 1 && charLevel <= maxLevel) ? charLevel : null,
+      creatorInGameName: creatorInGameName ? String(creatorInGameName).substring(0, 100).trim() : null,
+      creatorMeetingPoint: creatorMeetingPoint ? String(creatorMeetingPoint).substring(0, 200).trim() : null,
+      creatorAdditionalInfo: additionalNotes ? String(additionalNotes).substring(0, 500).trim() : null,
     });
 
     const gameKey = Object.keys(gameKeyMap).find(k => gameKeyMap[k] === gameName) || 'darksouls';
@@ -226,25 +232,11 @@ router.post('/confirm/:id', async (req, res) => {
     const isAcceptor = trade.acceptorId === req.user.id;
     if (!isCreator && !isAcceptor) return res.status(403).send('You are not part of this trade.');
 
-    // Require Discord set in profile before confirming
-    const confirmUser = await User.findByPk(req.user.id, { attributes: ['contactDiscord'] });
-    if (!confirmUser || !confirmUser.contactDiscord) {
-      return res.status(400).send('Please set your Discord name in your profile before confirming a trade.');
-    }
-
-    // Store confirmer's details if provided
-    const { inGameName, meetingPoint, additionalInfo } = req.body;
+    // Simple confirmation — details were already collected at creation/accept time
     if (isCreator) {
-      trade.creatorConfirmed    = true;
-      trade.creatorInGameName   = inGameName     ? String(inGameName).substring(0, 100).trim()     : null;
-      trade.creatorMeetingPoint = meetingPoint   ? String(meetingPoint).substring(0, 200).trim()   : null;
-      trade.creatorAdditionalInfo = additionalInfo ? String(additionalInfo).substring(0, 500).trim() : null;
+      trade.creatorConfirmed = true;
     } else {
       trade.acceptorConfirmed = true;
-      // Acceptor may update their info on confirm
-      if (inGameName)     trade.acceptorInGameName     = String(inGameName).substring(0, 100).trim();
-      if (meetingPoint)   trade.acceptorMeetingPoint   = String(meetingPoint).substring(0, 200).trim();
-      if (additionalInfo) trade.acceptorAdditionalInfo = String(additionalInfo).substring(0, 500).trim();
     }
 
     if (trade.creatorConfirmed && trade.acceptorConfirmed) {

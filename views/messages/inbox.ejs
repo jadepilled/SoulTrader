@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages | SoulTrader</title>
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <style>
+    .conversations-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .conversation-card {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      padding: 0.85rem 1rem;
+      background: rgba(18, 18, 18, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius);
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .conversation-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(18, 18, 18, 0.85);
+    }
+    .conversation-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .conversation-avatar-fallback {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .conversation-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .conversation-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .conversation-username {
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .conversation-time {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .conversation-preview {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .unread-badge {
+      background: var(--primary, #c8a84e);
+      color: #111;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      flex-shrink: 0;
+      min-width: 1.2rem;
+      text-align: center;
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      margin-top: 2rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <%- include('../partials/navbar', { title: 'Messages', gameKey: '', pendingTradeCount: typeof pendingTradeCount !== 'undefined' ? pendingTradeCount : 0 }) %>
+
+  <div class="main-content">
+    <%- include('../partials/flash-messages') %>
+
+    <div class="profile-section">
+      <h2 class="profile-section-title">Messages</h2>
+
+      <% if (typeof conversations !== 'undefined' && conversations.length > 0) { %>
+        <div class="conversations-list">
+          <% conversations.forEach(conv => { %>
+            <a href="/messages/<%= conv.otherUser.username %>" class="conversation-card">
+              <% if (conv.otherUser.profileImagePath) { %>
+                <img src="<%= conv.otherUser.profileImagePath %>" class="conversation-avatar" alt="" onerror="this.style.display='none'">
+              <% } else { %>
+                <div class="conversation-avatar-fallback"><%= conv.otherUser.username.charAt(0).toUpperCase() %></div>
+              <% } %>
+              <div class="conversation-info">
+                <div class="conversation-top-row">
+                  <span class="conversation-username" style="<%= getUsernameStyle(conv.otherUser.role || 'user') %>"><%= conv.otherUser.username %></span>
+                  <span class="conversation-time"><%= conv.lastMessage.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+                </div>
+                <div class="conversation-preview"><%= conv.lastMessage.content.length > 80 ? conv.lastMessage.content.substring(0, 80) + '...' : conv.lastMessage.content %></div>
+              </div>
+              <% if (conv.unreadCount && conv.unreadCount > 0) { %>
+                <span class="unread-badge"><%= conv.unreadCount %></span>
+              <% } %>
+            </a>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <p class="empty-state">No messages yet.</p>
+      <% } %>
+    </div>
+  </div>
+
+  <%- include('../partials/auth-modals') %>
+  <%- include('../partials/footer') %>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

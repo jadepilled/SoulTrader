@@ -79,7 +79,7 @@ router.get('/:username', async (req, res) => {
         'id', 'username', 'role', 'positiveKarma', 'negativeKarma',
         'bio', 'profileImagePath', 'steamUsername', 'discordUsername',
         'steamId', 'discordId', 'createdAt', 'isVerified', 'isBanned', 'isSponsor',
-        'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox',
+        'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox', 'lastOnline',
       ],
     });
 
