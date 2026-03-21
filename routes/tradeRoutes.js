@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Trade, User, Item, sequelize } = require('../models');
+const { Trade, TradeOffer, User, Item, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const tradeEmail = require('../utils/tradeEmailService');
 const { tradeCreateLimiter, tradeAcceptLimiter } = require('../middleware/rateLimiter');
@@ -142,6 +142,15 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
     const creatorInGameName = req.body.creatorInGameName;
     const creatorMeetingPoint = req.body.creatorMeetingPoint;
 
+    // Require Discord and timezone before creating trades
+    const tradeCreator = await User.findByPk(req.user.id, { attributes: ['contactDiscord', 'timezone'] });
+    if (!tradeCreator || !tradeCreator.contactDiscord) {
+      return res.status(400).send('Please set your Discord name in your profile before creating a trade.');
+    }
+    if (!tradeCreator || !tradeCreator.timezone) {
+      return res.status(400).send('Please set your timezone in your profile before creating a trade.');
+    }
+
     // Character name and meeting point are mandatory
     if (!creatorInGameName || !String(creatorInGameName).trim()) {
       return res.status(400).send('Please enter your in-game character name.');
@@ -203,7 +212,7 @@ router.get('/details/:id', async (req, res) => {
   }
 });
 
-// ─── ACCEPT TRADE ─────────────────────────────────────────────────────────────
+// ─── PLACE TRADE OFFER (multi-offer system) ──────────────────────────────────
 router.post('/accept/:id', tradeAcceptLimiter, ensureVerified, async (req, res) => {
   try {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
@@ -218,30 +227,119 @@ router.post('/accept/:id', tradeAcceptLimiter, ensureVerified, async (req, res) 
 
     const { meetingPoint, additionalInfo, inGameName } = req.body;
 
-    // Require Discord set in profile
-    const acceptorUser = await User.findByPk(req.user.id, { attributes: ['contactDiscord'] });
+    // Require Discord and timezone set in profile
+    const acceptorUser = await User.findByPk(req.user.id, { attributes: ['contactDiscord', 'timezone'] });
     if (!acceptorUser || !acceptorUser.contactDiscord) {
       return res.status(400).json({ error: 'Please set your Discord name in your profile before accepting a trade.' });
     }
+    if (!acceptorUser || !acceptorUser.timezone) {
+      return res.status(400).json({ error: 'Please set your timezone in your profile before making a trade offer.' });
+    }
 
-    trade.status    = 'awaiting_confirmation';
-    trade.acceptorId = req.user.id;
-    trade.acceptedAt = new Date();
-    trade.acceptorInGameName     = inGameName     ? String(inGameName).substring(0, 100).trim()     : null;
-    trade.acceptorMeetingPoint   = meetingPoint   ? String(meetingPoint).substring(0, 200).trim()   : null;
-    trade.acceptorAdditionalInfo = additionalInfo ? String(additionalInfo).substring(0, 500).trim() : null;
-    await trade.save();
+    // Check if this user already has a pending offer on this trade
+    const existingOffer = await TradeOffer.findOne({
+      where: { tradeId: trade.id, offererId: req.user.id, status: 'pending' },
+    });
+    if (existingOffer) {
+      return res.status(400).json({ error: 'You already have a pending offer on this trade.' });
+    }
 
+    // Create a trade offer instead of directly accepting
+    await TradeOffer.create({
+      tradeId: trade.id,
+      offererId: req.user.id,
+      inGameName:     inGameName     ? String(inGameName).substring(0, 100).trim()     : null,
+      meetingPoint:   meetingPoint   ? String(meetingPoint).substring(0, 200).trim()   : null,
+      additionalInfo: additionalInfo ? String(additionalInfo).substring(0, 500).trim() : null,
+      status: 'pending',
+    });
+
+    // Notify trade creator
     tradeEmail.sendTradeAcceptedEmail(
       trade.offerCreator.email, trade.offerCreator.username,
       req.user.username, trade,
       { meetingPoint, inGameName, additionalInfo }
-    ).catch(err => console.error('Trade accepted email failed:', err));
+    ).catch(err => console.error('Trade offer email failed:', err));
 
     return res.status(200).json({ success: true });
   } catch (err) {
-    console.error('Error accepting trade:', err);
+    console.error('Error placing trade offer:', err);
     return res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// ─── ACCEPT A SPECIFIC TRADE OFFER (creator selects which offer to accept) ──
+router.post('/accept-offer/:offerId', ensureVerified, async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).send('Unauthorized');
+
+    const offer = await TradeOffer.findByPk(req.params.offerId, {
+      include: [
+        { model: Trade, as: 'trade', include: [{ model: User, as: 'offerCreator', attributes: ['id', 'email', 'username'] }] },
+        { model: User, as: 'offerer', attributes: ['id', 'email', 'username'] },
+      ],
+    });
+
+    if (!offer || !offer.trade) return res.status(404).send('Offer not found.');
+    if (offer.trade.offerCreatorId !== req.user.id) return res.status(403).send('Only the trade creator can accept offers.');
+    if (offer.trade.status !== 'open') return res.status(400).send('This trade is no longer accepting offers.');
+    if (offer.status !== 'pending') return res.status(400).send('This offer is no longer pending.');
+
+    // Accept this offer — set trade to awaiting_confirmation
+    offer.status = 'accepted';
+    await offer.save();
+
+    const trade = offer.trade;
+    trade.status = 'awaiting_confirmation';
+    trade.acceptorId = offer.offererId;
+    trade.acceptedAt = new Date();
+    trade.acceptorInGameName = offer.inGameName;
+    trade.acceptorMeetingPoint = offer.meetingPoint;
+    trade.acceptorAdditionalInfo = offer.additionalInfo;
+    await trade.save();
+
+    // Cancel all other pending offers on this trade
+    await TradeOffer.update(
+      { status: 'cancelled' },
+      { where: { tradeId: trade.id, id: { [Op.ne]: offer.id }, status: 'pending' } }
+    );
+
+    // Notify acceptor
+    if (offer.offerer && offer.offerer.email) {
+      tradeEmail.sendTradeAcceptedEmail(
+        offer.offerer.email, offer.offerer.username,
+        trade.offerCreator.username, trade,
+        { meetingPoint: offer.meetingPoint, inGameName: offer.inGameName }
+      ).catch(err => console.error('Trade accept notification failed:', err));
+    }
+
+    return res.redirect('/trade/my-trades');
+  } catch (err) {
+    console.error('Error accepting trade offer:', err);
+    res.status(500).send('Server error.');
+  }
+});
+
+// ─── REJECT A SPECIFIC TRADE OFFER ──────────────────────────────────────────
+router.post('/reject-offer/:offerId', async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).send('Unauthorized');
+
+    const offer = await TradeOffer.findByPk(req.params.offerId, {
+      include: [{ model: Trade, as: 'trade' }],
+    });
+
+    if (!offer || !offer.trade) return res.status(404).send('Offer not found.');
+    if (offer.trade.offerCreatorId !== req.user.id) return res.status(403).send('Only the trade creator can reject offers.');
+    if (offer.status !== 'pending') return res.status(400).send('This offer is no longer pending.');
+
+    offer.status = 'cancelled';
+    await offer.save();
+
+    return res.redirect('/trade/my-trades');
+  } catch (err) {
+    console.error('Error rejecting trade offer:', err);
+    res.status(500).send('Server error.');
   }
 });
 
@@ -307,7 +405,7 @@ router.post('/decline/:id', async (req, res) => {
 
     if (!trade) return res.status(404).send('Trade not found.');
     if (trade.status !== 'awaiting_confirmation') return res.status(400).send('Only awaiting-confirmation trades can be declined.');
-    if (trade.offerCreatorId !== req.user.id && req.user.role !== 'admin') return res.status(403).send('Forbidden.');
+    if (trade.offerCreatorId !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'super_admin') return res.status(403).send('Forbidden.');
 
     trade.status      = 'declined';
     trade.declinedById = req.user.id;
@@ -337,13 +435,19 @@ async function cancelTrade(req, res, redirectTo) {
     });
 
     if (!trade) return res.status(404).send('Trade not found.');
-    if (trade.offerCreatorId !== req.user.id && req.user.role !== 'admin') return res.status(403).send('Forbidden.');
+    if (trade.offerCreatorId !== req.user.id && req.user.role !== 'admin' && req.user.role !== 'super_admin') return res.status(403).send('Forbidden.');
     if (trade.status === 'completed') return res.status(400).send('Completed trades cannot be cancelled.');
 
     const hadAcceptor = trade.acceptor && trade.status === 'awaiting_confirmation';
     trade.status      = 'cancelled';
     trade.cancelledAt = new Date();
     await trade.save();
+
+    // Cancel any pending trade offers
+    await TradeOffer.update(
+      { status: 'cancelled' },
+      { where: { tradeId: trade.id, status: 'pending' } }
+    );
 
     if (hadAcceptor) {
       tradeEmail.sendTradeCancelledEmail(trade.acceptor.email, trade.acceptor.username, trade.offerCreator.username, trade).catch(e => console.error(e));
@@ -426,15 +530,28 @@ router.get('/my-trades', async (req, res) => {
 
     const userId = req.user.id;
     const include = [
-      { model: User, as: 'offerCreator', attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox'] },
-      { model: User, as: 'acceptor',     attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox'] },
+      { model: User, as: 'offerCreator', attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox', 'timezone'] },
+      { model: User, as: 'acceptor',     attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox', 'timezone'] },
     ];
 
-    const [createdTrades, acceptedTrades, completedTrades] = await Promise.all([
-      Trade.findAll({ where: { offerCreatorId: userId, status: { [Op.ne]: 'completed' } }, include, order: [['createdAt', 'DESC']] }),
-      Trade.findAll({ where: { acceptorId: userId, status: { [Op.ne]: 'completed' } }, include, order: [['createdAt', 'DESC']] }),
+    const includeWithOffers = [
+      ...include,
+      { model: TradeOffer, as: 'tradeOffers', include: [{ model: User, as: 'offerer', attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'contactDiscord', 'timezone'] }] },
+    ];
+
+    const [createdTrades, acceptedTrades, completedTrades, expiredTrades] = await Promise.all([
+      Trade.findAll({ where: { offerCreatorId: userId, status: { [Op.notIn]: ['completed', 'expired'] } }, include: includeWithOffers, order: [['createdAt', 'DESC']] }),
+      Trade.findAll({ where: { acceptorId: userId, status: { [Op.notIn]: ['completed', 'expired'] } }, include, order: [['createdAt', 'DESC']] }),
       Trade.findAll({ where: { status: 'completed', [Op.or]: [{ offerCreatorId: userId }, { acceptorId: userId }] }, include, order: [['updatedAt', 'DESC']], limit: 50 }),
+      Trade.findAll({ where: { status: 'expired', [Op.or]: [{ offerCreatorId: userId }, { acceptorId: userId }] }, include, order: [['updatedAt', 'DESC']], limit: 50 }),
     ]);
+
+    // Also fetch trades where user has pending offers (but isn't the acceptor yet)
+    const pendingOffers = await TradeOffer.findAll({
+      where: { offererId: userId, status: 'pending' },
+      include: [{ model: Trade, as: 'trade', include }],
+      order: [['createdAt', 'DESC']],
+    });
 
     // Count pending trades for navbar badge
     const pendingTradeCount = createdTrades.filter(t => t.status === 'awaiting_confirmation').length
@@ -444,6 +561,8 @@ router.get('/my-trades', async (req, res) => {
       createdTrades,
       acceptedTrades,
       completedTrades,
+      expiredTrades,
+      pendingOffers,
       username: req.user.username,
       userId,
       role:    req.user.role,

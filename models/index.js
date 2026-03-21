@@ -2,6 +2,7 @@ const sequelize = require('../config/db');
 const User = require('./User');
 const Item = require('./Item');
 const Trade = require('./Trade');
+const TradeOffer = require('./TradeOffer');
 const Comment = require('./Comment');
 const Feedback = require('./Feedback');
 const Message = require('./Message');
@@ -17,6 +18,12 @@ User.hasMany(Trade, { as: 'acceptedTrades', foreignKey: 'acceptorId' });
 
 // Trade declined by
 Trade.belongsTo(User, { as: 'declinedBy', foreignKey: 'declinedById' });
+
+// Trade offers (multi-offer system)
+TradeOffer.belongsTo(Trade, { as: 'trade', foreignKey: 'tradeId' });
+Trade.hasMany(TradeOffer, { as: 'tradeOffers', foreignKey: 'tradeId' });
+TradeOffer.belongsTo(User, { as: 'offerer', foreignKey: 'offererId' });
+User.hasMany(TradeOffer, { as: 'tradeOffers', foreignKey: 'offererId' });
 
 // Comments
 Comment.belongsTo(User, { as: 'author',      foreignKey: 'authorId' });
@@ -44,6 +51,7 @@ module.exports = {
   User,
   Item,
   Trade,
+  TradeOffer,
   Comment,
   Feedback,
   Message,

@@ -1,4 +1,4 @@
-const { Item, Trade, User } = require('../models');
+const { Item, Trade, TradeOffer, User } = require('../models');
 
 // ─── Role-based username styling ─────────────────────────────────────────────
 const roleColors = {
@@ -137,6 +137,7 @@ const renderGamePage = async (req, res, gameKey) => {
       },
       include: [
         { model: User, as: 'offerCreator', attributes: ['username', 'positiveKarma', 'negativeKarma', 'role'] },
+        { model: TradeOffer, as: 'tradeOffers', where: { status: 'pending' }, required: false },
       ],
       order: [['createdAt', sort]],
     });

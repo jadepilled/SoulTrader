@@ -354,7 +354,7 @@
     <div id="acceptTradeModal" class="modal-overlay">
       <div class="modal-content">
         <button class="close-btn" onclick="closeAcceptModal()">&times;</button>
-        <h2>Accept Trade Offer</h2>
+        <h2>Make Trade Offer</h2>
         <form id="acceptTradeForm">
           <input type="hidden" id="tradeId" name="tradeId" />
           <input type="hidden" id="meetingPoint" name="meetingPoint" value="" />
@@ -403,16 +403,16 @@
     <div id="confirmationModal" class="modal-overlay">
       <div class="modal-content">
         <button class="close-btn" onclick="closeConfirmationModal()">&times;</button>
-        <h2>Confirm Trade</h2>
+        <h2>Confirm Offer</h2>
         <div id="tradeDetails" style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.9rem;line-height:1.6;"></div>
         <div style="padding:0.75rem;background:rgba(200,168,78,0.08);border:1px solid rgba(200,168,78,0.2);border-radius:var(--radius);margin-bottom:1rem;font-size:0.85rem;color:var(--text-secondary);">
-          This action is final. Once you accept, the trade will move to awaiting confirmation from both parties.
+          Your offer will be sent to the trade creator for review. They will choose which offer to accept from all received offers.
         </div>
         <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.9rem;">
           <input type="checkbox" id="confirmationCheckbox" />
           <span>I confirm I have these items and am willing to trade them.</span>
         </label>
-        <button id="finalSubmitButton" class="btn btn-success btn-full" style="margin-top:1rem;" disabled>Accept Trade</button>
+        <button id="finalSubmitButton" class="btn btn-success btn-full" style="margin-top:1rem;" disabled>Send Offer</button>
       </div>
     </div>
 
@@ -421,7 +421,8 @@
       <div class="filter-bar">
         <% if (userId) { %>
           <button id="create-offer-btn" class="btn btn-primary"
-                  data-has-discord="<%= typeof currentUser !== 'undefined' && currentUser && currentUser.contactDiscord ? 'true' : 'false' %>">+ Create Trade Offer</button>
+                  data-has-discord="<%= typeof currentUser !== 'undefined' && currentUser && currentUser.contactDiscord ? 'true' : 'false' %>"
+                  data-has-timezone="<%= typeof currentUser !== 'undefined' && currentUser && currentUser.timezone ? 'true' : 'false' %>">+ Create Trade Offer</button>
         <% } %>
         <div class="filter-group">
           <label for="platformSelect">Platform</label>
@@ -432,6 +433,17 @@
             <option value="Xbox">Xbox</option>
           </select>
         </div>
+        <% if (typeof variants !== 'undefined' && variants && variants.length > 0) { %>
+          <div class="filter-group">
+            <label for="variantSelect">Version</label>
+            <select id="variantSelect">
+              <option value="all">All Versions</option>
+              <% variants.forEach(v => { %>
+                <option value="<%= v %>"><%= v %></option>
+              <% }); %>
+            </select>
+          </div>
+        <% } %>
         <div class="filter-group">
           <label for="sortSelect">Sort</label>
           <select id="sortSelect">
@@ -464,6 +476,7 @@
           %>
             <div class="trade-card"
                  data-platform="<%= offer.platform %>"
+                 data-variant="<%= offer.gameVariant || '' %>"
                  data-created-at="<%= offer.createdAt.getTime() %>"
                  data-trade-id="<%= offer.id %>"
                  data-own="<%= (userId && userId === offer.offerCreatorId) ? 'true' : 'false' %>">
@@ -547,8 +560,18 @@
               <div class="trade-actions">
                 <% if (offer.status === 'awaiting_confirmation') { %>
                   <span style="font-size:0.72rem;padding:0.2rem 0.5rem;background:rgba(200,168,78,0.12);color:#c8a84e;border:1px solid rgba(200,168,78,0.25);border-radius:var(--radius);">Awaiting Confirmation</span>
-                <% } else if (userId && userId !== offer.offerCreatorId) { %>
-                  <button class="btn btn-success btn-accept" data-trade-id="<%= offer.id %>">Accept</button>
+                <% } else if (offer.status === 'open') { %>
+                  <%
+                    const offerCount = offer.tradeOffers ? offer.tradeOffers.filter(o => o.status === 'pending').length : 0;
+                  %>
+                  <% if (offerCount > 0) { %>
+                    <span style="font-size:0.72rem;padding:0.2rem 0.5rem;background:rgba(200,168,78,0.12);color:#c8a84e;border:1px solid rgba(200,168,78,0.25);border-radius:var(--radius);">
+                      <%= offerCount %> Offer<%= offerCount !== 1 ? 's' : '' %> Received
+                    </span>
+                  <% } %>
+                  <% if (userId && userId !== offer.offerCreatorId) { %>
+                    <button class="btn btn-success btn-accept" data-trade-id="<%= offer.id %>">Make Offer</button>
+                  <% } %>
                 <% } %>
                 <% if (userId && (userId === offer.offerCreatorId || role === 'admin' || role === 'super_admin') && offer.status === 'open') { %>
                   <button type="button" class="btn btn-danger btn-full" onclick="showStyledConfirm('Cancel this trade offer?', () => { document.getElementById('rescind-form-<%= offer.id %>').submit(); })">Cancel</button>

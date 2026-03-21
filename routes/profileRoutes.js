@@ -5,7 +5,7 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 const { User, Trade, Comment } = require('../models');
-const { ensureAuthenticated } = require('../middleware/roleMiddleware');
+const { ensureAuthenticated, ensureAdmin } = require('../middleware/roleMiddleware');
 const { getUsernameStyle, gameConfigs } = require('../controllers/gameController');
 const { profileUpdateLimiter } = require('../middleware/rateLimiter');
 const { computeBadges, getAvailableDisplayRoles, resolveDisplayRole } = require('../utils/badges');
@@ -81,6 +81,7 @@ router.get('/:username', async (req, res) => {
         'steamId', 'discordId', 'createdAt', 'isVerified', 'isBanned', 'isSponsor',
         'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox', 'lastOnline',
         'hideDiscord', 'hideSteam', 'hidePSN', 'hideXbox', 'displayRole',
+        'timezone', 'hideTimezone',
       ],
     });
 
@@ -160,6 +161,8 @@ router.get('/:username', async (req, res) => {
           date: t.updatedAt,
           game: t.game,
           type: 'trade_feedback',
+          tradeId: t.id,
+          party: 'creator',
         });
       }
       if (t.offerCreatorId === user.id && t.tradeFeedbackAcceptor) {
@@ -171,6 +174,8 @@ router.get('/:username', async (req, res) => {
           date: t.updatedAt,
           game: t.game,
           type: 'trade_feedback',
+          tradeId: t.id,
+          party: 'acceptor',
         });
       }
     });
@@ -331,6 +336,52 @@ router.post('/update-privacy', ensureAuthenticated, profileUpdateLimiter, async 
   } catch (err) {
     console.error('Error updating privacy settings:', err);
     res.status(500).send('Server error.');
+  }
+});
+
+// ─── Update timezone ─────────────────────────────────────────────────────────
+router.post('/update-timezone', ensureAuthenticated, profileUpdateLimiter, async (req, res) => {
+  try {
+    const { timezone, hideTimezone } = req.body;
+
+    if (!timezone || !String(timezone).trim()) {
+      req.user.timezone = null;
+    } else {
+      req.user.timezone = String(timezone).substring(0, 100).trim();
+    }
+    req.user.hideTimezone = hideTimezone === 'on';
+    await req.user.save();
+    res.redirect(`/profile/${req.user.username}?profile=updated`);
+  } catch (err) {
+    console.error('Error updating timezone:', err);
+    res.status(500).send('Server error.');
+  }
+});
+
+// ─── Delete trade feedback (admin+ only) ─────────────────────────────────────
+router.post('/delete-feedback', ensureAdmin, async (req, res) => {
+  try {
+    const { tradeId, party } = req.body;
+    if (!tradeId || !party) return res.status(400).send('Missing parameters.');
+
+    const trade = await Trade.findByPk(tradeId);
+    if (!trade) return res.status(404).send('Trade not found.');
+
+    if (party === 'creator') {
+      trade.tradeFeedbackCreator = null;
+      trade.creatorRatingValue = null;
+    } else if (party === 'acceptor') {
+      trade.tradeFeedbackAcceptor = null;
+      trade.acceptorRatingValue = null;
+    } else {
+      return res.status(400).send('Invalid party.');
+    }
+
+    await trade.save();
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('Error deleting feedback:', err);
+    res.status(500).json({ error: 'Server error.' });
   }
 });
 

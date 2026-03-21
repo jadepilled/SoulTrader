@@ -50,15 +50,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (tradeModal && tradeBtn) {
     const closeBtn = tradeModal.querySelector('.close-btn');
     tradeBtn.addEventListener('click', () => {
-      // Check if user has Discord set (data attribute on button)
-      if (tradeBtn.dataset.hasDiscord === 'false') {
-        // Show flash message instead of opening modal
-        // Insert flash message right after the filter bar
+      // Check if user has Discord and timezone set (data attributes on button)
+      if (tradeBtn.dataset.hasDiscord === 'false' || tradeBtn.dataset.hasTimezone === 'false') {
         const mainContent = document.querySelector('.main-content');
         const msg = document.createElement('div');
         msg.className = 'flash-message flash-error';
         msg.style.marginBottom = '1rem';
-        msg.innerHTML = 'Please set your Discord name in your <a href="/profile" style="color:inherit;text-decoration:underline;">profile</a> before creating a trade offer.';
+        const missing = [];
+        if (tradeBtn.dataset.hasDiscord === 'false') missing.push('Discord name');
+        if (tradeBtn.dataset.hasTimezone === 'false') missing.push('timezone');
+        msg.innerHTML = 'Please set your ' + missing.join(' and ') + ' in your <a href="/profile" style="color:inherit;text-decoration:underline;">profile</a> before creating a trade offer.';
         if (mainContent) {
           const filterBar = mainContent.querySelector('.filter-bar');
           if (filterBar && filterBar.parentElement) {
@@ -435,6 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tradeCards     = Array.from(document.querySelectorAll('.trade-card'));
   const offersGrid     = document.querySelector('.offers-grid');
   const platformSelect = document.getElementById('platformSelect');
+  const variantSelect  = document.getElementById('variantSelect');
   const sortSelect     = document.getElementById('sortSelect');
   const searchInput    = document.getElementById('searchInput');
 
@@ -485,12 +487,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function applyFilters() {
     if (!offersGrid) return;
     const platform = (platformSelect?.value || 'all').toLowerCase();
+    const variant  = variantSelect?.value || 'all';
     const sort     = sortSelect?.value || 'desc';
     const query    = (searchInput?.value || '').toLowerCase().trim();
     const hidden   = getHidden();
 
     let visible = tradeCards.filter(card => {
       if (platform !== 'all' && (card.dataset.platform || '').toLowerCase() !== platform) return false;
+      if (variant !== 'all' && (card.dataset.variant || '') !== variant) return false;
       if (query && !card.innerText.toLowerCase().includes(query)) return false;
       const tid = card.dataset.tradeId;
       if (tid && hidden.includes(tid) && !showHiddenActive) return false;
@@ -543,6 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   platformSelect?.addEventListener('change', applyFilters);
+  variantSelect?.addEventListener('change', applyFilters);
   sortSelect?.addEventListener('change', applyFilters);
   searchInput?.addEventListener('input', applyFilters);
   applyFilters();
@@ -609,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const onSubmit = async () => {
             submitBtn.removeEventListener('click', onSubmit);
             submitBtn.disabled   = true;
-            submitBtn.textContent = 'Accepting…';
+            submitBtn.textContent = 'Sending…';
             try {
               const finalResp = await fetch(`/trade/accept/${tradeId}`, {
                 method:  'POST',
@@ -621,14 +626,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.reload();
               } else {
                 const err = await finalResp.json().catch(() => ({}));
-                alert(err.error || 'Failed to accept trade.');
+                alert(err.error || 'Failed to send offer.');
                 submitBtn.disabled   = false;
-                submitBtn.textContent = 'Accept Trade';
+                submitBtn.textContent = 'Send Offer';
               }
             } catch (err) {
               console.error('Accept error:', err);
               submitBtn.disabled   = false;
-              submitBtn.textContent = 'Accept Trade';
+              submitBtn.textContent = 'Send Offer';
             }
           };
           submitBtn.addEventListener('click', onSubmit);

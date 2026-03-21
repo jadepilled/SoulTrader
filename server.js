@@ -398,7 +398,7 @@ sequelize.sync({ alter: true })
       // ── Trade expiry: revert awaiting_confirmation trades older than 24 hours ──
       const expireStaleAccepts = async () => {
         try {
-          const { Trade: T } = require('./models');
+          const { Trade: T, TradeOffer: TO } = require('./models');
           const { Op: O } = require('sequelize');
           const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
           const expired = await T.findAll({
@@ -417,6 +417,10 @@ sequelize.sync({ alter: true })
             trade.creatorConfirmed = false;
             trade.acceptorConfirmed = false;
             await trade.save();
+            // Bump to top of listings by updating createdAt directly
+            await T.update({ createdAt: new Date() }, { where: { id: trade.id }, silent: true });
+            // Reset the accepted offer back to pending so user can re-offer
+            await TO.update({ status: 'pending' }, { where: { tradeId: trade.id, status: 'accepted' } });
           }
           if (expired.length > 0) console.log(`[TradeExpiry] Reverted ${expired.length} expired trade(s).`);
         } catch (err) {
@@ -426,6 +430,32 @@ sequelize.sync({ alter: true })
       // Run expiry check every 15 minutes
       setInterval(expireStaleAccepts, 15 * 60 * 1000);
       expireStaleAccepts(); // Run once on startup
+
+      // ── 14-day trade expiry: expire open trades older than 14 days ──
+      const expireOldTrades = async () => {
+        try {
+          const { Trade: T, TradeOffer: TO } = require('./models');
+          const { Op: O } = require('sequelize');
+          const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+          const stale = await T.findAll({
+            where: {
+              status: 'open',
+              createdAt: { [O.lt]: cutoff },
+            },
+          });
+          for (const trade of stale) {
+            trade.status = 'expired';
+            await trade.save();
+            // Cancel any pending offers on expired trades
+            await TO.update({ status: 'cancelled' }, { where: { tradeId: trade.id, status: 'pending' } });
+          }
+          if (stale.length > 0) console.log(`[TradeExpiry] Expired ${stale.length} old trade(s) (14-day limit).`);
+        } catch (err) {
+          console.error('[TradeExpiry14d] Error:', err.message);
+        }
+      };
+      setInterval(expireOldTrades, 15 * 60 * 1000);
+      expireOldTrades(); // Run once on startup
 
       // ── Weekly digest — runs every 7 days (Sunday midnight UTC) ──
       const { sendWeeklyDigests } = require('./utils/weeklyDigest');

@@ -150,6 +150,16 @@ const User = sequelize.define('User', {
     allowNull: true,
     defaultValue: null,
   },
+  // Timezone
+  timezone: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    defaultValue: null,
+  },
+  hideTimezone: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
   // Tracking flags
   hasSeenTradingGuide: {
     type: DataTypes.BOOLEAN,

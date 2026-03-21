@@ -20,6 +20,7 @@
       .profile-section {
         border-color: rgba(<%= hexToRgb(resolvedDisplayRole.color) %>, 0.15) !important;
         box-shadow: inset 0 0 40px rgba(<%= hexToRgb(resolvedDisplayRole.color) %>, 0.02) !important;
+        background: rgba(<%= hexToRgb(resolvedDisplayRole.color) %>, 0.025) !important;
       }
     </style>
   <% } %>
@@ -37,10 +38,10 @@
       const _themeTint = _displayRole ? _displayRole.color : null;
       const _tintRgb = _themeTint ? hexToRgb(_themeTint) : null;
       const _headerStyle = _tintRgb
-        ? `border-color: rgba(${_tintRgb}, 0.2); box-shadow: 0 1rem 2.2rem rgba(0,0,0,0.26), inset 0 0 60px rgba(${_tintRgb}, 0.04);`
+        ? `border-color: rgba(${_tintRgb}, 0.2); box-shadow: 0 1rem 2.2rem rgba(0,0,0,0.26), inset 0 0 60px rgba(${_tintRgb}, 0.04); background: rgba(${_tintRgb}, 0.03);`
         : '';
       const _sectionStyle = _tintRgb
-        ? `border-color: rgba(${_tintRgb}, 0.15); box-shadow: inset 0 0 40px rgba(${_tintRgb}, 0.02);`
+        ? `border-color: rgba(${_tintRgb}, 0.15); box-shadow: inset 0 0 40px rgba(${_tintRgb}, 0.02); background: rgba(${_tintRgb}, 0.025);`
         : '';
     %>
     <div class="profile-header" style="<%= _headerStyle %>">
@@ -330,6 +331,41 @@
             <button type="submit" class="btn btn-primary btn-sm" style="margin-top:1rem;">Save Contact Details</button>
           </form>
 
+          <!-- Timezone -->
+          <form action="/profile/update-timezone" method="POST" style="margin-bottom:2rem;">
+            <h3 class="profile-subsection-title">Timezone</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.5rem;">
+              Set your timezone to help coordinate trades. Required before creating trades.
+            </p>
+            <select name="timezone" id="timezoneSelect" style="margin-bottom:0.5rem;">
+              <option value="">Select timezone...</option>
+              <%
+                const tzOptions = [
+                  'UTC-12:00 (Baker Island)', 'UTC-11:00 (Samoa)', 'UTC-10:00 (Hawaii)',
+                  'UTC-09:00 (Alaska)', 'UTC-08:00 (Pacific Time)', 'UTC-07:00 (Mountain Time)',
+                  'UTC-06:00 (Central Time)', 'UTC-05:00 (Eastern Time)', 'UTC-04:00 (Atlantic Time)',
+                  'UTC-03:00 (Argentina, Brazil)', 'UTC-02:00 (South Georgia)', 'UTC-01:00 (Azores)',
+                  'UTC+00:00 (GMT/London)', 'UTC+01:00 (CET/Paris/Berlin)',
+                  'UTC+02:00 (EET/Cairo/Helsinki)', 'UTC+03:00 (Moscow/Istanbul)',
+                  'UTC+04:00 (Dubai/Baku)', 'UTC+05:00 (Pakistan/Uzbekistan)',
+                  'UTC+05:30 (India)', 'UTC+06:00 (Bangladesh/Almaty)',
+                  'UTC+07:00 (Bangkok/Jakarta)', 'UTC+08:00 (Singapore/Perth/Beijing)',
+                  'UTC+09:00 (Tokyo/Seoul)', 'UTC+09:30 (Adelaide)',
+                  'UTC+10:00 (Sydney/Melbourne)', 'UTC+11:00 (Solomon Islands)',
+                  'UTC+12:00 (Auckland/Fiji)', 'UTC+13:00 (Tonga)',
+                ];
+              %>
+              <% tzOptions.forEach(tz => { %>
+                <option value="<%= tz %>" <%= (profileUser.timezone === tz) ? 'selected' : '' %>><%= tz %></option>
+              <% }); %>
+            </select>
+            <label class="privacy-checkbox" style="margin-top:0.5rem;">
+              <input type="checkbox" name="hideTimezone" <%= profileUser.hideTimezone !== false ? 'checked' : '' %> />
+              <span>Hide timezone from public profile</span>
+            </label>
+            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.75rem;">Save Timezone</button>
+          </form>
+
           <!-- Privacy Options -->
           <form action="/profile/update-privacy" method="POST" style="margin-bottom:2rem;">
             <h3 class="profile-subsection-title">Privacy Options</h3>
@@ -541,6 +577,11 @@
                 </div>
               </div>
               <div class="comment-body"><%= fb.content %></div>
+              <% if (typeof role !== 'undefined' && (role === 'admin' || role === 'super_admin')) { %>
+                <div class="comment-actions">
+                  <button class="comment-action-btn comment-delete-btn" onclick="deleteFeedback('<%= fb.tradeId %>', '<%= fb.party %>')">Remove Feedback</button>
+                </div>
+              <% } %>
             </div>
           <% }); %>
         </div>
@@ -726,6 +767,24 @@
             document.getElementById('comment-' + commentId).remove();
           } else {
             alert(data.error || 'Failed to delete comment.');
+          }
+        } catch { alert('Network error.'); }
+      });
+    }
+
+    function deleteFeedback(tradeId, party) {
+      showStyledConfirm('Remove this trade feedback? This cannot be undone.', async () => {
+        try {
+          const resp = await fetch('/profile/delete-feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tradeId, party }),
+          });
+          const data = await resp.json();
+          if (data.success) {
+            location.reload();
+          } else {
+            alert(data.error || 'Failed to remove feedback.');
           }
         } catch { alert('Network error.'); }
       });
