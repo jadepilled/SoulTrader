@@ -80,6 +80,7 @@ router.get('/:username', async (req, res) => {
         'bio', 'profileImagePath', 'steamUsername', 'discordUsername',
         'steamId', 'discordId', 'createdAt', 'isVerified', 'isBanned', 'isSponsor',
         'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox', 'lastOnline',
+        'hideDiscord', 'hideSteam', 'hidePSN', 'hideXbox',
       ],
     });
 
@@ -155,6 +156,7 @@ router.get('/:username', async (req, res) => {
           authorUsername: t.offerCreator ? t.offerCreator.username : 'Unknown',
           authorRole: t.offerCreator ? t.offerCreator.role : 'user',
           content: t.tradeFeedbackCreator,
+          rating: t.creatorRatingValue || null,
           date: t.updatedAt,
           game: t.game,
           type: 'trade_feedback',
@@ -165,6 +167,7 @@ router.get('/:username', async (req, res) => {
           authorUsername: t.acceptor ? t.acceptor.username : 'Unknown',
           authorRole: t.acceptor ? t.acceptor.role : 'user',
           content: t.tradeFeedbackAcceptor,
+          rating: t.acceptorRatingValue || null,
           date: t.updatedAt,
           game: t.game,
           type: 'trade_feedback',
@@ -260,6 +263,21 @@ router.post('/update-contact', ensureAuthenticated, profileUpdateLimiter, async 
     res.redirect(`/profile/${req.user.username}?profile=updated`);
   } catch (err) {
     console.error('Error updating contact details:', err);
+    res.status(500).send('Server error.');
+  }
+});
+
+// ─── Update privacy settings ────────────────────────────────────────────────
+router.post('/update-privacy', ensureAuthenticated, profileUpdateLimiter, async (req, res) => {
+  try {
+    req.user.hideDiscord = req.body.hideDiscord === 'on';
+    req.user.hideSteam   = req.body.hideSteam   === 'on';
+    req.user.hidePSN     = req.body.hidePSN     === 'on';
+    req.user.hideXbox    = req.body.hideXbox     === 'on';
+    await req.user.save();
+    res.redirect(`/profile/${req.user.username}?profile=updated`);
+  } catch (err) {
+    console.error('Error updating privacy settings:', err);
     res.status(500).send('Server error.');
   }
 });

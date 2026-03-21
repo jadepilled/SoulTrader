@@ -273,6 +273,34 @@ app.get('/users', async (req, res) => {
   }
 });
 
+// How to Trade guide
+app.get('/how-to-trade', async (req, res) => {
+  const { gameConfigs } = require('./controllers/gameController');
+  const { Trade } = require('./models');
+  const { Op } = require('sequelize');
+
+  let pendingTradeCount = 0;
+  if (req.user) {
+    pendingTradeCount = await Trade.count({
+      where: { status: 'awaiting_confirmation', [Op.or]: [{ offerCreatorId: req.user.id }, { acceptorId: req.user.id }] },
+    });
+
+    // Mark guide as seen for this user
+    if (!req.user.hasSeenTradingGuide) {
+      req.user.hasSeenTradingGuide = true;
+      req.user.save().catch(() => {});
+    }
+  }
+
+  res.render('tradingGuide', {
+    userId:   req.user ? req.user.id : null,
+    username: req.user ? req.user.username : null,
+    role:     req.user ? req.user.role : 'user',
+    gameConfigs, pendingTradeCount,
+    query: req.query,
+  });
+});
+
 // Code of Conduct
 app.get('/code-of-conduct', async (req, res) => {
   const { gameConfigs } = require('./controllers/gameController');

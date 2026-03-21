@@ -132,8 +132,12 @@
         <!-- Contact Details & Linked Accounts -->
         <%
           const hasLinked = profileUser.steamUsername || profileUser.discordUsername;
-          const hasContact = profileUser.contactDiscord || profileUser.contactSteam ||
-                             profileUser.contactPSN || profileUser.contactXbox;
+          // For public view, respect privacy settings; own profile always sees everything
+          const showDiscord = profileUser.contactDiscord && (isOwnProfile || !profileUser.hideDiscord);
+          const showSteam   = profileUser.contactSteam   && (isOwnProfile || !profileUser.hideSteam);
+          const showPSN     = profileUser.contactPSN     && (isOwnProfile || !profileUser.hidePSN);
+          const showXbox    = profileUser.contactXbox    && (isOwnProfile || !profileUser.hideXbox);
+          const hasContact  = showDiscord || showSteam || showPSN || showXbox;
         %>
         <% if (hasLinked || hasContact) { %>
           <div class="profile-badges">
@@ -143,25 +147,25 @@
             <% if (profileUser.discordUsername) { %>
               <span class="linked-badge"><strong>Discord:</strong> <%= profileUser.discordUsername %></span>
             <% } %>
-            <% if (profileUser.contactDiscord) { %>
+            <% if (showDiscord) { %>
               <span class="contact-item">
                 <span class="contact-platform contact-discord">Discord</span>
                 <span class="contact-value"><%= profileUser.contactDiscord %></span>
               </span>
             <% } %>
-            <% if (profileUser.contactSteam) { %>
+            <% if (showSteam) { %>
               <span class="contact-item">
                 <span class="contact-platform contact-steam">Steam</span>
                 <span class="contact-value"><%= profileUser.contactSteam %></span>
               </span>
             <% } %>
-            <% if (profileUser.contactPSN) { %>
+            <% if (showPSN) { %>
               <span class="contact-item">
                 <span class="contact-platform contact-psn">PSN</span>
                 <span class="contact-value"><%= profileUser.contactPSN %></span>
               </span>
             <% } %>
-            <% if (profileUser.contactXbox) { %>
+            <% if (showXbox) { %>
               <span class="contact-item">
                 <span class="contact-platform contact-xbox">Xbox</span>
                 <span class="contact-value"><%= profileUser.contactXbox %></span>
@@ -229,8 +233,11 @@
           <!-- Contact Details -->
           <form action="/profile/update-contact" method="POST" style="margin-bottom:2rem;">
             <h3 class="profile-subsection-title">Contact Details</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
-              These are shown publicly on your profile so trade partners know how to reach you.
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.5rem;">
+              These help trade partners reach you. Use the Privacy Options below to control which are publicly visible.
+            </p>
+            <p style="color:var(--accent, #c8a84e); font-size:0.78rem; margin-bottom:1rem; font-style:italic;">
+              Your Discord name is required for trading and will be shared with anyone you agree to trade with.
             </p>
 
             <div class="contact-edit-grid">
@@ -292,6 +299,36 @@
               </div>
             </div>
             <button type="submit" class="btn btn-primary btn-sm" style="margin-top:1rem;">Save Contact Details</button>
+          </form>
+
+          <!-- Privacy Options -->
+          <form action="/profile/update-privacy" method="POST" style="margin-bottom:2rem;">
+            <h3 class="profile-subsection-title">Privacy Options</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.75rem;">
+              Choose which contact details to hide from your public profile. Hidden contacts are still shared with trade partners when you agree to a trade.
+            </p>
+            <div class="privacy-options-grid">
+              <label class="privacy-checkbox">
+                <input type="checkbox" name="hideDiscord" <%= profileUser.hideDiscord ? 'checked' : '' %> />
+                <span>Hide Discord from profile</span>
+              </label>
+              <label class="privacy-checkbox">
+                <input type="checkbox" name="hideSteam" <%= profileUser.hideSteam ? 'checked' : '' %> />
+                <span>Hide Steam from profile</span>
+              </label>
+              <label class="privacy-checkbox">
+                <input type="checkbox" name="hidePSN" <%= profileUser.hidePSN ? 'checked' : '' %> />
+                <span>Hide PSN from profile</span>
+              </label>
+              <label class="privacy-checkbox">
+                <input type="checkbox" name="hideXbox" <%= profileUser.hideXbox ? 'checked' : '' %> />
+                <span>Hide Xbox from profile</span>
+              </label>
+            </div>
+            <p style="color:var(--text-muted); font-size:0.78rem; margin-top:0.5rem; font-style:italic;">
+              Note: Your Discord name will always be shared with anyone you agree to trade with, so they can contact you to coordinate the trade.
+            </p>
+            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.75rem;">Save Privacy Settings</button>
           </form>
 
           <!-- Verified Accounts -->
@@ -407,10 +444,36 @@
         <h2 class="profile-section-title">Trade Feedback (<%= feedbackItems.length %>)</h2>
         <div class="comment-list">
           <% feedbackItems.forEach(fb => { %>
-            <div class="comment-card" style="border-left: 3px solid var(--success); background: rgba(34, 197, 94, 0.03);">
+            <%
+              // Color feedback card based on rating: 1-3 red, 4-5 yellow, 6-7 neutral, 8-10 green
+              let fbBorderColor, fbBgColor, fbAvatarBg, fbAvatarColor, fbLabel;
+              const r = fb.rating;
+              if (!r || r >= 8) {
+                fbBorderColor = 'rgba(34, 197, 94, 1)';
+                fbBgColor = 'rgba(34, 197, 94, 0.03)';
+                fbAvatarBg = 'rgba(34, 197, 94, 0.15)';
+                fbAvatarColor = '#22c55e';
+              } else if (r >= 6) {
+                fbBorderColor = 'rgba(168, 162, 158, 1)';
+                fbBgColor = 'rgba(168, 162, 158, 0.03)';
+                fbAvatarBg = 'rgba(168, 162, 158, 0.15)';
+                fbAvatarColor = '#a8a29e';
+              } else if (r >= 4) {
+                fbBorderColor = 'rgba(234, 179, 8, 1)';
+                fbBgColor = 'rgba(234, 179, 8, 0.03)';
+                fbAvatarBg = 'rgba(234, 179, 8, 0.15)';
+                fbAvatarColor = '#eab308';
+              } else {
+                fbBorderColor = 'rgba(239, 68, 68, 1)';
+                fbBgColor = 'rgba(239, 68, 68, 0.03)';
+                fbAvatarBg = 'rgba(239, 68, 68, 0.15)';
+                fbAvatarColor = '#ef4444';
+              }
+            %>
+            <div class="comment-card" style="border-left: 3px solid <%= fbBorderColor %>; background: <%= fbBgColor %>;">
               <div class="comment-header">
                 <div class="comment-author">
-                  <div class="comment-avatar-fallback" style="background: rgba(34, 197, 94, 0.15); color: var(--success); font-size: 0.6rem;">TF</div>
+                  <div class="comment-avatar-fallback" style="background: <%= fbAvatarBg %>; color: <%= fbAvatarColor %>; font-size: 0.6rem;"><%= r ? r + '/10' : 'TF' %></div>
                   <a href="/profile/<%= fb.authorUsername %>"
                      class="comment-author-name"
                      style="<%= getUsernameStyle(fb.authorRole) %>">

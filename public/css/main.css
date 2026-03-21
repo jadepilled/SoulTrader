@@ -1497,6 +1497,33 @@ textarea {
   color: var(--text-muted);
 }
 
+/* ── Privacy Options ── */
+.privacy-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.privacy-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.privacy-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent, #c8a84e);
+  cursor: pointer;
+}
+
+/* ── Flash Info (guide prompts) ── */
+.flash-message.flash-info {
+  background: rgba(200, 168, 78, 0.08);
+  color: var(--text-secondary);
+}
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    AUTH PAGES (forgot/reset password, login, register)

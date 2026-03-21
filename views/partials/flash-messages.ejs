@@ -22,6 +22,9 @@
   <% } %>
   <% if (query.signup === 'verified') { %>
     <div class="flash-message flash-success">Email verified successfully! You can now log in.</div>
+    <div class="flash-message flash-info" style="border-left: 3px solid var(--accent, #c8a84e);">
+      New to trading? Read our <a href="/how-to-trade" style="color: var(--accent, #c8a84e); text-decoration: underline;">How to Trade</a> guide to learn how in-game trading works for each SoulsBorne title.
+    </div>
   <% } %>
   <% if (query.signup === 'resent') { %>
     <div class="flash-message flash-success">Verification email resent. Please check your inbox.</div>
@@ -34,6 +37,11 @@
   <% } %>
   <% if (query.trade === 'rescinded') { %>
     <div class="flash-message flash-success">Trade offer cancelled.</div>
+  <% } %>
+  <% if (query.trade === 'firstTrade') { %>
+    <div class="flash-message flash-info" style="border-left: 3px solid var(--accent, #c8a84e);">
+      Your trade has been posted! If you haven't already, check out our <a href="/how-to-trade" style="color: var(--accent, #c8a84e); text-decoration: underline;">How to Trade</a> guide so you know how to complete the exchange in-game.
+    </div>
   <% } %>
   <% if (query.linked) { %>
     <div class="flash-message flash-success"><%= query.linked.charAt(0).toUpperCase() + query.linked.slice(1) %> account linked successfully.</div>

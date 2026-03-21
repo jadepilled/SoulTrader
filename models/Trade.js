@@ -105,6 +105,8 @@ const Trade = sequelize.define('Trade', {
   // ── Trade feedback (filled when rating) ──
   tradeFeedbackCreator:   { type: DataTypes.TEXT,   allowNull: true },
   tradeFeedbackAcceptor:  { type: DataTypes.TEXT,   allowNull: true },
+  creatorRatingValue:     { type: DataTypes.INTEGER, allowNull: true },
+  acceptorRatingValue:    { type: DataTypes.INTEGER, allowNull: true },
 }, {
   tableName: 'trades',
   timestamps: true,

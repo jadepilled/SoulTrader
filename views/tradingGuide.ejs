@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How to Trade | SoulTrader</title>
+  <link rel="icon" type="image/png" href="/icons/favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <style>
+    .guide-content {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    .guide-content h1 {
+      font-size: 1.6rem;
+      margin-bottom: 0.25rem;
+    }
+    .guide-content h2 {
+      font-size: 1.15rem;
+      margin-top: 2rem;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .guide-content h3 {
+      font-size: 0.95rem;
+      margin-top: 1.25rem;
+      margin-bottom: 0.4rem;
+      color: var(--text-primary);
+    }
+    .guide-content p, .guide-content li {
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+    .guide-content ul, .guide-content ol {
+      padding-left: 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+    .guide-content li {
+      margin-bottom: 0.3rem;
+    }
+    .guide-content strong {
+      color: var(--text-primary);
+    }
+    .guide-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .guide-section h3 {
+      margin-top: 0;
+    }
+    .guide-callout {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      margin: 0.75rem 0;
+    }
+    .guide-callout-info {
+      background: rgba(91, 155, 255, 0.08);
+      border: 1px solid rgba(91, 155, 255, 0.2);
+      color: #8bb8ff;
+    }
+    .guide-callout-warning {
+      background: rgba(234, 179, 8, 0.08);
+      border: 1px solid rgba(234, 179, 8, 0.2);
+      color: var(--warning);
+    }
+    .guide-callout-danger {
+      background: rgba(239, 68, 68, 0.06);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      color: #f87171;
+    }
+    .game-badge-inline {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      vertical-align: middle;
+    }
+    .guide-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin: 0.75rem 0;
+    }
+    .guide-table th, .guide-table td {
+      padding: 0.45rem 0.6rem;
+      border: 1px solid var(--border-subtle);
+      text-align: left;
+    }
+    .guide-table th {
+      background: rgba(255,255,255,0.03);
+      color: var(--text-primary);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .guide-table td {
+      color: var(--text-secondary);
+    }
+    .guide-steps {
+      counter-reset: guide-step;
+      list-style: none;
+      padding-left: 0;
+    }
+    .guide-steps li {
+      counter-increment: guide-step;
+      padding-left: 2rem;
+      position: relative;
+      margin-bottom: 0.65rem;
+    }
+    .guide-steps li::before {
+      content: counter(guide-step);
+      position: absolute;
+      left: 0;
+      top: 0.1em;
+      width: 1.4rem;
+      height: 1.4rem;
+      background: rgba(200, 168, 78, 0.15);
+      color: #c8a84e;
+      border: 1px solid rgba(200, 168, 78, 0.3);
+      border-radius: 50%;
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .guide-toc {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .guide-toc-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+    .guide-toc a {
+      display: block;
+      font-size: 0.82rem;
+      padding: 0.2rem 0;
+      color: var(--text-secondary);
+    }
+    .guide-toc a:hover {
+      color: #c8a84e;
+    }
+  </style>
+</head>
+<body>
+  <%- include('partials/navbar', { title: 'How to Trade', gameKey: '', pendingTradeCount: typeof pendingTradeCount !== 'undefined' ? pendingTradeCount : 0 }) %>
+
+  <div class="main-content">
+    <%- include('partials/flash-messages') %>
+
+    <div class="guide-content">
+      <h1>How to Trade</h1>
+      <p style="color:var(--text-muted); margin-bottom:1.5rem;">
+        A complete guide to exchanging items with other players using the multiplayer systems in FromSoftware's Soulsborne games.
+      </p>
+
+      <div class="guide-toc">
+        <div class="guide-toc-title">Contents</div>
+        <a href="#overview">Overview</a>
+        <a href="#soultrader-flow">Using SoulTrader</a>
+        <a href="#general-steps">General Steps (All Games)</a>
+        <a href="#password-games">Password Matchmaking Games</a>
+        <a href="#ds2-special">Dark Souls II &mdash; Name-Engraved Ring</a>
+        <a href="#bloodborne-note">Bloodborne &mdash; Important Note</a>
+        <a href="#untradeable">What Can't Be Traded</a>
+        <a href="#weapon-upgrades">Weapon Upgrade Restrictions</a>
+        <a href="#tips">Tips &amp; Etiquette</a>
+        <a href="#reference">Quick Reference Table</a>
+      </div>
+
+      <!-- ───────── Overview ───────── -->
+      <h2 id="overview">Overview</h2>
+      <p>
+        There is no built-in trading menu in any Soulsborne game. Instead, players use the <strong>multiplayer summoning system</strong>
+        to join each other's worlds and then <strong>drop items on the ground</strong> for the other player to pick up.
+        Most modern titles feature <strong>password matchmaking</strong>, which bypasses level restrictions and makes it
+        easy to connect with a specific person.
+      </p>
+
+      <!-- ───────── SoulTrader Flow ───────── -->
+      <h2 id="soultrader-flow">Using SoulTrader</h2>
+      <ol class="guide-steps">
+        <li><strong>Create a trade offer</strong> on the game page listing what you're offering and what you want in return. Include your platform, character name, and a preferred meeting point.</li>
+        <li><strong>Wait for someone to accept</strong> your offer, or browse existing offers and accept one that interests you. When accepting, provide your own character name and preferred meeting point.</li>
+        <li><strong>Coordinate with your trade partner.</strong> Once a trade is accepted, both players' Discord names are shared so you can message each other to arrange the handoff. Contact details are visible in the <em>My Trades</em> page.</li>
+        <li><strong>Meet in-game</strong> at the agreed meeting point. Use the summoning method for your game (see below) to join each other's world.</li>
+        <li><strong>Drop the items</strong> and pick up what your partner drops for you.</li>
+        <li><strong>Confirm the trade</strong> on SoulTrader. Both parties must confirm for the trade to be marked as complete. The creator has <strong>24 hours</strong> to confirm after the acceptor accepts.</li>
+        <li><strong>Leave feedback</strong> to help build your trade partner's reputation.</li>
+      </ol>
+
+      <div class="guide-callout guide-callout-info">
+        <strong>Discord is required.</strong> You must set your Discord name in your <a href="/profile" style="color:inherit;text-decoration:underline;">profile</a> before creating or accepting trades. Your Discord name will be shared with anyone you agree to trade with so you can coordinate the exchange.
+      </div>
+
+      <!-- ───────── General Steps ───────── -->
+      <h2 id="general-steps">General Steps (All Games)</h2>
+      <p>The core process is the same across all games that support item trading:</p>
+      <ol class="guide-steps">
+        <li><strong>Agree on a location</strong> &mdash; choose a meeting point both players can access. Hub areas are usually safest.</li>
+        <li><strong>Set the same password</strong> (or equip the Name-Engraved Ring in Dark Souls II) so you match with each other instead of strangers.</li>
+        <li><strong>The host</strong> must be in the correct form (Human, Embered, etc.) and have the area boss alive. The host waits to see the summon sign.</li>
+        <li><strong>The phantom</strong> places their summon sign using the White Sign Soapstone (or equivalent). The host then interacts with the sign to summon them.</li>
+        <li><strong>Drop items</strong> from your inventory using the &ldquo;Leave&rdquo; or &ldquo;Discard&rdquo; option. The other player walks over the item to pick it up.</li>
+        <li><strong>Reverse roles</strong> if both sides are trading items &mdash; the phantom returns home and re-summons to drop their items.</li>
+      </ol>
+
+      <div class="guide-callout guide-callout-warning">
+        <strong>Passwords are case-sensitive.</strong> Make sure you and your trade partner type the exact same password, including capitalisation.
+      </div>
+
+      <!-- ───────── Password Matchmaking Games ───────── -->
+      <h2 id="password-games">Password Matchmaking Games</h2>
+      <p>These games have a password system that lets you bypass level restrictions and match with a specific player.</p>
+
+      <div class="guide-section">
+        <h3>Elden Ring</h3>
+        <ul>
+          <li><strong>Summon item:</strong> Tarnished's Furled Finger (cooperator places sign) &mdash; obtained early in the Stranded Graveyard.</li>
+          <li><strong>Host uses:</strong> Furlcalling Finger Remedy to reveal signs (crafted from 2 Erdleaf Flowers).</li>
+          <li><strong>Password:</strong> Set in the <em>Multiplayer</em> menu. Bypasses all level and weapon upgrade restrictions.</li>
+          <li><strong>Host form:</strong> None required &mdash; just use the Furlcalling Finger Remedy.</li>
+          <li><strong>Boss requirement:</strong> The area boss must be alive for the host to summon cooperators.</li>
+          <li><strong>Alternative:</strong> Use the <strong>Duelist's Furled Finger</strong> (red sign) for invasion-free trading &mdash; works even if the boss is dead.</li>
+          <li><strong>Item limit:</strong> A maximum of 8 items can be on the ground at once; the 9th will cause the oldest to disappear.</li>
+        </ul>
+      </div>
+
+      <div class="guide-section">
+        <h3>Dark Souls III</h3>
+        <ul>
+          <li><strong>Summon item:</strong> White Sign Soapstone &mdash; purchased from the Shrine Handmaid at Firelink Shrine.</li>
+          <li><strong>Password:</strong> Set in <em>Network Settings</em>. Bypasses Soul Level and weapon upgrade restrictions. Higher-level phantoms are scaled down.</li>
+          <li><strong>Host form:</strong> Must be <strong>Embered</strong> (use an Ember item or defeat a boss). You'll see a fiery glow on your character.</li>
+          <li><strong>Boss requirement:</strong> Area boss must be alive for White Sign summoning. Use the <strong>Red Sign Soapstone</strong> if the boss is dead.</li>
+          <li><strong>Matchmaking region:</strong> Set to <em>Global</em> or <em>Unrestricted</em> in Network Settings for the widest reach.</li>
+        </ul>
+      </div>
+
+      <div class="guide-section">
+        <h3>Dark Souls: Remastered</h3>
+        <ul>
+          <li><strong>Summon item:</strong> White Sign Soapstone &mdash; given by Solaire of Astora after defeating the Taurus Demon.</li>
+          <li><strong>Password:</strong> Set in <em>Network Settings</em> (added in the Remaster; the original did not have this). Bypasses Soul Level and weapon upgrade restrictions.</li>
+          <li><strong>Host form:</strong> Must be in <strong>Human Form</strong> (reverse hollowing at a bonfire, costs 1 Humanity).</li>
+          <li><strong>Boss requirement:</strong> Area boss must be alive for the host to see summon signs.</li>
+          <li><strong>Matchmaking region:</strong> Set to <em>Global</em> for cross-region matching.</li>
+        </ul>
+        <div class="guide-callout guide-callout-info">
+          <strong>Original Dark Souls (PTDE)</strong> does not have password matchmaking. Players must be within Soul Level and weapon upgrade range of each other to see signs. This makes trading harder — coordinate carefully with your partner on character level before attempting to meet.
+        </div>
+      </div>
+
+      <div class="guide-section">
+        <h3>Demon's Souls (PS5 Remake)</h3>
+        <ul>
+          <li><strong>Summon item:</strong> Blue Eye Stone &mdash; obtained from the Maiden in Black after defeating the first boss (Phalanx).</li>
+          <li><strong>Password:</strong> Set in <em>Settings &gt; Network</em>. Bypasses Soul Level restrictions.</li>
+          <li><strong>Host form:</strong> Must be in <strong>Human Form</strong> (revived via the Maiden in Black or by defeating a boss as a phantom).</li>
+          <li><strong>Phantom form:</strong> Must be in <strong>Soul Form</strong> to place a Blue Eye Stone sign.</li>
+          <li><strong>Boss requirement:</strong> Area boss must be alive (password may bypass this).</li>
+        </ul>
+        <div class="guide-callout guide-callout-warning">
+          <strong>Rings cannot be traded</strong> in the PS5 Remake. This is a Remake-specific restriction &mdash; the original PS3 version allowed ring trading.
+        </div>
+      </div>
+
+      <!-- ───────── DS2 Special ───────── -->
+      <h2 id="ds2-special">Dark Souls II &mdash; Name-Engraved Ring</h2>
+      <p>
+        Dark Souls II does <strong>not</strong> have a password matchmaking system. Instead, it uses
+        <strong>Soul Memory</strong> (the total number of souls your character has ever earned) to determine who you can connect with.
+      </p>
+
+      <div class="guide-section">
+        <h3>How to Match with a Specific Player</h3>
+        <ol class="guide-steps">
+          <li>Purchase the <strong>Name-Engraved Ring</strong> from <strong>Sweet Shalquoir</strong> (the cat merchant in Majula) for <strong>5,500 souls</strong>.</li>
+          <li>Both players equip the ring and <strong>select the same god</strong> from the list of ten options.</li>
+          <li>This filters out most other players and <strong>expands</strong> the Soul Memory matchmaking range, making it much easier to find each other.</li>
+          <li>The host must be in <strong>Human Form</strong> (use a Human Effigy or defeat a boss as a phantom).</li>
+          <li>Place a summon sign with the <strong>White Sign Soapstone</strong> (found in the Forest of Fallen Giants).</li>
+        </ol>
+
+        <div class="guide-callout guide-callout-warning">
+          <strong>Soul Memory matters.</strong> Even with the Name-Engraved Ring, both players must be within an expanded Soul Memory range.
+          Use the <strong>Agape Ring</strong> (5,000 souls from Straid of Olaphis) to stop gaining Soul Memory if you need to
+          control your matchmaking tier.
+        </div>
+
+        <h3>Additional Notes</h3>
+        <ul>
+          <li>The <strong>Small White Sign Soapstone</strong> summons you as a Shade (shorter session), but works even if the area boss is dead.</li>
+          <li>Make sure the <strong>Human Effigy effect</strong> is not active at the bonfire &mdash; it blocks all multiplayer. You can cancel it at any bonfire.</li>
+          <li>Do <strong>not</strong> be in the <strong>Covenant of Champions</strong> &mdash; it blocks all co-op summon signs.</li>
+          <li>Original Dark Souls II and Scholar of the First Sin are on <strong>separate servers</strong> and cannot connect with each other.</li>
+          <li>Set cross-region play to <strong>Allowed</strong> in Network Settings.</li>
+        </ul>
+      </div>
+
+      <!-- ───────── Bloodborne Note ───────── -->
+      <h2 id="bloodborne-note">Bloodborne &mdash; Important Note</h2>
+      <div class="guide-callout guide-callout-danger">
+        <strong>Bloodborne does not support item trading.</strong> Unlike other Soulsborne titles, players
+        <strong>cannot drop, leave, or transfer items</strong> to other players in Bloodborne. The only item
+        that can be placed on the ground is the Shining Coin, which is a decorative marker and cannot be picked up by others.
+      </div>
+      <p>
+        Bloodborne trades on SoulTrader are for <strong>co-op assistance</strong> &mdash; helping each other defeat bosses,
+        clear Chalice Dungeons, or progress through the game together.
+      </p>
+      <div class="guide-section">
+        <h3>How Bloodborne Co-op Works</h3>
+        <ul>
+          <li><strong>Host uses:</strong> Beckoning Bell (costs 1 Insight).</li>
+          <li><strong>Helper uses:</strong> Small Resonant Bell.</li>
+          <li><strong>Password:</strong> Set in <em>Settings &gt; Network</em>. Bypasses level range entirely.</li>
+          <li><strong>Chalice Dungeons:</strong> Use the Short Ritual Root Chalice at the Makeshift Altar to join another player's dungeon remotely.</li>
+          <li><strong>Session ends:</strong> When the boss is defeated, either player dies, or a Silencing Blank is used.</li>
+        </ul>
+      </div>
+
+      <!-- ───────── Untradeable Items ───────── -->
+      <h2 id="untradeable">What Can't Be Traded</h2>
+      <p>Every game restricts certain items from being dropped or picked up by other players:</p>
+      <table class="guide-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Spells &amp; Abilities</strong></td>
+            <td>Cannot be traded in any game. Sorceries, Miracles, Pyromancies, Hexes, Incantations &mdash; all are non-transferable.</td>
+          </tr>
+          <tr>
+            <td><strong>Key Items</strong></td>
+            <td>Quest-critical items, keys, progression items, and story objects cannot be dropped.</td>
+          </tr>
+          <tr>
+            <td><strong>Boss Souls</strong></td>
+            <td>Cannot be dropped in DS2, DS3, or Demon's Souls. In Elden Ring, Remembrances are not droppable.</td>
+          </tr>
+          <tr>
+            <td><strong>Upgrade Materials</strong></td>
+            <td>Cannot be traded in DS2 or DS3. <em>Can</em> be traded in DS1, Elden Ring, and Demon's Souls.</td>
+          </tr>
+          <tr>
+            <td><strong>Covenant Items</strong></td>
+            <td>Turn-in items (Sunlight Medals, Proofs of Concord, etc.) cannot be traded in DS2 or DS3.</td>
+          </tr>
+          <tr>
+            <td><strong>Rings (Demon's Souls Remake)</strong></td>
+            <td>Rings specifically cannot be traded in the PS5 remake. They can be traded in all other games.</td>
+          </tr>
+          <tr>
+            <td><strong>Multiplayer Items</strong></td>
+            <td>Soapstones, Red Eye Orbs, and similar items generally cannot be dropped.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ───────── Weapon Upgrades ───────── -->
+      <h2 id="weapon-upgrades">Weapon Upgrade Restrictions</h2>
+      <p>
+        In <strong>Elden Ring</strong>, <strong>Dark Souls: Remastered</strong>, and <strong>Dark Souls III</strong>,
+        the game tracks the <strong>highest weapon upgrade level you have ever owned</strong>. You cannot pick up a weapon
+        that exceeds this level &mdash; even with password matchmaking.
+      </p>
+      <div class="guide-section">
+        <ul>
+          <li><strong>Elden Ring:</strong> Tracked separately for regular weapons (+0 to +25) and somber weapons (+0 to +10). Your highest-ever upgrade level is permanently recorded.</li>
+          <li><strong>Dark Souls III:</strong> Boss and Twinkling Titanite weapons count at double the regular level (e.g. +3 boss weapon = +6 regular). Approximately &plusmn;2 upgrade tiers without password.</li>
+          <li><strong>Dark Souls: Remastered:</strong> Special weapons (Twinkling/Dragon/Boss weapons) count as +5 at base level. Picking up certain weapons (e.g. Black Knight weapons) immediately sets your tier.</li>
+        </ul>
+      </div>
+      <div class="guide-callout guide-callout-info">
+        <strong>Dark Souls II has no weapon upgrade restriction</strong> for trading. You can freely receive any weapon at any upgrade level, regardless of what you've previously owned.
+      </div>
+
+      <!-- ───────── Tips ───────── -->
+      <h2 id="tips">Tips &amp; Etiquette</h2>
+      <ul>
+        <li><strong>Use a hub area</strong> as your meeting point &mdash; they're easy to reach and usually safe from enemies.</li>
+        <li><strong>Set matchmaking to Global/Unrestricted</strong> to ensure you can connect with players in other regions.</li>
+        <li><strong>Don't attack your trade partner.</strong> Place a cooperative sign (white), not a hostile one (red), unless both parties agree. The Duelist's Furled Finger in Elden Ring is an exception &mdash; it's a safe red sign option.</li>
+        <li><strong>Drop items one at a time</strong> and wait for the other player to pick up before dropping more, to avoid items despawning.</li>
+        <li><strong>Confirm and rate</strong> your trades on SoulTrader so other traders can see that you're reliable.</li>
+        <li><strong>Report issues</strong> if a trade goes wrong. Use the report system on the trader's profile if needed.</li>
+      </ul>
+
+      <!-- ───────── Quick Reference Table ───────── -->
+      <h2 id="reference">Quick Reference Table</h2>
+      <div style="overflow-x:auto;">
+        <table class="guide-table">
+          <thead>
+            <tr>
+              <th>Game</th>
+              <th>Summon Item</th>
+              <th>Host Requirement</th>
+              <th>Password</th>
+              <th>Item Trading</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Elden Ring</strong></td>
+              <td>Tarnished's Furled Finger</td>
+              <td>Furlcalling Finger Remedy</td>
+              <td>Yes</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td><strong>Dark Souls III</strong></td>
+              <td>White Sign Soapstone</td>
+              <td>Embered</td>
+              <td>Yes</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td><strong>DS: Remastered</strong></td>
+              <td>White Sign Soapstone</td>
+              <td>Human Form</td>
+              <td>Yes</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td><strong>Demon's Souls</strong></td>
+              <td>Blue Eye Stone</td>
+              <td>Human Form</td>
+              <td>Yes</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td><strong>Dark Souls II</strong></td>
+              <td>White Sign Soapstone</td>
+              <td>Human Form</td>
+              <td>No (Name-Engraved Ring)</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td><strong>Bloodborne</strong></td>
+              <td>Small Resonant Bell</td>
+              <td>1 Insight + Beckoning Bell</td>
+              <td>Yes</td>
+              <td>No (co-op only)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:2rem; color:var(--text-muted); font-size:0.82rem; text-align:center;">
+        For further reference, see the community wikis:
+        <a href="https://eldenring.wiki.fextralife.com/Player+Trade" target="_blank" rel="noopener" style="color:var(--text-secondary);">Elden Ring</a> &middot;
+        <a href="https://darksouls.wiki.fextralife.com/Player+Trade" target="_blank" rel="noopener" style="color:var(--text-secondary);">Dark Souls</a> &middot;
+        <a href="https://darksouls3.wiki.fextralife.com/Player+Trade" target="_blank" rel="noopener" style="color:var(--text-secondary);">Dark Souls III</a> &middot;
+        <a href="https://darksouls2.wiki.fextralife.com/Player+Trade" target="_blank" rel="noopener" style="color:var(--text-secondary);">Dark Souls II</a>
+      </p>
+    </div>
+  </div>
+
+  <%- include('partials/preloader') %>
+  <%- include('partials/auth-modals') %>
+  <%- include('partials/footer') %>
+  <script src="/js/auth.js"></script>
+</body>
+</html>

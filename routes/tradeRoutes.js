@@ -146,6 +146,14 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
     const creatorInGameName = req.body.creatorInGameName;
     const creatorMeetingPoint = req.body.creatorMeetingPoint;
 
+    // Character name and meeting point are mandatory
+    if (!creatorInGameName || !String(creatorInGameName).trim()) {
+      return res.status(400).send('Please enter your in-game character name.');
+    }
+    if (!creatorMeetingPoint || !String(creatorMeetingPoint).trim()) {
+      return res.status(400).send('Please select a preferred meeting point.');
+    }
+
     await Trade.create({
       offeredItems:   sanitize(offeredArr),
       requestedItems: sanitize(requestedArr),
@@ -155,12 +163,20 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
       gameVariant,
       offerCreatorId: req.user.id,
       characterLevel: (!isNaN(charLevel) && charLevel >= 1 && charLevel <= maxLevel) ? charLevel : null,
-      creatorInGameName: creatorInGameName ? String(creatorInGameName).substring(0, 100).trim() : null,
-      creatorMeetingPoint: creatorMeetingPoint ? String(creatorMeetingPoint).substring(0, 200).trim() : null,
+      creatorInGameName: String(creatorInGameName).substring(0, 100).trim(),
+      creatorMeetingPoint: String(creatorMeetingPoint).substring(0, 200).trim(),
       creatorAdditionalInfo: additionalNotes ? String(additionalNotes).substring(0, 500).trim() : null,
     });
 
     const gameKey = Object.keys(gameKeyMap).find(k => gameKeyMap[k] === gameName) || 'darksouls';
+
+    // Check if this is the user's first trade — show guide prompt
+    if (!req.user.hasSeenTradingGuide) {
+      req.user.hasSeenTradingGuide = true;
+      req.user.save().catch(() => {});
+      return res.redirect(`/${gameKey}?trade=firstTrade`);
+    }
+
     res.redirect(`/${gameKey}`);
   } catch (err) {
     console.error('Error creating trade:', err);
@@ -392,9 +408,11 @@ router.post('/rate/:id', ensureVerified, async (req, res) => {
     if (isCreator) {
       trade.creatorRated = true;
       trade.tradeFeedbackCreator = feedback;
+      trade.creatorRatingValue = r;
     } else {
       trade.acceptorRated = true;
       trade.tradeFeedbackAcceptor = feedback;
+      trade.acceptorRatingValue = r;
     }
     await trade.save();
 

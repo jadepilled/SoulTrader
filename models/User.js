@@ -127,6 +127,28 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: true,
   },
+  // Privacy options — hide contact info from public profile
+  hideDiscord: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  hideSteam: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  hidePSN: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  hideXbox: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  // Tracking flags
+  hasSeenTradingGuide: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 }, {
   tableName: 'users',
 });
