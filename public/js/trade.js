@@ -57,9 +57,10 @@ document.addEventListener('DOMContentLoaded', () => {
         msg.className = 'flash-message flash-error';
         msg.style.marginBottom = '1rem';
         const missing = [];
-        if (tradeBtn.dataset.hasDiscord === 'false') missing.push('Discord name');
-        if (tradeBtn.dataset.hasTimezone === 'false') missing.push('timezone');
-        msg.innerHTML = 'Please set your ' + missing.join(' and ') + ' in your <a href="/profile" style="color:inherit;text-decoration:underline;">profile</a> before creating a trade offer.';
+        const parts = [];
+        if (tradeBtn.dataset.hasDiscord === 'false') parts.push('verify your Discord');
+        if (tradeBtn.dataset.hasTimezone === 'false') parts.push('set your timezone');
+        msg.innerHTML = 'Please ' + parts.join(' and ') + ' in your <a href="/profile" style="color:inherit;text-decoration:underline;">profile</a> before creating a trade offer.';
         if (mainContent) {
           const filterBar = mainContent.querySelector('.filter-bar');
           if (filterBar && filterBar.parentElement) {

@@ -53,20 +53,30 @@
           onerror="this.src='/images/default-avatar.svg'"
         />
         <% if (isOwnProfile) { %>
-          <form action="/profile/upload-image" method="POST" enctype="multipart/form-data" class="avatar-upload-form">
-            <input
-              type="file"
-              id="profileImage"
-              name="profileImage"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              class="avatar-file-input"
-            />
+          <div class="avatar-actions" style="display:flex; gap:0.35rem; margin-top:0.35rem;">
+            <button type="button" class="btn btn-sm" style="font-size:0.68rem; padding:0.2rem 0.6rem;" onclick="document.getElementById('avatarUploadForm').classList.toggle('open')">Edit</button>
+            <% if (profileUser.profileImagePath) { %>
+              <button type="button" class="btn btn-sm" style="font-size:0.68rem; padding:0.2rem 0.6rem; border-color:var(--danger); color:var(--danger);" onclick="deleteProfilePicture()">Delete</button>
+            <% } %>
+          </div>
+          <form id="avatarUploadForm" action="/profile/upload-image" method="POST" enctype="multipart/form-data" class="avatar-upload-form">
+            <input type="file" id="profileImage" name="profileImage" accept="image/jpeg,image/png,image/webp,image/gif" class="avatar-file-input" />
             <button type="submit" class="btn btn-primary btn-sm" style="width:100%; margin-top:0.25rem; font-size:0.7rem; padding:0.25rem 0.5rem;">Upload</button>
           </form>
         <% } %>
       </div>
 
-      <div class="profile-info">
+      <div class="profile-info" style="position:relative;">
+        <% if (isOwnProfile && typeof availableDisplayRoles !== 'undefined' && availableDisplayRoles.length > 0) { %>
+          <form action="/profile/update-display-role" method="POST" class="profile-theme-selector">
+            <select name="displayRole" onchange="this.form.submit()">
+              <option value="none" <%= !profileUser.displayRole ? 'selected' : '' %>>🎨 Theme</option>
+              <% availableDisplayRoles.forEach(dr => { %>
+                <option value="<%= dr.value %>" <%= profileUser.displayRole === dr.value ? 'selected' : '' %>><%= dr.name %></option>
+              <% }); %>
+            </select>
+          </form>
+        <% } %>
         <h1 style="<%= getUsernameStyle(profileUser.role) %>"><%= profileUser.username %></h1>
         <div class="profile-role" <% if (_displayRole) { %>style="color: <%= _displayRole.color %>;"<% } %>>
           <%= _displayRole ? _displayRole.name : (profileUser.role === 'super_admin' ? 'Super Admin' : profileUser.role) %>
@@ -91,6 +101,23 @@
               <% } %>
               <%= _lastOnlineStr %>
             </span>
+          <% } %>
+          <% if (!profileUser.hideTimezone && profileUser.timezone) { %>
+            <%
+              const _tzMatch = profileUser.timezone.match(/UTC([+-]\d{1,2}):(\d{2})/);
+              if (_tzMatch) {
+                const _tzSign = _tzMatch[1].charAt(0) === '-' ? -1 : 1;
+                const _tzHours = parseInt(_tzMatch[1].replace(/[+-]/, ''), 10);
+                const _tzMinutes = parseInt(_tzMatch[2], 10);
+                const _tzOffsetMs = _tzSign * (_tzHours * 60 + _tzMinutes) * 60000;
+                const _utcNow = new Date();
+                const _localTime = new Date(_utcNow.getTime() + _utcNow.getTimezoneOffset() * 60000 + _tzOffsetMs);
+                const _localTimeStr = _localTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            %>
+              <span style="margin-left: 0.75rem; color: var(--text-muted); font-size: 0.82rem;">
+                🕐 Local time: <%= _localTimeStr %>
+              </span>
+            <% } %>
           <% } %>
         </div>
 
@@ -161,32 +188,26 @@
 
         <!-- Contact Details & Linked Accounts -->
         <%
-          const hasLinked = profileUser.steamUsername || profileUser.discordUsername;
-          // For public view, respect privacy settings; own profile always sees everything
-          const showDiscord = profileUser.contactDiscord && (isOwnProfile || !profileUser.hideDiscord);
-          const showSteam   = profileUser.contactSteam   && (isOwnProfile || !profileUser.hideSteam);
+          const showDiscord = profileUser.discordUsername && (isOwnProfile || !profileUser.hideDiscord);
+          const showSteam   = profileUser.steamUsername && (isOwnProfile || !profileUser.hideSteam);
           const showPSN     = profileUser.contactPSN     && (isOwnProfile || !profileUser.hidePSN);
           const showXbox    = profileUser.contactXbox    && (isOwnProfile || !profileUser.hideXbox);
           const hasContact  = showDiscord || showSteam || showPSN || showXbox;
         %>
-        <% if (hasLinked || hasContact) { %>
+        <% if (hasContact) { %>
           <div class="profile-badges">
-            <% if (profileUser.steamUsername) { %>
-              <span class="linked-badge"><strong>Steam:</strong> <%= profileUser.steamUsername %></span>
-            <% } %>
-            <% if (profileUser.discordUsername) { %>
-              <span class="linked-badge"><strong>Discord:</strong> <%= profileUser.discordUsername %></span>
-            <% } %>
             <% if (showDiscord) { %>
               <span class="contact-item">
                 <span class="contact-platform contact-discord">Discord</span>
-                <span class="contact-value"><%= profileUser.contactDiscord %></span>
+                <span class="contact-value"><%= profileUser.discordUsername %></span>
+                <span style="font-size:0.6rem; color:var(--success); font-weight:700;">✓</span>
               </span>
             <% } %>
             <% if (showSteam) { %>
               <span class="contact-item">
                 <span class="contact-platform contact-steam">Steam</span>
-                <span class="contact-value"><%= profileUser.contactSteam %></span>
+                <span class="contact-value"><%= profileUser.steamUsername %></span>
+                <span style="font-size:0.6rem; color:var(--success); font-weight:700;">✓</span>
               </span>
             <% } %>
             <% if (showPSN) { %>
@@ -207,7 +228,7 @@
         <!-- Bio -->
         <div class="profile-bio">
           <% if (profileUser.bio) { %>
-            <p style="white-space: pre-wrap; margin:0;"><%= profileUser.bio %></p>
+            <p style="margin:0;"><%= profileUser.bio %></p>
           <% } else { %>
             <p style="color: var(--text-muted); font-style:italic; margin:0;">No bio yet.</p>
           <% } %>
@@ -284,6 +305,161 @@
       </div>
     <% } %>
 
+    <!-- Edit Panel (own profile only) -->
+    <% if (isOwnProfile) { %>
+      <div id="profileEditPanel" class="profile-edit-panel">
+        <div class="profile-section" style="<%= _sectionStyle %>">
+          <h2 class="profile-section-title">Edit Profile</h2>
+
+          <!-- Bio -->
+          <form action="/profile/update" method="POST" style="margin-bottom:2rem;">
+            <label for="bio">Bio <span style="color:var(--text-muted); font-size:0.8rem;">(max 500 characters)</span></label>
+            <textarea id="bio" name="bio" maxlength="500" style="margin-top:0.5rem;"><%= profileUser.bio || '' %></textarea>
+            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Save Bio</button>
+          </form>
+
+          <!-- Verified Accounts -->
+          <div style="margin-bottom:2rem;">
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+              <!-- Discord Verification -->
+              <div style="display:flex; align-items:center; gap:0.75rem; padding:0.65rem 0.85rem; background:rgba(88,101,242,0.08); border:1px solid rgba(88,101,242,0.2); border-radius:var(--radius);">
+                <span class="contact-platform contact-discord" style="font-size:0.75rem;">Discord</span>
+                <% if (profileUser.discordId) { %>
+                  <span style="color:var(--text-primary); font-size:0.88rem; font-weight:600;"><%= profileUser.discordUsername %></span>
+                  <span style="font-size:0.65rem; color:var(--success); font-weight:700;">✓ Verified</span>
+                  <form action="/auth/unlink/discord" method="POST" style="margin-left:auto;" id="unlink-discord-form-edit">
+                    <button type="button" class="btn btn-sm" style="font-size:0.68rem; padding:0.15rem 0.5rem; border-color:var(--danger); color:var(--danger);" onclick="showStyledConfirm('Unlink your Discord account?', () => { document.getElementById('unlink-discord-form-edit').submit(); })">Unlink</button>
+                  </form>
+                <% } else { %>
+                  <span style="color:var(--text-muted); font-size:0.82rem;">Not verified</span>
+                  <a href="/auth/discord" class="btn btn-sm" style="margin-left:auto; font-size:0.72rem; padding:0.2rem 0.75rem; background:rgba(88,101,242,0.15); border-color:rgba(88,101,242,0.4); color:#7289da;">Verify with Discord</a>
+                <% } %>
+              </div>
+
+              <!-- Steam Verification -->
+              <div style="display:flex; align-items:center; gap:0.75rem; padding:0.65rem 0.85rem; background:rgba(27,40,56,0.25); border:1px solid rgba(42,71,94,0.4); border-radius:var(--radius);">
+                <span class="contact-platform contact-steam" style="font-size:0.75rem;">Steam</span>
+                <% if (profileUser.steamId) { %>
+                  <span style="color:var(--text-primary); font-size:0.88rem; font-weight:600;"><%= profileUser.steamUsername %></span>
+                  <span style="font-size:0.65rem; color:var(--success); font-weight:700;">✓ Verified</span>
+                  <form action="/auth/unlink/steam" method="POST" style="margin-left:auto;" id="unlink-steam-form-edit">
+                    <button type="button" class="btn btn-sm" style="font-size:0.68rem; padding:0.15rem 0.5rem; border-color:var(--danger); color:var(--danger);" onclick="showStyledConfirm('Unlink your Steam account?', () => { document.getElementById('unlink-steam-form-edit').submit(); })">Unlink</button>
+                  </form>
+                <% } else { %>
+                  <span style="color:var(--text-muted); font-size:0.82rem;">Not verified</span>
+                  <a href="/auth/steam" class="btn btn-sm" style="margin-left:auto; font-size:0.72rem; padding:0.2rem 0.75rem; background:rgba(27,40,56,0.3); border-color:rgba(42,71,94,0.5); color:#c7d5e0;">Verify with Steam</a>
+                <% } %>
+              </div>
+            </div>
+            <p style="color:var(--text-muted); font-size:0.78rem; margin-top:0.5rem; font-style:italic;">
+              Verify your accounts to display them on your profile. Each account can only be linked to one SoulTrader profile.
+            </p>
+          </div>
+
+          <!-- Contact Details -->
+          <form action="/profile/update-contact" method="POST" style="margin-bottom:2rem;">
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.75rem;">
+              Additional contact details to help trade partners reach you. Use Privacy Options below to control visibility.
+            </p>
+            <div class="contact-edit-grid">
+              <div class="contact-edit-field">
+                <label for="contactPSN">
+                  <span class="contact-platform contact-psn" style="font-size:0.75rem;">PSN</span>
+                </label>
+                <input
+                  type="text"
+                  id="contactPSN"
+                  name="contactPSN"
+                  maxlength="100"
+                  placeholder="e.g. YourPSNID"
+                  value="<%= profileUser.contactPSN || '' %>"
+                  style="margin-top:0.35rem;"
+                />
+              </div>
+              <div class="contact-edit-field">
+                <label for="contactXbox">
+                  <span class="contact-platform contact-xbox" style="font-size:0.75rem;">Xbox</span>
+                </label>
+                <input
+                  type="text"
+                  id="contactXbox"
+                  name="contactXbox"
+                  maxlength="100"
+                  placeholder="e.g. YourGamertag"
+                  value="<%= profileUser.contactXbox || '' %>"
+                  style="margin-top:0.35rem;"
+                />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:1rem;">Save Contact Details</button>
+          </form>
+
+          <!-- Timezone -->
+          <form action="/profile/update-timezone" method="POST" style="margin-bottom:2rem;">
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.5rem;">
+              Set your timezone to help coordinate trades. Required before creating trades.
+            </p>
+            <select name="timezone" id="timezoneSelect" style="margin-bottom:0.5rem;">
+              <option value="">Select timezone...</option>
+              <%
+                const tzOptions = [
+                  'UTC-12:00 (Baker Island)', 'UTC-11:00 (Samoa)', 'UTC-10:00 (Hawaii)',
+                  'UTC-09:00 (Alaska)', 'UTC-08:00 (Pacific Time)', 'UTC-07:00 (Mountain Time)',
+                  'UTC-06:00 (Central Time)', 'UTC-05:00 (Eastern Time)', 'UTC-04:00 (Atlantic Time)',
+                  'UTC-03:00 (Argentina, Brazil)', 'UTC-02:00 (South Georgia)', 'UTC-01:00 (Azores)',
+                  'UTC+00:00 (GMT/London)', 'UTC+01:00 (CET/Paris/Berlin)',
+                  'UTC+02:00 (EET/Cairo/Helsinki)', 'UTC+03:00 (Moscow/Istanbul)',
+                  'UTC+04:00 (Dubai/Baku)', 'UTC+05:00 (Pakistan/Uzbekistan)',
+                  'UTC+05:30 (India)', 'UTC+06:00 (Bangladesh/Almaty)',
+                  'UTC+07:00 (Bangkok/Jakarta)', 'UTC+08:00 (Singapore/Perth/Beijing)',
+                  'UTC+09:00 (Tokyo/Seoul)', 'UTC+09:30 (Adelaide)',
+                  'UTC+10:00 (Sydney/Melbourne)', 'UTC+11:00 (Solomon Islands)',
+                  'UTC+12:00 (Auckland/Fiji)', 'UTC+13:00 (Tonga)',
+                ];
+              %>
+              <% tzOptions.forEach(tz => { %>
+                <option value="<%= tz %>" <%= (profileUser.timezone === tz) ? 'selected' : '' %>><%= tz %></option>
+              <% }); %>
+            </select>
+            <label class="privacy-checkbox" style="margin-top:0.5rem;">
+              <input type="checkbox" name="showTimezone" <%= !profileUser.hideTimezone ? 'checked' : '' %> />
+              <span>Show timezone publicly in profile</span>
+            </label>
+            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.75rem;">Save Timezone</button>
+          </form>
+
+          <!-- Privacy Options -->
+          <form action="/profile/update-privacy" method="POST">
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.75rem;">
+              Choose which contact details to hide from your public profile. Hidden contacts are still shared with trade partners when you agree to a trade.
+            </p>
+            <div class="privacy-options-grid">
+              <label class="privacy-checkbox">
+                <input type="checkbox" name="hideDiscord" <%= profileUser.hideDiscord ? 'checked' : '' %> />
+                <span>Hide Discord from profile</span>
+              </label>
+              <label class="privacy-checkbox">
+                <input type="checkbox" name="hideSteam" <%= profileUser.hideSteam ? 'checked' : '' %> />
+                <span>Hide Steam from profile</span>
+              </label>
+              <label class="privacy-checkbox">
+                <input type="checkbox" name="hidePSN" <%= profileUser.hidePSN ? 'checked' : '' %> />
+                <span>Hide PSN from profile</span>
+              </label>
+              <label class="privacy-checkbox">
+                <input type="checkbox" name="hideXbox" <%= profileUser.hideXbox ? 'checked' : '' %> />
+                <span>Hide Xbox from profile</span>
+              </label>
+            </div>
+            <p style="color:var(--text-muted); font-size:0.78rem; margin-top:0.5rem; font-style:italic;">
+              Note: Your verified Discord/Steam names will always be shared with trade partners when you agree to a trade.
+            </p>
+            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.75rem;">Save Privacy Settings</button>
+          </form>
+        </div>
+      </div>
+    <% } %>
+
     <!-- Pending Friend Requests (own profile only) -->
     <% if (isOwnProfile && typeof pendingFriendRequests !== 'undefined' && pendingFriendRequests.length > 0) { %>
       <div class="profile-section" style="<%= _sectionStyle %>">
@@ -320,210 +496,6 @@
               <span style="<%= getUsernameStyle(friend.role) %>; font-size:0.82rem; font-weight:600;"><%= friend.username %></span>
             </a>
           <% }); %>
-        </div>
-      </div>
-    <% } %>
-
-    <!-- Edit Panel (hidden by default, own profile only) -->
-    <% if (isOwnProfile) { %>
-      <div id="profileEditPanel" class="profile-edit-panel">
-        <div class="profile-section">
-          <h2 class="profile-section-title">Edit Profile</h2>
-
-          <!-- Bio -->
-          <form action="/profile/update" method="POST" style="margin-bottom:2rem;">
-            <label for="bio">Bio <span style="color:var(--text-muted); font-size:0.8rem;">(max 500 characters)</span></label>
-            <textarea id="bio" name="bio" maxlength="500" style="margin-top:0.5rem;"><%= profileUser.bio || '' %></textarea>
-            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.5rem;">Save Bio</button>
-          </form>
-
-          <!-- Contact Details -->
-          <form action="/profile/update-contact" method="POST" style="margin-bottom:2rem;">
-            <h3 class="profile-subsection-title">Contact Details</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.5rem;">
-              These help trade partners reach you. Use the Privacy Options below to control which are publicly visible.
-            </p>
-            <p style="color:var(--accent, #c8a84e); font-size:0.78rem; margin-bottom:1rem; font-style:italic;">
-              Your Discord name is required for trading and will be shared with anyone you agree to trade with.
-            </p>
-
-            <div class="contact-edit-grid">
-              <div class="contact-edit-field">
-                <label for="contactDiscord">
-                  <span class="contact-platform contact-discord" style="font-size:0.75rem;">Discord</span>
-                </label>
-                <input
-                  type="text"
-                  id="contactDiscord"
-                  name="contactDiscord"
-                  maxlength="100"
-                  placeholder="e.g. username or username#0000"
-                  value="<%= profileUser.contactDiscord || '' %>"
-                  style="margin-top:0.35rem;"
-                />
-              </div>
-              <div class="contact-edit-field">
-                <label for="contactSteam">
-                  <span class="contact-platform contact-steam" style="font-size:0.75rem;">Steam</span>
-                </label>
-                <input
-                  type="text"
-                  id="contactSteam"
-                  name="contactSteam"
-                  maxlength="200"
-                  placeholder="e.g. Steam username or profile URL"
-                  value="<%= profileUser.contactSteam || '' %>"
-                  style="margin-top:0.35rem;"
-                />
-              </div>
-              <div class="contact-edit-field">
-                <label for="contactPSN">
-                  <span class="contact-platform contact-psn" style="font-size:0.75rem;">PSN</span>
-                </label>
-                <input
-                  type="text"
-                  id="contactPSN"
-                  name="contactPSN"
-                  maxlength="100"
-                  placeholder="e.g. YourPSNID"
-                  value="<%= profileUser.contactPSN || '' %>"
-                  style="margin-top:0.35rem;"
-                />
-              </div>
-              <div class="contact-edit-field">
-                <label for="contactXbox">
-                  <span class="contact-platform contact-xbox" style="font-size:0.75rem;">Xbox</span>
-                </label>
-                <input
-                  type="text"
-                  id="contactXbox"
-                  name="contactXbox"
-                  maxlength="100"
-                  placeholder="e.g. YourGamertag"
-                  value="<%= profileUser.contactXbox || '' %>"
-                  style="margin-top:0.35rem;"
-                />
-              </div>
-            </div>
-            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:1rem;">Save Contact Details</button>
-          </form>
-
-          <!-- Timezone -->
-          <form action="/profile/update-timezone" method="POST" style="margin-bottom:2rem;">
-            <h3 class="profile-subsection-title">Timezone</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.5rem;">
-              Set your timezone to help coordinate trades. Required before creating trades.
-            </p>
-            <select name="timezone" id="timezoneSelect" style="margin-bottom:0.5rem;">
-              <option value="">Select timezone...</option>
-              <%
-                const tzOptions = [
-                  'UTC-12:00 (Baker Island)', 'UTC-11:00 (Samoa)', 'UTC-10:00 (Hawaii)',
-                  'UTC-09:00 (Alaska)', 'UTC-08:00 (Pacific Time)', 'UTC-07:00 (Mountain Time)',
-                  'UTC-06:00 (Central Time)', 'UTC-05:00 (Eastern Time)', 'UTC-04:00 (Atlantic Time)',
-                  'UTC-03:00 (Argentina, Brazil)', 'UTC-02:00 (South Georgia)', 'UTC-01:00 (Azores)',
-                  'UTC+00:00 (GMT/London)', 'UTC+01:00 (CET/Paris/Berlin)',
-                  'UTC+02:00 (EET/Cairo/Helsinki)', 'UTC+03:00 (Moscow/Istanbul)',
-                  'UTC+04:00 (Dubai/Baku)', 'UTC+05:00 (Pakistan/Uzbekistan)',
-                  'UTC+05:30 (India)', 'UTC+06:00 (Bangladesh/Almaty)',
-                  'UTC+07:00 (Bangkok/Jakarta)', 'UTC+08:00 (Singapore/Perth/Beijing)',
-                  'UTC+09:00 (Tokyo/Seoul)', 'UTC+09:30 (Adelaide)',
-                  'UTC+10:00 (Sydney/Melbourne)', 'UTC+11:00 (Solomon Islands)',
-                  'UTC+12:00 (Auckland/Fiji)', 'UTC+13:00 (Tonga)',
-                ];
-              %>
-              <% tzOptions.forEach(tz => { %>
-                <option value="<%= tz %>" <%= (profileUser.timezone === tz) ? 'selected' : '' %>><%= tz %></option>
-              <% }); %>
-            </select>
-            <label class="privacy-checkbox" style="margin-top:0.5rem;">
-              <input type="checkbox" name="hideTimezone" <%= profileUser.hideTimezone !== false ? 'checked' : '' %> />
-              <span>Hide timezone from public profile</span>
-            </label>
-            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.75rem;">Save Timezone</button>
-          </form>
-
-          <!-- Privacy Options -->
-          <form action="/profile/update-privacy" method="POST" style="margin-bottom:2rem;">
-            <h3 class="profile-subsection-title">Privacy Options</h3>
-            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.75rem;">
-              Choose which contact details to hide from your public profile. Hidden contacts are still shared with trade partners when you agree to a trade.
-            </p>
-            <div class="privacy-options-grid">
-              <label class="privacy-checkbox">
-                <input type="checkbox" name="hideDiscord" <%= profileUser.hideDiscord ? 'checked' : '' %> />
-                <span>Hide Discord from profile</span>
-              </label>
-              <label class="privacy-checkbox">
-                <input type="checkbox" name="hideSteam" <%= profileUser.hideSteam ? 'checked' : '' %> />
-                <span>Hide Steam from profile</span>
-              </label>
-              <label class="privacy-checkbox">
-                <input type="checkbox" name="hidePSN" <%= profileUser.hidePSN ? 'checked' : '' %> />
-                <span>Hide PSN from profile</span>
-              </label>
-              <label class="privacy-checkbox">
-                <input type="checkbox" name="hideXbox" <%= profileUser.hideXbox ? 'checked' : '' %> />
-                <span>Hide Xbox from profile</span>
-              </label>
-            </div>
-            <p style="color:var(--text-muted); font-size:0.78rem; margin-top:0.5rem; font-style:italic;">
-              Note: Your Discord name will always be shared with anyone you agree to trade with, so they can contact you to coordinate the trade.
-            </p>
-            <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.75rem;">Save Privacy Settings</button>
-          </form>
-
-          <!-- Display Role / Profile Theme -->
-          <% if (typeof availableDisplayRoles !== 'undefined' && availableDisplayRoles.length > 0) { %>
-            <form action="/profile/update-display-role" method="POST" style="margin-bottom:2rem;">
-              <h3 class="profile-subsection-title">Profile Theme</h3>
-              <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.75rem;">
-                Choose a display role to theme your profile. This replaces the role label beneath your name and tints your profile with that role's colour.
-              </p>
-              <div class="display-role-options">
-                <label class="display-role-option">
-                  <input type="radio" name="displayRole" value="none" <%= !profileUser.displayRole ? 'checked' : '' %> />
-                  <span class="display-role-chip" style="background: rgba(255,255,255,0.06); color: var(--text-muted);">Default</span>
-                </label>
-                <% availableDisplayRoles.forEach(dr => { %>
-                  <label class="display-role-option">
-                    <input type="radio" name="displayRole" value="<%= dr.value %>" <%= profileUser.displayRole === dr.value ? 'checked' : '' %> />
-                    <span class="display-role-chip" style="background: <%= dr.color %>20; color: <%= dr.color %>; border-color: <%= dr.color %>40;"><%= dr.name %></span>
-                  </label>
-                <% }); %>
-              </div>
-              <button type="submit" class="btn btn-primary btn-sm" style="margin-top:0.75rem;">Save Theme</button>
-            </form>
-          <% } %>
-
-          <!-- Verified Accounts -->
-          <h3 class="profile-subsection-title">Verified Accounts</h3>
-          <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
-            Link your Steam or Discord to verify your identity. Each account can only be linked to one SoulTrader profile.
-          </p>
-          <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
-            <% if (!profileUser.steamId) { %>
-              <a href="/auth/steam" class="btn btn-sm">Link Steam</a>
-            <% } else { %>
-              <div style="display:flex; align-items:center; gap:0.5rem;">
-                <span class="linked-badge">Steam: <%= profileUser.steamUsername %></span>
-                <form id="unlink-steam-form" action="/auth/unlink/steam" method="POST" style="display:inline;">
-                  <button type="button" class="btn btn-danger btn-sm" onclick="showStyledConfirm('Unlink your Steam account?', () => { document.getElementById('unlink-steam-form').submit(); })">Unlink</button>
-                </form>
-              </div>
-            <% } %>
-
-            <% if (!profileUser.discordId) { %>
-              <a href="/auth/discord" class="btn btn-sm">Link Discord</a>
-            <% } else { %>
-              <div style="display:flex; align-items:center; gap:0.5rem;">
-                <span class="linked-badge">Discord: <%= profileUser.discordUsername %></span>
-                <form id="unlink-discord-form" action="/auth/unlink/discord" method="POST" style="display:inline;">
-                  <button type="button" class="btn btn-danger btn-sm" onclick="showStyledConfirm('Unlink your Discord account?', () => { document.getElementById('unlink-discord-form').submit(); })">Unlink</button>
-                </form>
-              </div>
-            <% } %>
-          </div>
         </div>
       </div>
     <% } %>
@@ -635,7 +607,7 @@
                 fbAvatarColor = '#ef4444';
               }
             %>
-            <div class="comment-card" style="border-left: 3px solid <%= fbBorderColor %>; background: <%= fbBgColor %>;">
+            <div class="comment-card" style="border-left: 3px solid <%= fbBorderColor %>; background: <%= fbBgColor %>; padding: 0.85rem 0.75rem;">
               <div class="comment-header">
                 <div class="comment-author">
                   <div class="comment-avatar-fallback" style="background: <%= fbAvatarBg %>; color: <%= fbAvatarColor %>; font-size: 0.6rem;"><%= r ? r + '/10' : 'TF' %></div>
@@ -915,6 +887,17 @@
           const data = await resp.json();
           if (data.success) { location.reload(); }
           else { alert(data.error || 'Failed to unblock user.'); }
+        } catch { alert('Network error.'); }
+      });
+    }
+
+    function deleteProfilePicture() {
+      showStyledConfirm('Delete your profile picture?', async () => {
+        try {
+          const resp = await fetch('/profile/delete-image', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+          const data = await resp.json();
+          if (data.success) { location.reload(); }
+          else { alert(data.error || 'Failed to delete profile picture.'); }
         } catch { alert('Network error.'); }
       });
     }

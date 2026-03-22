@@ -1387,10 +1387,13 @@ textarea {
   border-radius: var(--radius);
   padding: 0.4rem 1rem;
   margin-top: 0.75rem;
-  white-space: pre-wrap;
   font-size: 0.88rem;
   color: var(--text-secondary);
   line-height: 1.5;
+}
+
+.profile-bio p {
+  white-space: pre-wrap;
 }
 
 .profile-badges {
@@ -1404,6 +1407,11 @@ textarea {
 .avatar-upload-form {
   width: 100%;
   max-width: 120px;
+  display: none;
+}
+
+.avatar-upload-form.open {
+  display: block;
 }
 
 .avatar-file-input {
@@ -1418,6 +1426,32 @@ textarea {
 
 .avatar-file-input::file-selector-button {
   display: none;
+}
+
+/* ─── Profile Theme Selector ──────────────────────────────────────────── */
+.profile-theme-selector {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.profile-theme-selector select {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all var(--transition);
+}
+
+.profile-theme-selector select:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
 }
 
 /* ─── Profile Edit Toggle ───────────────────────────────────────────────── */

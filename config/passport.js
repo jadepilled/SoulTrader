@@ -15,18 +15,27 @@ module.exports = (passport) => {
         const steamId = profile.id;
         const steamUsername = profile.displayName;
 
+        // Get the current user — from JWT middleware or from session fallback
+        let currentUser = req.user;
+        if (!currentUser && req.session && req.session.steamLinkUserId) {
+          currentUser = await User.findByPk(req.session.steamLinkUserId);
+        }
+        if (!currentUser) {
+          return done(null, false, { message: 'Could not identify your account. Please try again.' });
+        }
+
         // Check if this Steam account is already linked to another user
         const existingLink = await User.findOne({ where: { steamId } });
-        if (existingLink && existingLink.id !== req.user.id) {
+        if (existingLink && existingLink.id !== currentUser.id) {
           return done(null, false, { message: 'This Steam account is already linked to another SoulTrader account.' });
         }
 
         // Link to the current user
-        req.user.steamId = steamId;
-        req.user.steamUsername = steamUsername;
-        await req.user.save();
+        currentUser.steamId = steamId;
+        currentUser.steamUsername = steamUsername;
+        await currentUser.save();
 
-        return done(null, req.user);
+        return done(null, currentUser);
       } catch (err) {
         return done(err);
       }

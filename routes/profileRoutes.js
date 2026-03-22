@@ -335,10 +335,8 @@ router.post('/update', ensureAuthenticated, profileUpdateLimiter, async (req, re
 // ─── Update contact details ──────────────────────────────────────────────────
 router.post('/update-contact', ensureAuthenticated, profileUpdateLimiter, async (req, res) => {
   try {
-    const { contactDiscord, contactSteam, contactPSN, contactXbox } = req.body;
+    const { contactPSN, contactXbox } = req.body;
 
-    req.user.contactDiscord = contactDiscord ? contactDiscord.substring(0, 100).trim() : null;
-    req.user.contactSteam   = contactSteam   ? contactSteam.substring(0, 200).trim()  : null;
     req.user.contactPSN     = contactPSN     ? contactPSN.substring(0, 100).trim()    : null;
     req.user.contactXbox    = contactXbox    ? contactXbox.substring(0, 100).trim()   : null;
 
@@ -405,14 +403,15 @@ router.post('/update-privacy', ensureAuthenticated, profileUpdateLimiter, async 
 // ─── Update timezone ─────────────────────────────────────────────────────────
 router.post('/update-timezone', ensureAuthenticated, profileUpdateLimiter, async (req, res) => {
   try {
-    const { timezone, hideTimezone } = req.body;
+    const { timezone, showTimezone } = req.body;
 
     if (!timezone || !String(timezone).trim()) {
       req.user.timezone = null;
     } else {
       req.user.timezone = String(timezone).substring(0, 100).trim();
     }
-    req.user.hideTimezone = hideTimezone === 'on';
+    // "Show timezone" checkbox: checked = show (hideTimezone = false)
+    req.user.hideTimezone = showTimezone !== 'on';
     await req.user.save();
     res.redirect(`/profile/${req.user.username}?profile=updated`);
   } catch (err) {
@@ -471,6 +470,30 @@ router.post('/upload-image', ensureAuthenticated, upload.single('profileImage'),
   } catch (err) {
     console.error('Error uploading profile image:', err);
     res.redirect(`/profile/${req.user.username}?error=upload_failed`);
+  }
+});
+
+// ─── Delete profile image ────────────────────────────────────────────────────
+router.post('/delete-image', ensureAuthenticated, async (req, res) => {
+  try {
+    if (!req.user.profileImagePath) {
+      return res.status(400).json({ error: 'No profile picture to delete.' });
+    }
+
+    // Delete the file from disk
+    const filePath = path.join(__dirname, '..', req.user.profileImagePath);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    // Clear the path in DB
+    req.user.profileImagePath = null;
+    await req.user.save();
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting profile image:', err);
+    res.status(500).json({ error: 'Server error.' });
   }
 });
 

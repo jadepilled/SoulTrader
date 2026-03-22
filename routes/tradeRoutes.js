@@ -142,10 +142,10 @@ router.post('/create', tradeCreateLimiter, ensureVerified, async (req, res) => {
     const creatorInGameName = req.body.creatorInGameName;
     const creatorMeetingPoint = req.body.creatorMeetingPoint;
 
-    // Require Discord and timezone before creating trades
-    const tradeCreator = await User.findByPk(req.user.id, { attributes: ['contactDiscord', 'timezone'] });
-    if (!tradeCreator || !tradeCreator.contactDiscord) {
-      return res.status(400).send('Please set your Discord name in your profile before creating a trade.');
+    // Require verified Discord and timezone before creating trades
+    const tradeCreator = await User.findByPk(req.user.id, { attributes: ['discordUsername', 'timezone'] });
+    if (!tradeCreator || !tradeCreator.discordUsername) {
+      return res.status(400).send('Please verify your Discord account in your profile before creating a trade.');
     }
     if (!tradeCreator || !tradeCreator.timezone) {
       return res.status(400).send('Please set your timezone in your profile before creating a trade.');
@@ -228,10 +228,10 @@ router.post('/accept/:id', tradeAcceptLimiter, ensureVerified, async (req, res) 
 
     const { meetingPoint, additionalInfo, inGameName } = req.body;
 
-    // Require Discord and timezone set in profile
-    const acceptorUser = await User.findByPk(req.user.id, { attributes: ['contactDiscord', 'timezone'] });
-    if (!acceptorUser || !acceptorUser.contactDiscord) {
-      return res.status(400).json({ error: 'Please set your Discord name in your profile before accepting a trade.' });
+    // Require verified Discord and timezone set in profile
+    const acceptorUser = await User.findByPk(req.user.id, { attributes: ['discordUsername', 'timezone'] });
+    if (!acceptorUser || !acceptorUser.discordUsername) {
+      return res.status(400).json({ error: 'Please verify your Discord account in your profile before accepting a trade.' });
     }
     if (!acceptorUser || !acceptorUser.timezone) {
       return res.status(400).json({ error: 'Please set your timezone in your profile before making a trade offer.' });
@@ -562,13 +562,13 @@ router.get('/my-trades', async (req, res) => {
 
     const userId = req.user.id;
     const include = [
-      { model: User, as: 'offerCreator', attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox', 'timezone'] },
-      { model: User, as: 'acceptor',     attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'contactDiscord', 'contactSteam', 'contactPSN', 'contactXbox', 'timezone'] },
+      { model: User, as: 'offerCreator', attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'discordUsername', 'steamUsername', 'contactPSN', 'contactXbox', 'timezone'] },
+      { model: User, as: 'acceptor',     attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'discordUsername', 'steamUsername', 'contactPSN', 'contactXbox', 'timezone'] },
     ];
 
     const includeWithOffers = [
       ...include,
-      { model: TradeOffer, as: 'tradeOffers', include: [{ model: User, as: 'offerer', attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'contactDiscord', 'timezone'] }] },
+      { model: TradeOffer, as: 'tradeOffers', include: [{ model: User, as: 'offerer', attributes: ['id', 'username', 'role', 'positiveKarma', 'negativeKarma', 'discordUsername', 'timezone'] }] },
     ];
 
     const [createdTrades, acceptedTrades, completedTrades, expiredTrades] = await Promise.all([

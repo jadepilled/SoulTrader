@@ -395,7 +395,7 @@
       <div class="filter-bar">
         <% if (userId) { %>
           <button id="create-offer-btn" class="btn btn-primary"
-                  data-has-discord="<%= typeof currentUser !== 'undefined' && currentUser && currentUser.contactDiscord ? 'true' : 'false' %>"
+                  data-has-discord="<%= typeof currentUser !== 'undefined' && currentUser && currentUser.discordUsername ? 'true' : 'false' %>"
                   data-has-timezone="<%= typeof currentUser !== 'undefined' && currentUser && currentUser.timezone ? 'true' : 'false' %>">+ Create Trade Offer</button>
         <% } %>
         <div class="filter-group">

@@ -218,8 +218,8 @@
       function renderContactInfo(user, label) {
         if (!user) return '';
         const c = [];
-        if (user.contactDiscord) c.push('<div class="trade-info-row"><span class="trade-info-label">Discord</span><span class="trade-info-value">' + user.contactDiscord + '</span></div>');
-        if (user.contactSteam)   c.push('<div class="trade-info-row"><span class="trade-info-label">Steam</span><span class="trade-info-value">' + user.contactSteam + '</span></div>');
+        if (user.discordUsername) c.push('<div class="trade-info-row"><span class="trade-info-label">Discord</span><span class="trade-info-value">' + user.discordUsername + '</span></div>');
+        if (user.steamUsername)  c.push('<div class="trade-info-row"><span class="trade-info-label">Steam</span><span class="trade-info-value">' + user.steamUsername + '</span></div>');
         if (user.contactPSN)     c.push('<div class="trade-info-row"><span class="trade-info-label">PSN</span><span class="trade-info-value">' + user.contactPSN + '</span></div>');
         if (user.contactXbox)    c.push('<div class="trade-info-row"><span class="trade-info-label">Xbox</span><span class="trade-info-value">' + user.contactXbox + '</span></div>');
         if (c.length === 0) return '';
