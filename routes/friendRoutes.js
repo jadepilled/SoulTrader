@@ -4,7 +4,7 @@ const { Op } = require('sequelize');
 const { Friendship, BlockedUser, User, Report } = require('../models');
 const { ensureAuthenticated, ensureVerified } = require('../middleware/roleMiddleware');
 const { getUsernameStyle, gameConfigs } = require('../controllers/gameController');
-const { sendFriendRequestEmail } = require('../utils/friendEmailService');
+const { sendFriendRequestEmail, sendFriendAcceptedEmail } = require('../utils/friendEmailService');
 
 // Staff roles that cannot be blocked by regular users
 const STAFF_ROLES = ['moderator', 'admin', 'super_admin'];
@@ -97,6 +97,14 @@ router.post('/accept/:friendshipId', ensureAuthenticated, async (req, res) => {
 
     friendship.status = 'accepted';
     await friendship.save();
+
+    // Notify the requester that their friend request was accepted
+    const requester = await User.findByPk(friendship.requesterId, { attributes: ['email', 'username'] });
+    if (requester && requester.email) {
+      sendFriendAcceptedEmail(requester.email, requester.username, req.user.username)
+        .catch(err => console.error('Friend accepted email failed:', err));
+    }
+
     return res.json({ success: true });
   } catch (err) {
     console.error('Error accepting friend request:', err);

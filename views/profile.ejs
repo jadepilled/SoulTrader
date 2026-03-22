@@ -296,7 +296,7 @@
               <% } else { %>
                 <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:var(--text-muted);"><%= fr.requester ? fr.requester.username.charAt(0).toUpperCase() : '?' %></div>
               <% } %>
-              <a href="/profile/<%= fr.requester ? fr.requester.username : '' %>" style="<%= fr.requester ? getUsernameStyle(fr.requester.role) : '' %>; font-weight:700; text-decoration:none; flex:1;"><%= fr.requester ? fr.requester.username : 'Unknown' %></a>
+              <a href="/profile/<%= fr.requester ? fr.requester.username : '' %>" class="user-hover-trigger" data-username="<%= fr.requester ? fr.requester.username : '' %>" style="<%= fr.requester ? getUsernameStyle(fr.requester.role) : '' %>; font-weight:700; text-decoration:none; flex:1;"><%= fr.requester ? fr.requester.username : 'Unknown' %></a>
               <button class="btn btn-success btn-sm" onclick="acceptFriendRequest('<%= fr.id %>')">Accept</button>
               <button class="btn btn-danger btn-sm" onclick="declineFriendRequest('<%= fr.id %>')">Decline</button>
             </div>
@@ -311,7 +311,7 @@
         <h2 class="profile-section-title">Friends (<%= friendsList.length %>)</h2>
         <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
           <% friendsList.forEach(friend => { %>
-            <a href="/profile/<%= friend.username %>" style="display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:999px; text-decoration:none; transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
+            <a href="/profile/<%= friend.username %>" class="user-hover-trigger" data-username="<%= friend.username %>" style="display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:999px; text-decoration:none; transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
               <% if (friend.profileImagePath) { %>
                 <img src="<%= friend.profileImagePath %>" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" alt="" onerror="this.style.display='none'">
               <% } else { %>

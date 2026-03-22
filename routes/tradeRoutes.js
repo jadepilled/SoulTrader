@@ -198,13 +198,14 @@ router.get('/details/:id', async (req, res) => {
     if (!trade) return res.status(404).json({ error: 'Trade not found.' });
 
     res.json({
-      offerCreator:   trade.offerCreator,
-      offeredItems:   trade.offeredItems,   // already parsed array via getter
-      requestedItems: trade.requestedItems,
-      game:           trade.game,
-      gameVariant:    trade.gameVariant,
-      platform:       trade.platform,
-      characterLevel: trade.characterLevel,
+      offerCreator:        trade.offerCreator,
+      offeredItems:        trade.offeredItems,   // already parsed array via getter
+      requestedItems:      trade.requestedItems,
+      game:                trade.game,
+      gameVariant:         trade.gameVariant,
+      platform:            trade.platform,
+      characterLevel:      trade.characterLevel,
+      creatorMeetingPoint: trade.creatorMeetingPoint,
     });
   } catch (err) {
     console.error('Error fetching trade details:', err);
@@ -236,12 +237,12 @@ router.post('/accept/:id', tradeAcceptLimiter, ensureVerified, async (req, res) 
       return res.status(400).json({ error: 'Please set your timezone in your profile before making a trade offer.' });
     }
 
-    // Check if this user already has a pending offer on this trade
+    // Check if this user already has an active (pending) offer on this trade
     const existingOffer = await TradeOffer.findOne({
       where: { tradeId: trade.id, offererId: req.user.id, status: 'pending' },
     });
     if (existingOffer) {
-      return res.status(400).json({ error: 'You already have a pending offer on this trade.' });
+      return res.status(400).json({ error: 'You already have a pending offer on this trade. Rescind it first to place a new one.' });
     }
 
     // Create a trade offer instead of directly accepting
@@ -326,7 +327,10 @@ router.post('/reject-offer/:offerId', async (req, res) => {
     if (!req.user) return res.status(401).send('Unauthorized');
 
     const offer = await TradeOffer.findByPk(req.params.offerId, {
-      include: [{ model: Trade, as: 'trade' }],
+      include: [
+        { model: Trade, as: 'trade', include: [{ model: User, as: 'offerCreator', attributes: ['username'] }] },
+        { model: User, as: 'offerer', attributes: ['id', 'email', 'username'] },
+      ],
     });
 
     if (!offer || !offer.trade) return res.status(404).send('Offer not found.');
@@ -336,10 +340,38 @@ router.post('/reject-offer/:offerId', async (req, res) => {
     offer.status = 'cancelled';
     await offer.save();
 
+    // Notify the offerer their offer was rejected
+    if (offer.offerer && offer.offerer.email) {
+      tradeEmail.sendOfferDeclinedEmail(
+        offer.offerer.email, offer.offerer.username,
+        offer.trade.offerCreator.username, offer.trade
+      ).catch(err => console.error('Offer declined email failed:', err));
+    }
+
     return res.redirect('/trade/my-trades');
   } catch (err) {
     console.error('Error rejecting trade offer:', err);
     res.status(500).send('Server error.');
+  }
+});
+
+// ─── RESCIND OWN TRADE OFFER ────────────────────────────────────────────────
+router.post('/rescind-offer/:offerId', async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+    const offer = await TradeOffer.findByPk(req.params.offerId);
+    if (!offer) return res.status(404).json({ error: 'Offer not found.' });
+    if (offer.offererId !== req.user.id) return res.status(403).json({ error: 'You can only rescind your own offers.' });
+    if (offer.status !== 'pending') return res.status(400).json({ error: 'This offer is no longer pending.' });
+
+    offer.status = 'cancelled';
+    await offer.save();
+
+    return res.redirect('/trade/my-trades');
+  } catch (err) {
+    console.error('Error rescinding trade offer:', err);
+    res.status(500).json({ error: 'Server error.' });
   }
 });
 

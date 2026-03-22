@@ -228,7 +228,7 @@
         <div class="chat-partner-avatar-fallback"><%= otherUser.username.charAt(0).toUpperCase() %></div>
       <% } %>
       <div>
-        <a href="/profile/<%= otherUser.username %>" class="chat-partner-name" style="<%= getUsernameStyle(otherUser.role || 'user') %>"><%= otherUser.username %></a>
+        <a href="/profile/<%= otherUser.username %>" class="chat-partner-name user-hover-trigger" data-username="<%= otherUser.username %>" style="<%= getUsernameStyle(otherUser.role || 'user') %>"><%= otherUser.username %></a>
         <% if (otherUser.role && otherUser.role !== 'user') { %>
           <span class="chat-partner-role"><%= otherUser.role %></span>
         <% } %>
@@ -244,7 +244,7 @@
             <% if (msg.deletedAt) { %>
               <div class="message-sender-row">
                 <% const sender = isSent ? currentUser : otherUser; %>
-                <span class="message-sender-name" style="<%= getUsernameStyle(sender.role || 'user') %>"><%= sender.username %></span>
+                <a href="/profile/<%= sender.username %>" class="message-sender-name user-hover-trigger" data-username="<%= sender.username %>" style="<%= getUsernameStyle(sender.role || 'user') %>; text-decoration:none;"><%= sender.username %></a>
               </div>
               <div class="message-content" style="font-style:italic; color:var(--text-muted);">message deleted</div>
               <div class="message-time"><%= msg.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></div>
@@ -261,7 +261,7 @@
                 <% } else { %>
                   <div class="message-sender-avatar-fallback"><%= sender.username.charAt(0).toUpperCase() %></div>
                 <% } %>
-                <span class="message-sender-name" style="<%= getUsernameStyle(sender.role || 'user') %>"><%= sender.username %></span>
+                <a href="/profile/<%= sender.username %>" class="message-sender-name user-hover-trigger" data-username="<%= sender.username %>" style="<%= getUsernameStyle(sender.role || 'user') %>; text-decoration:none;"><%= sender.username %></a>
               </div>
               <div class="message-content"><%= msg.content %></div>
               <div class="message-time"><%= msg.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) %></div>

@@ -35,7 +35,11 @@
               <span class="nav-trade-badge"><%= unreadMessageCount %></span>
             <% } %>
           </a>
-          <a href="/profile" class="nav-dropdown-item">Profile</a>
+          <a href="/profile" class="nav-dropdown-item">Profile
+            <% if (typeof pendingFriendCount !== 'undefined' && pendingFriendCount > 0) { %>
+              <span class="nav-trade-badge" style="background: #5b9bff;"><%= pendingFriendCount %></span>
+            <% } %>
+          </a>
           <a href="/users" class="nav-dropdown-item">Community</a>
           <a href="/how-to-trade" class="nav-dropdown-item">How to Trade</a>
           <a href="/code-of-conduct" class="nav-dropdown-item">Conduct</a>

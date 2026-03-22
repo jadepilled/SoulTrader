@@ -163,8 +163,19 @@ router.post('/users/:id/role', async (req, res) => {
       return res.status(400).json({ error: 'Moderators cannot modify other moderators.' });
     }
 
+    const oldRole = user.role;
     user.role = role;
     await user.save();
+
+    // Send email notification if promoted to a staff role
+    if (role !== 'user' && role !== oldRole) {
+      try {
+        const { sendRoleChangedEmail } = require('../utils/tradeEmailService');
+        if (user.email) {
+          sendRoleChangedEmail(user.email, user.username, role).catch(err => console.error('Role change email failed:', err));
+        }
+      } catch (e) { /* ignore */ }
+    }
 
     res.json({ success: true, message: `${user.username} role changed to ${role}.` });
   } catch (err) {

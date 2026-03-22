@@ -64,13 +64,18 @@ app.use(async (req, res, next) => {
   res.locals.currentUser = req.user || null;
   res.locals.unreadMessageCount = 0;
   res.locals.pendingReportCount = 0;
+  res.locals.pendingFriendCount = 0;
 
   if (req.user) {
     try {
-      const { Message, Report } = require('./models');
+      const { Message, Report, Friendship } = require('./models');
       // Unread message count for all logged-in users
       res.locals.unreadMessageCount = await Message.count({
         where: { recipientId: req.user.id, readAt: null },
+      });
+      // Pending friend request count
+      res.locals.pendingFriendCount = await Friendship.count({
+        where: { addresseeId: req.user.id, status: 'pending' },
       });
       // Pending report count for admins and super admins
       if (req.user.role === 'admin' || req.user.role === 'super_admin') {
@@ -436,20 +441,27 @@ sequelize.sync({ alter: true })
       // ── 14-day trade expiry: expire open trades older than 14 days ──
       const expireOldTrades = async () => {
         try {
-          const { Trade: T, TradeOffer: TO } = require('./models');
+          const { Trade: T, TradeOffer: TO, User: U } = require('./models');
           const { Op: O } = require('sequelize');
+          const tradeEmailExpiry = require('./utils/tradeEmailService');
           const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
           const stale = await T.findAll({
             where: {
               status: 'open',
               createdAt: { [O.lt]: cutoff },
             },
+            include: [{ model: U, as: 'offerCreator', attributes: ['email', 'username'] }],
           });
           for (const trade of stale) {
             trade.status = 'expired';
             await trade.save();
             // Cancel any pending offers on expired trades
             await TO.update({ status: 'cancelled' }, { where: { tradeId: trade.id, status: 'pending' } });
+            // Notify trade creator
+            if (trade.offerCreator && trade.offerCreator.email) {
+              tradeEmailExpiry.sendTradeExpiredEmail(trade.offerCreator.email, trade.offerCreator.username, trade)
+                .catch(err => console.error('[TradeExpiry] Email failed:', err));
+            }
           }
           if (stale.length > 0) console.log(`[TradeExpiry] Expired ${stale.length} old trade(s) (14-day limit).`);
         } catch (err) {

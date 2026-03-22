@@ -559,9 +559,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const acceptForm       = document.getElementById('acceptTradeForm');
 
   document.querySelectorAll('.btn-accept').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       if (!acceptModal || !tradeIdInput) return;
-      tradeIdInput.value     = btn.dataset.tradeId;
+      tradeIdInput.value = btn.dataset.tradeId;
+
+      // Fetch trade details to show creator's meeting point
+      try {
+        const resp = await fetch(`/trade/details/${btn.dataset.tradeId}`);
+        const trade = await resp.json();
+        const mpDisplay = document.getElementById('acceptMeetingPointDisplay');
+        const mpText = document.getElementById('acceptMeetingPointText');
+        if (mpDisplay && mpText && trade.creatorMeetingPoint) {
+          mpText.textContent = trade.creatorMeetingPoint;
+          mpDisplay.style.display = 'block';
+        } else if (mpDisplay) {
+          mpDisplay.style.display = 'none';
+        }
+      } catch (e) { /* ignore */ }
+
       acceptModal.style.display = 'flex';
     });
   });
@@ -572,10 +587,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (acceptForm) {
     acceptForm.addEventListener('submit', async e => {
       e.preventDefault();
-      const tradeId       = tradeIdInput.value;
-      const meetingPoint  = document.getElementById('meetingPoint')?.value  || '';
+      const tradeId        = tradeIdInput.value;
       const additionalInfo = document.getElementById('additionalInfo')?.value || '';
-      const inGameName    = document.getElementById('inGameName')?.value    || '';
+      const inGameName     = document.getElementById('inGameName')?.value    || '';
 
       try {
         const resp  = await fetch(`/trade/details/${tradeId}`);
@@ -619,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
               const finalResp = await fetch(`/trade/accept/${tradeId}`, {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body:    JSON.stringify({ meetingPoint, additionalInfo, inGameName }),
+                body:    JSON.stringify({ additionalInfo, inGameName }),
               });
               if (finalResp.ok) {
                 window.closeConfirmationModal();

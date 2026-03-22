@@ -7,43 +7,75 @@
 }
 
 @media (max-width: 768px) {
-  /* Navbar — no hamburger, just wrap links gracefully */
+  /* Navbar — compact mobile layout */
   .navbar {
     height: auto;
     min-height: 3.2rem;
-    padding: 0.4rem 1rem;
-    grid-template-columns: 1fr;
+    padding: 0.5rem 0.75rem;
+    grid-template-columns: 1fr auto;
     grid-template-rows: auto auto;
-    gap: 0.15rem;
-    text-align: center;
+    gap: 0;
+    background: rgba(13, 13, 13, 0.95);
   }
 
   .navbar .brand {
-    justify-self: center;
-  }
-
-  .nav-links {
-    justify-content: center;
-    gap: 0.6rem;
-    order: 3;
-  }
-
-  .nav-links a {
-    font-size: 0.75rem;
+    justify-self: start;
+    font-size: 0.95rem;
   }
 
   .nav-user {
-    justify-content: center;
+    justify-self: end;
+    justify-content: flex-end;
     gap: 0.5rem;
-    order: 2;
+    order: 1;
   }
 
+  .nav-links {
+    grid-column: 1 / -1;
+    justify-content: center;
+    gap: 0.15rem;
+    order: 3;
+    padding: 0.35rem 0 0.15rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    margin-top: 0.35rem;
+  }
+
+  .nav-links a {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+
+  .nav-links a:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  /* Mobile dropdown menu — full width overlay style */
   .nav-dropdown-menu {
-    right: 50%;
-    transform: translateX(50%);
+    position: fixed;
+    top: auto;
+    right: 0.5rem;
+    left: 0.5rem;
+    min-width: 0;
+    max-width: none;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+    background: rgba(18, 18, 18, 0.98);
+    padding: 0.5rem 0;
   }
 
-  /* Keep nav-links always visible — no hamburger */
+  .nav-dropdown-item {
+    padding: 0.65rem 1rem;
+    font-size: 0.85rem;
+    justify-content: center;
+  }
+
+  .nav-dropdown-divider {
+    margin: 0.35rem 1rem;
+  }
+
+  /* Keep nav-links always visible */
   .nav-links.open {
     display: flex;
   }
@@ -149,6 +181,13 @@
   .admin-stats {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  /* Footer — smaller on mobile */
+  .footer {
+    font-size: 0.62rem;
+    padding: 0.5rem 0.6rem;
+    line-height: 1.5;
+  }
 }
 
 @media (max-width: 480px) {
@@ -157,15 +196,31 @@
   }
 
   .navbar {
-    padding: 0.35rem 0.75rem;
+    padding: 0.35rem 0.6rem;
   }
 
   .navbar .brand {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
 
   .nav-links a {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.3rem;
+  }
+
+  .nav-user-name {
+    max-width: 80px;
+    font-size: 0.75rem;
+  }
+
+  .nav-user-toggle {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  /* Guest nav links */
+  .nav-user a {
+    font-size: 0.72rem;
   }
 
   .admin-stats {

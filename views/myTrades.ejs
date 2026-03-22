@@ -151,8 +151,17 @@
         return Math.floor(mins / 1440) + 'd ago';
       }
 
+      // Parse UTC offset from timezone string like "UTC+10:00 (Sydney/Melbourne)"
+      function parseUtcOffset(tzStr) {
+        if (!tzStr) return null;
+        const m = tzStr.match(/UTC([+-])(\d{1,2}):(\d{2})/);
+        if (!m) return null;
+        const sign = m[1] === '+' ? 1 : -1;
+        return sign * (parseInt(m[2], 10) * 60 + parseInt(m[3], 10));
+      }
+
       // Helper to render trade party details
-      function renderTradeDetails(trade, partyType) {
+      function renderTradeDetails(trade, partyType, viewerTz) {
         // partyType: 'creator' or 'acceptor'
         const prefix = partyType;
         const ign = trade[prefix + 'InGameName'];
@@ -166,11 +175,44 @@
         let html = '<div class="trade-info-section"><h3>' + (partyType === 'creator' ? "Creator's" : "Acceptor's") + ' Details</h3>';
         if (ign)     html += '<div class="trade-info-row"><span class="trade-info-label">In-Game Name</span><span class="trade-info-value">' + ign + '</span></div>';
         if (meeting) html += '<div class="trade-info-row"><span class="trade-info-label">Meeting Point</span><span class="trade-info-value">' + meeting + '</span></div>';
-        if (tz)      html += '<div class="trade-info-row"><span class="trade-info-label">Timezone</span><span class="trade-info-value">' + tz + '</span></div>';
+
+        // Timezone — show their current time and difference from viewer
+        if (tz) {
+          const theirOffset = parseUtcOffset(tz);
+          const viewerOffset = viewerTz ? parseUtcOffset(viewerTz) : null;
+          if (theirOffset !== null) {
+            const now = new Date();
+            const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+            const theirTime = new Date(utcMs + theirOffset * 60000);
+            const h = theirTime.getHours();
+            const m = theirTime.getMinutes();
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const h12 = h % 12 || 12;
+            const timeStr = h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+
+            let diffStr = '';
+            if (viewerOffset !== null && viewerOffset !== theirOffset) {
+              const diffMins = theirOffset - viewerOffset;
+              const diffH = Math.floor(Math.abs(diffMins) / 60);
+              const diffM = Math.abs(diffMins) % 60;
+              const sign = diffMins > 0 ? '+' : '-';
+              diffStr = ' (' + sign + diffH + (diffM ? ':' + String(diffM).padStart(2, '0') : '') + 'h from you)';
+            }
+
+            html += '<div class="trade-info-row"><span class="trade-info-label">Their Time</span><span class="trade-info-value">' + timeStr + diffStr + '</span></div>';
+          } else {
+            html += '<div class="trade-info-row"><span class="trade-info-label">Timezone</span><span class="trade-info-value">' + tz + '</span></div>';
+          }
+        }
+
         if (info)    html += '<div class="trade-info-row"><span class="trade-info-label">Additional Info</span><span class="trade-info-value">' + info + '</span></div>';
         html += '</div>';
         return html;
       }
+
+      // Get viewer's timezone for offset calculations
+      const viewerUser = typeof currentUser !== 'undefined' && currentUser ? currentUser : null;
+      const viewerTimezone = viewerUser ? viewerUser.timezone : null;
 
       // Helper to render connected contact info for a user
       function renderContactInfo(user, label) {
@@ -286,7 +328,29 @@
                           <div class="trade-info-row"><span class="trade-info-label">Meeting Point</span><span class="trade-info-value"><%= off.meetingPoint %></span></div>
                         <% } %>
                         <% if (off.offerer && off.offerer.timezone) { %>
-                          <div class="trade-info-row"><span class="trade-info-label">Timezone</span><span class="trade-info-value"><%= off.offerer.timezone %></span></div>
+                          <%
+                            const _offOffset = parseUtcOffset(off.offerer.timezone);
+                            const _viewOffset = viewerTimezone ? parseUtcOffset(viewerTimezone) : null;
+                            let _tzDisplay = off.offerer.timezone;
+                            if (_offOffset !== null) {
+                              const _n = new Date();
+                              const _utcMs = _n.getTime() + _n.getTimezoneOffset() * 60000;
+                              const _tTime = new Date(_utcMs + _offOffset * 60000);
+                              const _h = _tTime.getHours();
+                              const _m = _tTime.getMinutes();
+                              const _ap = _h >= 12 ? 'PM' : 'AM';
+                              const _h12 = _h % 12 || 12;
+                              _tzDisplay = _h12 + ':' + String(_m).padStart(2, '0') + ' ' + _ap;
+                              if (_viewOffset !== null && _viewOffset !== _offOffset) {
+                                const _dm = _offOffset - _viewOffset;
+                                const _dh = Math.floor(Math.abs(_dm) / 60);
+                                const _dmm = Math.abs(_dm) % 60;
+                                const _s = _dm > 0 ? '+' : '-';
+                                _tzDisplay += ' (' + _s + _dh + (_dmm ? ':' + String(_dmm).padStart(2, '0') : '') + 'h from you)';
+                              }
+                            }
+                          %>
+                          <div class="trade-info-row"><span class="trade-info-label">Their Time</span><span class="trade-info-value"><%= _tzDisplay %></span></div>
                         <% } %>
                         <% if (off.additionalInfo) { %>
                           <div class="trade-info-row"><span class="trade-info-label">Info</span><span class="trade-info-value"><%= off.additionalInfo %></span></div>
@@ -306,8 +370,8 @@
               <% } %>
 
               <% if (trade.status === 'awaiting_confirmation' || trade.status === 'completed') { %>
-                <%- renderTradeDetails(trade, 'acceptor') %>
-                <%- renderTradeDetails(trade, 'creator') %>
+                <%- renderTradeDetails(trade, 'acceptor', viewerTimezone) %>
+                <%- renderTradeDetails(trade, 'creator', viewerTimezone) %>
                 <% if (trade.acceptor) { %>
                   <%- renderContactInfo(trade.acceptor, trade.acceptor.username + "'s") %>
                 <% } %>
@@ -437,8 +501,8 @@
               </p>
 
               <% if (trade.status === 'awaiting_confirmation' || trade.status === 'completed') { %>
-                <%- renderTradeDetails(trade, 'creator') %>
-                <%- renderTradeDetails(trade, 'acceptor') %>
+                <%- renderTradeDetails(trade, 'creator', viewerTimezone) %>
+                <%- renderTradeDetails(trade, 'acceptor', viewerTimezone) %>
                 <% if (trade.offerCreator) { %>
                   <%- renderContactInfo(trade.offerCreator, trade.offerCreator.username + "'s") %>
                 <% } %>
@@ -566,8 +630,8 @@
                 </span>
               </p>
 
-              <%- renderTradeDetails(trade, 'creator') %>
-              <%- renderTradeDetails(trade, 'acceptor') %>
+              <%- renderTradeDetails(trade, 'creator', viewerTimezone) %>
+              <%- renderTradeDetails(trade, 'acceptor', viewerTimezone) %>
 
               <% if (isCreator && trade.tradeFeedbackAcceptor) { %>
                 <div class="trade-feedback-block">
@@ -710,6 +774,11 @@
                   <% } %>
                 </div>
               <% } %>
+            </div>
+            <div class="trade-actions">
+              <form action="/trade/rescind-offer/<%= po.id %>" method="POST" style="flex:1;">
+                <button type="submit" class="btn btn-danger btn-full" onclick="return confirm('Rescind your offer on this trade?')">Rescind Offer</button>
+              </form>
             </div>
           </div>
         <% }); %>

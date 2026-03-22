@@ -357,43 +357,17 @@
         <h2>Make Trade Offer</h2>
         <form id="acceptTradeForm">
           <input type="hidden" id="tradeId" name="tradeId" />
-          <input type="hidden" id="meetingPoint" name="meetingPoint" value="" />
 
-          <!-- Meeting Point Picker for acceptor -->
-          <label>Preferred Meeting Point <span style="color:var(--text-muted);font-size:0.8rem;">(optional)</span></label>
-          <div class="meeting-point-picker">
-            <div class="meeting-point-options" id="acceptMeetingPointOptions">
-              <% if (typeof meetingPoints !== 'undefined' && meetingPoints.length > 0) { %>
-                <%
-                  const sortedAcceptMPs = [...meetingPoints].sort((a, b) => {
-                    if (a.hub && !a.dlc && !(b.hub && !b.dlc)) return -1;
-                    if (b.hub && !b.dlc && !(a.hub && !a.dlc)) return 1;
-                    if (!a.dlc && b.dlc) return -1;
-                    if (a.dlc && !b.dlc) return 1;
-                    return 0;
-                  });
-                %>
-                <% sortedAcceptMPs.forEach(mp => { %>
-                  <button type="button" class="mp-option" data-value="<%= mp.name %>"
-                          onclick="selectAcceptMeetingPoint(this)">
-                    <%= mp.name %>
-                    <% if (mp.hub) { %><span class="mp-hub-badge">Hub</span><% } %>
-                    <% if (mp.dlc) { %><span class="mp-dlc-badge">DLC</span><% } %>
-                  </button>
-                <% }); %>
-                <button type="button" class="mp-option" data-value="other"
-                        onclick="selectAcceptMeetingPoint(this)">
-                  Other
-                </button>
-              <% } %>
-            </div>
-            <input type="text" id="acceptMeetingPointOtherInput" class="mp-other-input" maxlength="100" placeholder="Specify meeting point..." />
+          <!-- Meeting point display (set by trade creator) -->
+          <div id="acceptMeetingPointDisplay" style="margin-bottom:0.75rem; display:none;">
+            <label style="margin-bottom:0.25rem;">Meeting Point</label>
+            <div style="padding:0.4rem 0.6rem;background:var(--bg-tertiary);border:1px solid var(--border-color);border-radius:var(--radius);font-size:0.85rem;color:var(--text-primary);" id="acceptMeetingPointText"></div>
           </div>
 
           <label for="inGameName">In-Game Character Name</label>
           <input type="text" id="inGameName" name="inGameName" placeholder="Your character name" />
           <label for="additionalInfo">Additional Information</label>
-          <textarea id="additionalInfo" name="additionalInfo" placeholder="Timezone, availability…"></textarea>
+          <textarea id="additionalInfo" name="additionalInfo" placeholder="Availability, extra details…"></textarea>
           <button type="submit" class="btn btn-success btn-full" style="margin-top:1rem;">Continue</button>
         </form>
       </div>
@@ -552,6 +526,12 @@
                 <% if (offer.characterLevel) { %>
                   <span class="char-level-badge">LVL <%= offer.characterLevel %></span>
                 <% } %>
+                <% if (offer.creatorMeetingPoint) { %>
+                  <div class="trade-meeting-point">
+                    <span class="trade-meeting-point-icon">&#128205;</span>
+                    <%= offer.creatorMeetingPoint %>
+                  </div>
+                <% } %>
                 <% if (offer.additionalNotes) { %>
                   <div class="notes">Notes: <%= offer.additionalNotes %></div>
                 <% } %>
@@ -569,8 +549,13 @@
                       <%= offerCount %> Offer<%= offerCount !== 1 ? 's' : '' %> Received
                     </span>
                   <% } %>
-                  <% if (userId && userId !== offer.offerCreatorId) { %>
+                  <%
+                    const userHasOffer = userId && offer.tradeOffers && offer.tradeOffers.some(o => o.offererId === userId && o.status === 'pending');
+                  %>
+                  <% if (userId && userId !== offer.offerCreatorId && !userHasOffer) { %>
                     <button class="btn btn-success btn-accept" data-trade-id="<%= offer.id %>">Make Offer</button>
+                  <% } else if (userId && userId !== offer.offerCreatorId && userHasOffer) { %>
+                    <span class="status-badge status-awaiting">Offer Sent</span>
                   <% } %>
                 <% } %>
                 <% if (userId && (userId === offer.offerCreatorId || role === 'admin' || role === 'super_admin') && offer.status === 'open') { %>
@@ -670,25 +655,6 @@
       }
     }
 
-    // ── Meeting Point Picker (acceptor) ──
-    function selectAcceptMeetingPoint(btn) {
-      document.querySelectorAll('#acceptMeetingPointOptions .mp-option').forEach(b => b.classList.remove('mp-selected'));
-      btn.classList.add('mp-selected');
-
-      const hidden = document.getElementById('meetingPoint');
-      const otherInput = document.getElementById('acceptMeetingPointOtherInput');
-
-      if (btn.dataset.value === 'other') {
-        otherInput.classList.add('visible');
-        otherInput.focus();
-        otherInput.oninput = () => { hidden.value = otherInput.value; };
-        hidden.value = otherInput.value;
-      } else {
-        otherInput.classList.remove('visible');
-        otherInput.oninput = null;
-        hidden.value = btn.dataset.value;
-      }
-    }
   </script>
 </body>
 </html>

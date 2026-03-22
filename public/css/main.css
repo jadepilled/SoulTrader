@@ -646,11 +646,32 @@ textarea {
 .trade-actions .status-badge {
   flex: 1;
   text-align: center;
+  border-radius: var(--radius);
 }
 
 .trade-actions > *:only-child {
   flex: 1;
   width: 100%;
+}
+
+/* Meeting point display in trade cards */
+.trade-meeting-point {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.72rem;
+  border-radius: 4px;
+  cursor: default;
+  border: 1px solid rgba(var(--game-accent-rgb, 138, 138, 138), 0.25);
+  background: rgba(var(--game-accent-rgb, 138, 138, 138), 0.08);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  margin-top: 0.35rem;
+}
+.trade-meeting-point-icon {
+  font-size: 0.7rem;
+  opacity: 0.7;
 }
 
 /* ─── Trade Item Rows ──────────────────────────────────────────────────── */
@@ -2208,11 +2229,15 @@ textarea {
   padding: 0.65rem 0.85rem 0.8rem;
   color: rgba(255, 255, 255, 0.72);
   font-size: 0.72rem;
-  background: rgba(12, 12, 12, 0.82);
+  background: rgba(12, 12, 12, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  width: 100%;
 }
 
 /* ─── Stats Tracker ───────────────────────────────────────────────────── */
