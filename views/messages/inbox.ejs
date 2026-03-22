@@ -95,6 +95,34 @@
       margin-top: 2rem;
       text-align: center;
     }
+    .new-message-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .new-message-bar input {
+      flex: 1;
+      min-width: 180px;
+    }
+    .thread-delete-btn {
+      position: absolute;
+      top: 50%;
+      right: 0.75rem;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.75rem;
+      opacity: 0;
+      transition: opacity 0.2s, color 0.2s;
+      padding: 0.3rem;
+    }
+    .conversation-card { position: relative; }
+    .conversation-card:hover .thread-delete-btn { opacity: 1; }
+    .thread-delete-btn:hover { color: var(--danger, #e74c3c); }
   </style>
 </head>
 <body>
@@ -103,8 +131,34 @@
   <div class="main-content">
     <%- include('../partials/flash-messages') %>
 
+    <% if (typeof query !== 'undefined' && query.error) { %>
+      <div class="flash-message flash-error" style="margin-bottom:1rem;"><%= query.error %></div>
+    <% } %>
+    <% if (typeof query !== 'undefined' && query.success) { %>
+      <div class="flash-message flash-success" style="margin-bottom:1rem;"><%= query.success %></div>
+    <% } %>
+
     <div class="profile-section">
       <h2 class="profile-section-title">Messages</h2>
+
+      <!-- New Message -->
+      <div class="new-message-bar">
+        <form action="/messages/new" method="GET" style="display:flex; gap:0.5rem; flex:1; min-width:200px;">
+          <input type="text" name="to" placeholder="Message a user by username..." maxlength="50" required />
+          <button type="submit" class="btn btn-primary btn-sm">Start Chat</button>
+        </form>
+      </div>
+
+      <% if (typeof friends !== 'undefined' && friends.length > 0) { %>
+        <div style="margin-bottom:1rem;">
+          <span style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted);">Quick message a friend:</span>
+          <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.35rem;">
+            <% friends.forEach(f => { %>
+              <a href="/messages/<%= f.username %>" style="font-size:0.78rem; padding:0.2rem 0.6rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:999px; text-decoration:none; color:var(--text-secondary); transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'"><%= f.username %></a>
+            <% }); %>
+          </div>
+        </div>
+      <% } %>
 
       <% if (typeof conversations !== 'undefined' && conversations.length > 0) { %>
         <div class="conversations-list">
@@ -125,6 +179,7 @@
               <% if (conv.unreadCount && conv.unreadCount > 0) { %>
                 <span class="unread-badge"><%= conv.unreadCount %></span>
               <% } %>
+              <button type="button" class="thread-delete-btn" onclick="event.preventDefault(); event.stopPropagation(); deleteThread('<%= conv.otherUser.username %>', this);" title="Delete conversation">&#128465;</button>
             </a>
           <% }); %>
         </div>
@@ -134,9 +189,56 @@
     </div>
   </div>
 
+  <!-- ═══ Styled Confirm Modal ═══ -->
+  <div class="confirm-modal-overlay" id="styledConfirmModal">
+    <div class="confirm-modal-box">
+      <h3 id="styledConfirmTitle">Confirm</h3>
+      <p id="styledConfirmMessage" style="color:var(--text-secondary);margin-bottom:1rem;font-size:0.9rem;"></p>
+      <div class="confirm-modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeStyledConfirm()">Cancel</button>
+        <button type="button" class="btn btn-danger" id="styledConfirmYes">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <%- include('../partials/auth-modals') %>
   <%- include('../partials/preloader') %>
   <%- include('../partials/footer') %>
   <script src="/js/auth.js"></script>
+  <script>
+    let _styledConfirmCb = null;
+    function showStyledConfirm(message, onConfirm) {
+      const modal = document.getElementById('styledConfirmModal');
+      document.getElementById('styledConfirmMessage').textContent = message;
+      _styledConfirmCb = onConfirm;
+      modal.classList.add('active');
+    }
+    function closeStyledConfirm() {
+      document.getElementById('styledConfirmModal').classList.remove('active');
+      _styledConfirmCb = null;
+    }
+    document.getElementById('styledConfirmYes').addEventListener('click', () => {
+      if (_styledConfirmCb) _styledConfirmCb();
+      closeStyledConfirm();
+    });
+    document.getElementById('styledConfirmModal').addEventListener('click', function(e) {
+      if (e.target === this) closeStyledConfirm();
+    });
+
+    function deleteThread(username, btn) {
+      showStyledConfirm('Delete this entire conversation with ' + username + '? This cannot be undone.', async () => {
+        try {
+          const resp = await fetch('/messages/delete-thread/' + username, { method: 'POST' });
+          const data = await resp.json();
+          if (data.success) {
+            const card = btn.closest('.conversation-card');
+            if (card) card.remove();
+          } else {
+            alert(data.error || 'Failed to delete thread.');
+          }
+        } catch { alert('Network error.'); }
+      });
+    }
+  </script>
 </body>
 </html>

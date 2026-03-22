@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
-const { Message, User, Report } = require('../models');
+const { Message, User, Report, BlockedUser, Friendship } = require('../models');
 const { ensureAuthenticated, ensureVerified } = require('../middleware/roleMiddleware');
 const { filterContent } = require('../utils/contentFilter');
 const { getUsernameStyle, gameConfigs } = require('../controllers/gameController');
@@ -44,24 +44,38 @@ router.get('/', ensureAuthenticated, ensureVerified, async (req, res) => {
   try {
     const userId = req.user.id;
 
+    // Get blocked user IDs (both directions)
+    const blocks = await BlockedUser.findAll({
+      where: {
+        [Op.or]: [{ blockerId: userId }, { blockedId: userId }],
+      },
+      attributes: ['blockerId', 'blockedId'],
+      raw: true,
+    });
+    const blockedIds = new Set();
+    blocks.forEach(b => {
+      if (b.blockerId === userId) blockedIds.add(b.blockedId);
+      else blockedIds.add(b.blockerId);
+    });
+
     // Find all distinct users the current user has exchanged messages with
     const sent = await Message.findAll({
-      where: { senderId: userId },
+      where: { senderId: userId, deletedAt: null },
       attributes: ['recipientId'],
       group: ['recipientId'],
       raw: true,
     });
     const received = await Message.findAll({
-      where: { recipientId: userId },
+      where: { recipientId: userId, deletedAt: null },
       attributes: ['senderId'],
       group: ['senderId'],
       raw: true,
     });
 
-    // Collect unique partner IDs
+    // Collect unique partner IDs (exclude blocked users)
     const partnerIds = new Set();
-    sent.forEach(m => partnerIds.add(m.recipientId));
-    received.forEach(m => partnerIds.add(m.senderId));
+    sent.forEach(m => { if (!blockedIds.has(m.recipientId)) partnerIds.add(m.recipientId); });
+    received.forEach(m => { if (!blockedIds.has(m.senderId)) partnerIds.add(m.senderId); });
 
     // Build conversation summaries
     const conversations = [];
@@ -71,9 +85,10 @@ router.get('/', ensureAuthenticated, ensureVerified, async (req, res) => {
       });
       if (!otherUser) continue;
 
-      // Last message between the two users
+      // Last message between the two users (non-deleted)
       const lastMessage = await Message.findOne({
         where: {
+          deletedAt: null,
           [Op.or]: [
             { senderId: userId, recipientId: partnerId },
             { senderId: partnerId, recipientId: userId },
@@ -81,6 +96,7 @@ router.get('/', ensureAuthenticated, ensureVerified, async (req, res) => {
         },
         order: [['createdAt', 'DESC']],
       });
+      if (!lastMessage) continue; // Skip if all messages in thread are deleted
 
       // Unread count (messages FROM partner that current user hasn't read)
       const unreadCount = await Message.count({
@@ -105,12 +121,37 @@ router.get('/', ensureAuthenticated, ensureVerified, async (req, res) => {
       return bDate - aDate;
     });
 
+    // Get friends list for "New Message" feature
+    const friendships = await Friendship.findAll({
+      where: {
+        status: 'accepted',
+        [Op.or]: [{ requesterId: userId }, { addresseeId: userId }],
+      },
+      include: [
+        { model: User, as: 'requester', attributes: ['id', 'username', 'profileImagePath', 'role'] },
+        { model: User, as: 'addressee', attributes: ['id', 'username', 'profileImagePath', 'role'] },
+      ],
+    });
+    const friends = friendships.map(f => {
+      return f.requesterId === userId ? f.addressee : f.requester;
+    }).filter(f => f && !blockedIds.has(f.id));
+
     const locals = await viewLocals(req);
-    res.render('messages/inbox', { ...locals, conversations });
+    res.render('messages/inbox', { ...locals, conversations, friends });
   } catch (err) {
     console.error('Error loading inbox:', err);
     res.status(500).send('Server error.');
   }
+});
+
+// ─── New message redirect (by username) ─────────────────────────────────────
+router.get('/new', ensureAuthenticated, ensureVerified, async (req, res) => {
+  const { to } = req.query;
+  if (!to || !to.trim()) return res.redirect('/messages');
+  const targetUser = await User.findOne({ where: { username: to.trim() }, attributes: ['username'] });
+  if (!targetUser) return res.redirect('/messages?error=' + encodeURIComponent('User not found.'));
+  if (targetUser.username === req.user.username) return res.redirect('/messages');
+  return res.redirect('/messages/' + targetUser.username);
 });
 
 // ─── Conversation thread with a specific user ───────────────────────────────
@@ -123,6 +164,19 @@ router.get('/:username', ensureAuthenticated, ensureVerified, async (req, res) =
     });
     if (!otherUser) return res.status(404).send('User not found.');
     if (otherUser.id === userId) return res.redirect('/messages');
+
+    // Check if either party has blocked the other
+    const blockExists = await BlockedUser.findOne({
+      where: {
+        [Op.or]: [
+          { blockerId: userId, blockedId: otherUser.id },
+          { blockerId: otherUser.id, blockedId: userId },
+        ],
+      },
+    });
+    if (blockExists) {
+      return res.redirect('/messages?error=' + encodeURIComponent('You cannot message this user.'));
+    }
 
     // Mark unread messages from partner as read
     await Message.update(
@@ -183,6 +237,19 @@ router.post('/:username', ensureAuthenticated, ensureVerified, messageLimiter, a
     if (!recipient) return res.status(404).send('User not found.');
     if (recipient.id === userId) return res.status(400).send('You cannot message yourself.');
 
+    // Check if either party has blocked the other
+    const blockExists = await BlockedUser.findOne({
+      where: {
+        [Op.or]: [
+          { blockerId: userId, blockedId: recipient.id },
+          { blockerId: recipient.id, blockedId: userId },
+        ],
+      },
+    });
+    if (blockExists) {
+      return res.redirect(`/messages/${req.params.username}?error=${encodeURIComponent('You cannot message this user.')}`);
+    }
+
     // Check if this is the first message from this sender to this recipient
     const priorMessageCount = await Message.count({
       where: { senderId: userId, recipientId: recipient.id },
@@ -207,6 +274,37 @@ router.post('/:username', ensureAuthenticated, ensureVerified, messageLimiter, a
   } catch (err) {
     console.error('Error sending message:', err);
     res.status(500).send('Server error.');
+  }
+});
+
+// ─── Delete entire conversation thread ──────────────────────────────────────
+router.post('/delete-thread/:username', ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const otherUser = await User.findOne({
+      where: { username: req.params.username },
+      attributes: ['id'],
+    });
+    if (!otherUser) return res.status(404).json({ error: 'User not found.' });
+
+    // Soft-delete all messages in this thread (both directions)
+    await Message.update(
+      { deletedAt: new Date() },
+      {
+        where: {
+          deletedAt: null,
+          [Op.or]: [
+            { senderId: userId, recipientId: otherUser.id },
+            { senderId: otherUser.id, recipientId: userId },
+          ],
+        },
+      }
+    );
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting thread:', err);
+    return res.status(500).json({ error: 'Server error.' });
   }
 });
 

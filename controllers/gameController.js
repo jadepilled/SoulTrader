@@ -71,6 +71,7 @@ const gameConfigs = {
     secondaryColorRgb: '110, 110, 110',
     logoUrl: 'https://i.imgur.com/fzs2DYZ.png',
     levelCap: 712,
+    forcePlatform: 'PlayStation',
   },
 };
 

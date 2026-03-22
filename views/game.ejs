@@ -559,13 +559,13 @@
 
               <div class="trade-actions">
                 <% if (offer.status === 'awaiting_confirmation') { %>
-                  <span style="font-size:0.72rem;padding:0.2rem 0.5rem;background:rgba(200,168,78,0.12);color:#c8a84e;border:1px solid rgba(200,168,78,0.25);border-radius:var(--radius);">Awaiting Confirmation</span>
+                  <span class="status-badge status-awaiting">Awaiting Confirmation</span>
                 <% } else if (offer.status === 'open') { %>
                   <%
                     const offerCount = offer.tradeOffers ? offer.tradeOffers.filter(o => o.status === 'pending').length : 0;
                   %>
                   <% if (offerCount > 0) { %>
-                    <span style="font-size:0.72rem;padding:0.2rem 0.5rem;background:rgba(200,168,78,0.12);color:#c8a84e;border:1px solid rgba(200,168,78,0.25);border-radius:var(--radius);">
+                    <span class="status-badge status-awaiting">
                       <%= offerCount %> Offer<%= offerCount !== 1 ? 's' : '' %> Received
                     </span>
                   <% } %>

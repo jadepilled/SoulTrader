@@ -217,8 +217,25 @@
           <button class="profile-edit-toggle" onclick="toggleProfileEdit()">Edit Profile</button>
         <% } else { %>
           <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.75rem;">
-            <% if (typeof userId !== 'undefined' && userId) { %>
+            <% if (typeof userId !== 'undefined' && userId && !isBlockedBy && !isBlocked) { %>
               <a href="/messages/<%= profileUser.username %>" class="btn btn-primary btn-sm">Send Message</a>
+            <% } %>
+            <% if (typeof userId !== 'undefined' && userId) { %>
+              <% if (friendshipStatus === 'accepted') { %>
+                <button class="btn btn-sm" style="border-color: var(--success); color: var(--success);" onclick="removeFriend('<%= profileUser.username %>')">Remove Friend</button>
+              <% } else if (friendshipStatus === 'pending_sent') { %>
+                <span class="btn btn-sm" style="border-color: var(--text-muted); color: var(--text-muted); cursor:default; opacity:0.7;">Request Sent</span>
+              <% } else if (friendshipStatus === 'pending_received') { %>
+                <button class="btn btn-sm" style="border-color: var(--success); color: var(--success);" onclick="acceptFriendRequest('<%= friendshipId %>')">Accept Request</button>
+                <button class="btn btn-sm" style="border-color: var(--danger); color: var(--danger);" onclick="declineFriendRequest('<%= friendshipId %>')">Decline</button>
+              <% } else if (!isBlocked && !isBlockedBy) { %>
+                <button class="btn btn-sm" style="border-color: var(--primary, #c8a84e); color: var(--primary, #c8a84e);" onclick="sendFriendRequest('<%= profileUser.username %>')">Add Friend</button>
+              <% } %>
+              <% if (!isBlocked) { %>
+                <button class="btn btn-sm" style="border-color: var(--danger); color: var(--danger);" onclick="document.getElementById('blockUserPanel').classList.toggle('open')">Block User</button>
+              <% } else { %>
+                <button class="btn btn-sm" style="border-color: var(--text-muted); color: var(--text-muted);" onclick="unblockUser('<%= profileUser.username %>')">Unblock User</button>
+              <% } %>
             <% } %>
             <% if (typeof userId !== 'undefined' && userId && typeof role !== 'undefined') { %>
               <button class="btn btn-sm" style="border-color: var(--danger); color: var(--danger);" onclick="document.getElementById('reportUserPanel').classList.toggle('open')">Report User</button>
@@ -243,6 +260,66 @@
               <button type="submit" class="btn btn-danger btn-sm">Submit Report</button>
             </div>
           </form>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Block User Panel (hidden by default) -->
+    <% if (!isOwnProfile && typeof userId !== 'undefined' && userId && !isBlocked) { %>
+      <div id="blockUserPanel" class="profile-edit-panel">
+        <div class="profile-section">
+          <h2 class="profile-section-title">Block <%= profileUser.username %></h2>
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.75rem;">
+            Blocking this user will prevent them from messaging you and remove any existing friendship. This can be undone later.
+          </p>
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:0.75rem;">
+            Would you also like to report this user? (optional)
+          </p>
+          <textarea id="blockReportReason" maxlength="500" rows="3" placeholder="Reason for report (optional)..." style="margin-bottom:0.5rem;"></textarea>
+          <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('blockUserPanel').classList.remove('open')">Cancel</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="blockUser('<%= profileUser.username %>')">Block User</button>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Pending Friend Requests (own profile only) -->
+    <% if (isOwnProfile && typeof pendingFriendRequests !== 'undefined' && pendingFriendRequests.length > 0) { %>
+      <div class="profile-section" style="<%= _sectionStyle %>">
+        <h2 class="profile-section-title">Friend Requests (<%= pendingFriendRequests.length %>)</h2>
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          <% pendingFriendRequests.forEach(fr => { %>
+            <div style="display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0.75rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius);" id="fr-<%= fr.id %>">
+              <% if (fr.requester && fr.requester.profileImagePath) { %>
+                <img src="<%= fr.requester.profileImagePath %>" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" alt="" onerror="this.style.display='none'">
+              <% } else { %>
+                <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;color:var(--text-muted);"><%= fr.requester ? fr.requester.username.charAt(0).toUpperCase() : '?' %></div>
+              <% } %>
+              <a href="/profile/<%= fr.requester ? fr.requester.username : '' %>" style="<%= fr.requester ? getUsernameStyle(fr.requester.role) : '' %>; font-weight:700; text-decoration:none; flex:1;"><%= fr.requester ? fr.requester.username : 'Unknown' %></a>
+              <button class="btn btn-success btn-sm" onclick="acceptFriendRequest('<%= fr.id %>')">Accept</button>
+              <button class="btn btn-danger btn-sm" onclick="declineFriendRequest('<%= fr.id %>')">Decline</button>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Friends List -->
+    <% if (typeof friendsList !== 'undefined' && friendsList.length > 0) { %>
+      <div class="profile-section" style="<%= _sectionStyle %>">
+        <h2 class="profile-section-title">Friends (<%= friendsList.length %>)</h2>
+        <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+          <% friendsList.forEach(friend => { %>
+            <a href="/profile/<%= friend.username %>" style="display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0.75rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:999px; text-decoration:none; transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
+              <% if (friend.profileImagePath) { %>
+                <img src="<%= friend.profileImagePath %>" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" alt="" onerror="this.style.display='none'">
+              <% } else { %>
+                <div style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;color:var(--text-muted);"><%= friend.username.charAt(0).toUpperCase() %></div>
+              <% } %>
+              <span style="<%= getUsernameStyle(friend.role) %>; font-size:0.82rem; font-weight:600;"><%= friend.username %></span>
+            </a>
+          <% }); %>
         </div>
       </div>
     <% } %>
@@ -768,6 +845,76 @@
           } else {
             alert(data.error || 'Failed to delete comment.');
           }
+        } catch { alert('Network error.'); }
+      });
+    }
+
+    // ── Friend / Block actions ──
+    async function sendFriendRequest(username) {
+      try {
+        const resp = await fetch('/friends/request/' + username, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const data = await resp.json();
+        if (data.success) { location.reload(); }
+        else { alert(data.error || 'Failed to send request.'); }
+      } catch { alert('Network error.'); }
+    }
+
+    async function acceptFriendRequest(friendshipId) {
+      try {
+        const resp = await fetch('/friends/accept/' + friendshipId, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const data = await resp.json();
+        if (data.success) { location.reload(); }
+        else { alert(data.error || 'Failed to accept request.'); }
+      } catch { alert('Network error.'); }
+    }
+
+    async function declineFriendRequest(friendshipId) {
+      try {
+        const resp = await fetch('/friends/decline/' + friendshipId, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const data = await resp.json();
+        if (data.success) {
+          const el = document.getElementById('fr-' + friendshipId);
+          if (el) el.remove();
+          else location.reload();
+        }
+        else { alert(data.error || 'Failed to decline request.'); }
+      } catch { alert('Network error.'); }
+    }
+
+    function removeFriend(username) {
+      showStyledConfirm('Remove ' + username + ' from your friends?', async () => {
+        try {
+          const resp = await fetch('/friends/remove/' + username, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+          const data = await resp.json();
+          if (data.success) { location.reload(); }
+          else { alert(data.error || 'Failed to remove friend.'); }
+        } catch { alert('Network error.'); }
+      });
+    }
+
+    function blockUser(username) {
+      const reportReason = document.getElementById('blockReportReason')?.value || '';
+      showStyledConfirm('Block ' + username + '? They will not be able to message you.', async () => {
+        try {
+          const resp = await fetch('/friends/block/' + username, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reportReason }),
+          });
+          const data = await resp.json();
+          if (data.success) { location.reload(); }
+          else { alert(data.error || 'Failed to block user.'); }
+        } catch { alert('Network error.'); }
+      });
+    }
+
+    function unblockUser(username) {
+      showStyledConfirm('Unblock ' + username + '?', async () => {
+        try {
+          const resp = await fetch('/friends/unblock/' + username, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+          const data = await resp.json();
+          if (data.success) { location.reload(); }
+          else { alert(data.error || 'Failed to unblock user.'); }
         } catch { alert('Network error.'); }
       });
     }

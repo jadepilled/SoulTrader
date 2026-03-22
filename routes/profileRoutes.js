@@ -4,7 +4,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
-const { User, Trade, Comment } = require('../models');
+const { User, Trade, Comment, Friendship, BlockedUser } = require('../models');
 const { ensureAuthenticated, ensureAdmin } = require('../middleware/roleMiddleware');
 const { getUsernameStyle, gameConfigs } = require('../controllers/gameController');
 const { profileUpdateLimiter } = require('../middleware/rateLimiter');
@@ -218,6 +218,63 @@ router.get('/:username', async (req, res) => {
       ? getAvailableDisplayRoles(user, completedTradeCount)
       : [];
 
+    // Friends list for this profile
+    const friendships = await Friendship.findAll({
+      where: {
+        status: 'accepted',
+        [Op.or]: [{ requesterId: user.id }, { addresseeId: user.id }],
+      },
+      include: [
+        { model: User, as: 'requester', attributes: ['id', 'username', 'profileImagePath', 'role'] },
+        { model: User, as: 'addressee', attributes: ['id', 'username', 'profileImagePath', 'role'] },
+      ],
+    });
+    const friendsList = friendships.map(f => {
+      return f.requesterId === user.id ? f.addressee : f.requester;
+    }).filter(f => f);
+
+    // Friendship status between viewer and profile owner
+    let friendshipStatus = null; // null = no relation, 'pending_sent', 'pending_received', 'accepted'
+    let friendshipId = null;
+    if (req.user && !isOwnProfile) {
+      const friendship = await Friendship.findOne({
+        where: {
+          [Op.or]: [
+            { requesterId: req.user.id, addresseeId: user.id },
+            { requesterId: user.id, addresseeId: req.user.id },
+          ],
+        },
+      });
+      if (friendship) {
+        friendshipId = friendship.id;
+        if (friendship.status === 'accepted') {
+          friendshipStatus = 'accepted';
+        } else if (friendship.status === 'pending') {
+          friendshipStatus = friendship.requesterId === req.user.id ? 'pending_sent' : 'pending_received';
+        }
+      }
+    }
+
+    // Block status
+    let isBlocked = false;
+    let isBlockedBy = false;
+    if (req.user && !isOwnProfile) {
+      const blockOut = await BlockedUser.findOne({ where: { blockerId: req.user.id, blockedId: user.id } });
+      const blockIn = await BlockedUser.findOne({ where: { blockerId: user.id, blockedId: req.user.id } });
+      isBlocked = !!blockOut;
+      isBlockedBy = !!blockIn;
+    }
+
+    // Pending friend requests (for own profile)
+    let pendingFriendRequests = [];
+    if (isOwnProfile) {
+      pendingFriendRequests = await Friendship.findAll({
+        where: { addresseeId: user.id, status: 'pending' },
+        include: [{ model: User, as: 'requester', attributes: ['id', 'username', 'profileImagePath', 'role'] }],
+        order: [['createdAt', 'DESC']],
+      });
+    }
+
     res.render('profile', {
       profileUser: user,
       completedTradeCount,
@@ -242,6 +299,12 @@ router.get('/:username', async (req, res) => {
       gameConfigs,
       pendingTradeCount,
       query: req.query,
+      friendsList,
+      friendshipStatus,
+      friendshipId,
+      isBlocked,
+      isBlockedBy,
+      pendingFriendRequests,
     });
   } catch (err) {
     console.error('Error loading profile:', err);

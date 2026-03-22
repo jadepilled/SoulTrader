@@ -7,6 +7,8 @@ const Comment = require('./Comment');
 const Feedback = require('./Feedback');
 const Message = require('./Message');
 const Report = require('./Report');
+const Friendship = require('./Friendship');
+const BlockedUser = require('./BlockedUser');
 
 // Trade creator
 Trade.belongsTo(User, { as: 'offerCreator', foreignKey: 'offerCreatorId' });
@@ -46,6 +48,18 @@ Report.belongsTo(User, { as: 'reporter', foreignKey: 'reporterId' });
 Report.belongsTo(User, { as: 'reportedUser', foreignKey: 'reportedUserId' });
 Report.belongsTo(Message, { as: 'reportedMessage', foreignKey: 'reportedMessageId' });
 
+// Friendships
+Friendship.belongsTo(User, { as: 'requester', foreignKey: 'requesterId' });
+Friendship.belongsTo(User, { as: 'addressee', foreignKey: 'addresseeId' });
+User.hasMany(Friendship, { as: 'sentFriendRequests', foreignKey: 'requesterId' });
+User.hasMany(Friendship, { as: 'receivedFriendRequests', foreignKey: 'addresseeId' });
+
+// Blocked users
+BlockedUser.belongsTo(User, { as: 'blocker', foreignKey: 'blockerId' });
+BlockedUser.belongsTo(User, { as: 'blocked', foreignKey: 'blockedId' });
+User.hasMany(BlockedUser, { as: 'blockedUsers', foreignKey: 'blockerId' });
+User.hasMany(BlockedUser, { as: 'blockedBy', foreignKey: 'blockedId' });
+
 module.exports = {
   sequelize,
   User,
@@ -56,4 +70,6 @@ module.exports = {
   Feedback,
   Message,
   Report,
+  Friendship,
+  BlockedUser,
 };

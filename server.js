@@ -21,6 +21,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const friendRoutes = require('./routes/friendRoutes');
 
 const app = express();
 
@@ -111,6 +112,7 @@ app.use('/admin', adminRoutes);
 app.use('/comments', commentRoutes);
 app.use('/messages', messageRoutes);
 app.use('/reports', reportRoutes);
+app.use('/friends', friendRoutes);
 
 // Homepage
 app.get('/', async (req, res) => {
